@@ -1,1 +1,1 @@
-// Scripts gerais
+// JS principal

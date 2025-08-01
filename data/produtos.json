@@ -1,0 +1,139 @@
+[
+  {
+    "nome": "Eppi Cinema",
+    "variantes": [
+      {
+        "tipo": "Mensal (30 dias)",
+        "preco": "R$24,90",
+        "descricao": "Recarga válida por 30 dias. Ideal para quem busca filmes e séries organizados por nuvem pessoal.",
+        "imagem": "Eppi Cinema mensal.jpg"
+      },
+      {
+        "tipo": "Trimestral (90 dias)",
+        "preco": "R$69,90",
+        "descricao": "Acesso sem anúncios, com atualizações automáticas.",
+        "imagem": "Eppi Cinema trimestral.jpg"
+      },
+      {
+        "tipo": "Anual (365 dias)",
+        "preco": "R$239,90",
+        "descricao": "Economia e acesso ilimitado durante 12 meses.",
+        "imagem": "Eppi Cinema anual.jpg"
+      }
+    ]
+  },
+  {
+    "nome": "Unitv",
+    "variantes": [
+      {
+        "tipo": "Mensal (30 dias)",
+        "preco": "R$34,90",
+        "descricao": "Mais de 500 canais, incluindo esportes, filmes e infantil.",
+        "imagem": "Unitv mensal.jpg"
+      },
+      {
+        "tipo": "Anual (365 dias)",
+        "preco": "R$359,90",
+        "descricao": "Conteúdo ao vivo e sob demanda com qualidade HD e 4K.",
+        "imagem": "Unitv anual.jpg"
+      }
+    ]
+  },
+  {
+    "nome": "Combo TV Express + Eppi Cinema",
+    "variantes": [
+      {
+        "tipo": "Mensal (30 dias)",
+        "preco": "R$34,90",
+        "descricao": "Recarga combinada ideal para teste das duas plataformas.",
+        "imagem": "combo Tv express+Eppi Cinema mensal.jpg"
+      },
+      {
+        "tipo": "Anual (365 dias)",
+        "preco": "R$359,90",
+        "descricao": "Pacote econômico com 1 ano de entretenimento.",
+        "imagem": "Combo Tv express+Eppi Cinema anual.jpg"
+      }
+    ]
+  },
+  {
+    "nome": "TV Express",
+    "variantes": [
+      {
+        "tipo": "Mensal (30 dias)",
+        "preco": "R$29,90",
+        "descricao": "Mais de 400 canais disponíveis no app Android.",
+        "imagem": "Tv express mensal 30.jpg"
+      },
+      {
+        "tipo": "Trimestral (90 dias)",
+        "preco": "R$79,90",
+        "descricao": "Acesso ilimitado a canais ao vivo e conteúdos variados.",
+        "imagem": "Tv express trimestral.jpg"
+      },
+      {
+        "tipo": "Anual (365 dias)",
+        "preco": "R$299,90",
+        "descricao": "Plataforma estável com suporte para Android TV e celular.",
+        "imagem": "Tv express anual.jpg"
+      }
+    ]
+  },
+  {
+    "nome": "HOT App",
+    "variantes": [
+      {
+        "tipo": "Mensal (30 dias)",
+        "preco": "R$9,90",
+        "descricao": "Conteúdo adulto sob demanda e canais ao vivo 24h.",
+        "imagem": "HOT app mensal.jpg"
+      },
+      {
+        "tipo": "Anual (365 dias)",
+        "preco": "R$34,90",
+        "descricao": "Acesso completo ao conteúdo adulto premium.",
+        "imagem": "HOT apk anual.jpg"
+      }
+    ]
+  },
+  {
+    "nome": "Império TV",
+    "variantes": [
+      {
+        "tipo": "Mensal (30 dias)",
+        "preco": "R$29,90",
+        "descricao": "Acesso a canais abertos, fechados e conteúdo sob demanda.",
+        "imagem": "IMPÉRIO TV Mensal.jpg"
+      },
+      {
+        "tipo": "Trimestral (90 dias)",
+        "preco": "R$79,90",
+        "descricao": "Estabilidade e variedade de conteúdo.",
+        "imagem": "IMPÉRIO TV Trimestral.jpg"
+      },
+      {
+        "tipo": "Anual (365 dias)",
+        "preco": "R$299,90",
+        "descricao": "A melhor lista IPTV do Brasil com suporte contínuo.",
+        "imagem": "IMPÉRIO TV Anual.jpg"
+      }
+    ]
+  },
+  {
+    "nome": "Blue TV",
+    "variantes": [
+      {
+        "tipo": "Mensal (30 dias)",
+        "preco": "R$29,90",
+        "descricao": "Acesso aos principais canais e conteúdo on-demand. Ideal para Box ou celular.",
+        "imagem": "Bluetv mensal.jpg"
+      },
+      {
+        "tipo": "Anual (365 dias)",
+        "preco": "R$299,90",
+        "descricao": "Experiência premium com estabilidade e suporte.",
+        "imagem": "Bluetv anual.jpg"
+      }
+    ]
+  }
+]

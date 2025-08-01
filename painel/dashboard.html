@@ -1,0 +1,38 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Administrativo - Produtos</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+  <header class="bg-white shadow p-4 mb-6">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold">Painel de Produtos</h1>
+      <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded">Sair</button>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4">
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold mb-2">Cadastrar Novo Produto</h2>
+      <form id="form-produto" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input type="text" id="nome" placeholder="Nome do Produto" class="p-2 border rounded" required>
+        <input type="text" id="tipo" placeholder="Tipo (ex: Mensal)" class="p-2 border rounded" required>
+        <input type="text" id="preco" placeholder="Preço (ex: R$29,90)" class="p-2 border rounded" required>
+        <input type="text" id="descricao" placeholder="Descrição" class="p-2 border rounded" required>
+        <input type="text" id="imagem" placeholder="Nome do arquivo da imagem" class="p-2 border rounded" required>
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded md:col-span-2">Salvar Produto</button>
+      </form>
+    </div>
+
+    <h2 class="text-lg font-semibold mb-4">Produtos Cadastrados</h2>
+    <div id="lista-produtos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+  </main>
+
+  <script src="../js/painel.js"></script>
+</body>
+</html>

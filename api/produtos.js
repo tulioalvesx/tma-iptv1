@@ -1,0 +1,1 @@
+// Endpoint mock para API futura

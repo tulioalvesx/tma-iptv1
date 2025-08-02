@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "id": "app-android",
+      "name": "Aplicativo Android",
+      "url": "#",
+      "description": "Download do aplicativo para Android."
+    },
+    {
+      "id": "app-ios",
+      "name": "Aplicativo iOS",
+      "url": "#",
+      "description": "Download do aplicativo para iOS."
+    }
+  ]
+}

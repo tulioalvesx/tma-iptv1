@@ -1,0 +1,17 @@
+Eppi Cinema - Mensal (30 dias) | R$ 24,90 | Imagem: eppi-cinema.png
+Eppi Cinema - Trimestral (90 dias) | R$ 69,90 | Imagem: eppi-cinema.png
+Eppi Cinema - Anual (365 dias) | R$ 239,90 | Imagem: eppi-cinema.png
+Unitv - Mensal (30 dias) | R$ 34,90 | Imagem: unitv.png
+Unitv - Anual (365 dias) | R$ 359,90 | Imagem: unitv.png
+Combo TV Express + Eppi - Mensal (30 dias) | R$ 34,90 | Imagem: combo-tvexpress-eppi.png
+Combo TV Express + Eppi - Anual (365 dias) | R$ 359,90 | Imagem: combo-tvexpress-eppi.png
+TV Express - Mensal (30 dias) | R$ 29,90 | Imagem: tvexpress.png
+TV Express - Trimestral (90 dias) | R$ 79,90 | Imagem: tvexpress.png
+TV Express - Anual (365 dias) | R$ 299,90 | Imagem: tvexpress.png
+HOT App - Mensal (30 dias) | R$ 9,90 | Imagem: hotapp.png
+HOT App - Anual (365 dias) | R$ 34,90 | Imagem: hotapp.png
+Império TV - Mensal (30 dias) | R$ 29,90 | Imagem: imperiotv.png
+Império TV - Trimestral (90 dias) | R$ 79,90 | Imagem: imperiotv.png
+Império TV - Anual (365 dias) | R$ 299,90 | Imagem: imperiotv.png
+Blue TV - Mensal (30 dias) | R$ 29,90 | Imagem: bluetv.png
+Blue TV - Anual (365 dias) | R$ 299,90 | Imagem: bluetv.png

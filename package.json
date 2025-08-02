@@ -1,11 +1,12 @@
 {
   "name": "tma-iptv",
   "version": "1.0.0",
-  "description": "TMA IPTV PREMIUM website with product catalogue, admin panel, chat and public API.",
+  "description": "TMA IPTV PREMIUM - frontend + backend para Render",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
-  "author": "",
-  "license": "MIT"
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }

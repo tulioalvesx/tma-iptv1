@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: tma-iptv-app
+    env: node
+    plan: free
+    rootDir: tma-iptv
+    buildCommand: npm install
+    startCommand: node server.js
+    autoDeploy: true

@@ -5,6 +5,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const sectionProdutos = document.getElementById("produtos-section");
   const sectionDownloads = document.getElementById("downloads-section");
 
+  const totalProdutos = document.getElementById("total-produtos");
+  const totalGrupos = document.getElementById("total-grupos");
+  const totalDownloads = document.getElementById("total-downloads");
+
   tabProdutos.addEventListener("click", () => {
     sectionProdutos.classList.remove("hidden");
     sectionDownloads.classList.add("hidden");
@@ -21,30 +25,49 @@ document.addEventListener("DOMContentLoaded", () => {
     tabProdutos.classList.add("bg-gray-300", "text-black");
   });
 
-  // Simulação de carregamento (substituir por fetch real)
-  const produtos = [
-    { grupo: "UniTV", itens: ["30 dias", "90 dias", "1 ano"] },
-    { grupo: "TV Express", itens: ["30 dias", "1 ano"] },
-  ];
+  // Carregar dados reais
+  fetch("/api/groups")
+    .then(res => res.json())
+    .then(data => {
+      totalGrupos.textContent = data.length;
+      let total = 0;
+      sectionProdutos.innerHTML = data.map((grupo, idx) => {
+        total += grupo.products.length;
+        return `
+          <div class="border rounded">
+            <button onclick="toggleAccordion('grupo${idx}')" class="w-full text-left p-4 bg-gray-200 font-bold">${grupo.name}</button>
+            <div id="grupo${idx}" class="hidden p-4 bg-white space-y-2">
+              ${grupo.products.map(prod => `
+                <div class="border p-2 rounded shadow flex justify-between items-center">
+                  <span>${prod.name} - R$ ${prod.price}</span>
+                  <div class="space-x-2">
+                    <button class="bg-yellow-400 text-white px-2 py-1 rounded">Editar</button>
+                    <button class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
+                  </div>
+                </div>
+              `).join('')}
+              <button class="mt-2 bg-green-600 text-white px-3 py-1 rounded">+ Novo Produto</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      totalProdutos.textContent = total;
+    });
 
-  const downloads = ["EPPI.apk", "ExpressTV.apk"];
-
-  // Render produtos
-  sectionProdutos.innerHTML = produtos.map((g, idx) => `
-    <div class="border rounded">
-      <button class="w-full text-left p-4 font-bold bg-gray-200" onclick="toggleAccordion('p${idx}')">
-        ${g.grupo}
-      </button>
-      <div id="p${idx}" class="hidden p-4 space-y-2 bg-white">
-        ${g.itens.map(p => `<div class='border p-2 rounded shadow'>${p}</div>`).join('')}
-      </div>
-    </div>
-  `).join('');
-
-  // Render downloads
-  sectionDownloads.innerHTML = downloads.map((d, idx) => `
-    <div class="border p-4 bg-white rounded shadow">${d}</div>
-  `).join('');
+  fetch("/api/downloads")
+    .then(res => res.json())
+    .then(data => {
+      totalDownloads.textContent = data.length;
+      sectionDownloads.innerHTML = data.map((app, idx) => `
+        <div class="border p-4 bg-white rounded shadow flex justify-between items-center">
+          <span>${app.name}</span>
+          <div class="space-x-2">
+            <button class="bg-yellow-400 text-white px-2 py-1 rounded">Editar</button>
+            <button class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
+          </div>
+        </div>
+      `).join('') + '<button class="mt-4 bg-green-600 text-white px-4 py-2 rounded">+ Novo App</button>';
+    });
 });
 
 function toggleAccordion(id) {

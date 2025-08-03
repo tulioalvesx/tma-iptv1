@@ -3,20 +3,47 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Painel Administrativo</title>
+  <title>Painel Administrativo - TMA IPTV</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 text-gray-800">
-  <header class="bg-black text-white p-4 text-center text-xl font-bold">Painel de Administração</header>
+  <header class="bg-black text-white p-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold">Painel de Administração</h1>
+    <a href="/" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded">Voltar ao site</a>
+  </header>
 
-  <main class="p-4">
-    <div class="flex gap-4 mb-4">
+  <main class="p-4 space-y-6">
+    <!-- Dashboard Cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white p-4 rounded shadow">
+        <p class="text-gray-500">Total de Produtos</p>
+        <p id="total-produtos" class="text-2xl font-bold">0</p>
+      </div>
+      <div class="bg-white p-4 rounded shadow">
+        <p class="text-gray-500">Total de Grupos</p>
+        <p id="total-grupos" class="text-2xl font-bold">0</p>
+      </div>
+      <div class="bg-white p-4 rounded shadow">
+        <p class="text-gray-500">Downloads</p>
+        <p id="total-downloads" class="text-2xl font-bold">0</p>
+      </div>
+      <div class="bg-white p-4 rounded shadow">
+        <p class="text-gray-500">Acessos (fake)</p>
+        <p class="text-2xl font-bold">1234</p>
+      </div>
+    </section>
+
+    <!-- Abas -->
+    <div class="flex gap-4">
       <button id="tab-produtos" class="tab-button bg-blue-600 text-white px-4 py-2 rounded">Produtos</button>
       <button id="tab-downloads" class="tab-button bg-gray-300 text-black px-4 py-2 rounded">Downloads</button>
     </div>
 
+    <!-- Produtos -->
     <div id="produtos-section" class="space-y-4"></div>
+
+    <!-- Downloads -->
     <div id="downloads-section" class="hidden space-y-4"></div>
   </main>
 

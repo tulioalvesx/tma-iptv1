@@ -1,38 +1,25 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel de Administração - TMA IPTV PREMIUM</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <meta charset="UTF-8" />
+  <title>Painel Administrativo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <header class="header">
-    <h1 data-i18n="panel-title">Painel de Administração</h1>
-    <nav class="nav">
-      <a href="/" data-i18n="nav-home">Início</a>
-      <a href="/downloads.html" data-i18n="nav-downloads">Downloads</a>
-      <a href="/admin/dashboard.html" data-i18n="nav-panel">Painel</a>
-    </nav>
-    <div style="margin-top:8px; font-size:12px;">
-      <button id="lang-pt" style="background:none; border:none; color:#fff; cursor:pointer;">PT</button> |
-      <button id="lang-en" style="background:none; border:none; color:#fff; cursor:pointer;">EN</button>
-    </div>
-  </header>
-  <div class="container">
-    <div class="admin-container">
-      <h2 data-i18n="products-heading">Gerenciar Produtos</h2>
-      <div id="groups-admin"></div>
-      <button id="save-products" class="button" style="margin-top:20px;" data-i18n="button-save-products">Salvar Alterações</button>
-    </div>
-    <div class="admin-container" style="margin-top:40px;">
-      <h2 data-i18n="downloads-heading">Gerenciar Downloads</h2>
-      <table class="admin-table" id="downloads-admin"></table>
-      <button id="save-downloads" class="button" style="margin-top:20px;" data-i18n="button-save-downloads">Salvar Downloads</button>
-    </div>
-  </div>
+<body class="bg-gray-100 text-gray-800">
+  <header class="bg-black text-white p-4 text-center text-xl font-bold">Painel de Administração</header>
 
-  <script src="/js/lang.js"></script>
-  <script src="/js/admin.js"></script>
+  <main class="p-4">
+    <div class="flex gap-4 mb-4">
+      <button id="tab-produtos" class="tab-button bg-blue-600 text-white px-4 py-2 rounded">Produtos</button>
+      <button id="tab-downloads" class="tab-button bg-gray-300 text-black px-4 py-2 rounded">Downloads</button>
+    </div>
+
+    <div id="produtos-section" class="space-y-4"></div>
+    <div id="downloads-section" class="hidden space-y-4"></div>
+  </main>
+
+  <script src="dashboard.js"></script>
 </body>
 </html>

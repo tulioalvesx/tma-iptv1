@@ -1,29 +1,30 @@
+// NOTE: Assumindo que Chart.js está carregado no HTML e existe <canvas id="grafico-acessos">
 document.addEventListener("DOMContentLoaded", () => {
   const tabs = document.querySelectorAll(".tab-btn");
   const sections = document.querySelectorAll(".tab-section");
-  const toastEl = createToastElement();
   let chartLock = false;
 
-  // Helpers
+  // Toast helper
   function showToast(msg, success = true) {
+    let toastEl = document.getElementById("toast");
+    if (!toastEl) {
+      toastEl = document.createElement("div");
+      toastEl.id = "toast";
+      toastEl.className = "fixed bottom-4 right-4 text-white px-4 py-2 rounded shadow transition-opacity";
+      document.body.appendChild(toastEl);
+    }
     toastEl.textContent = msg;
     toastEl.style.backgroundColor = success ? "#16a34a" : "#dc2626";
-    toastEl.classList.remove("opacity-0");
-    setTimeout(() => toastEl.classList.add("opacity-0"), 3000);
+    toastEl.style.opacity = "1";
+    setTimeout(() => {
+      toastEl.style.opacity = "0";
+    }, 2500);
   }
 
-  function createToastElement() {
-    let t = document.getElementById("toast");
-    if (!t) {
-      t = document.createElement("div");
-      t.id = "toast";
-      t.className = "fixed bottom-4 right-4 text-white px-4 py-2 rounded shadow transition-opacity";
-      t.style.backgroundColor = "#16a34a";
-      t.style.opacity = "1";
-      document.body.appendChild(t);
-    }
-    t.classList.add("opacity-0");
-    return t;
+  function normalizeImagem(im) {
+    if (!im) return "";
+    if (im.startsWith("http") || im.startsWith("/")) return im.startsWith("/img/") ? im : (im.startsWith("/") ? im : `/${im}`);
+    return `/img/${im.replace(/^\/?img\/?/i, "")}`;
   }
 
   // Tab switching
@@ -40,12 +41,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (sel) sel.classList.remove("hidden");
     });
   });
-
-  function normalizeImagem(im) {
-    if (!im) return "";
-    if (im.startsWith("http") || im.startsWith("/")) return im;
-    return `/img/${im}`;
-  }
 
   // Dashboard
   async function carregarDashboard() {
@@ -168,11 +163,10 @@ document.addEventListener("DOMContentLoaded", () => {
       input.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        const type = e.target.dataset.type; // "produto"
         const id = e.target.dataset.id;
         const form = new FormData();
         form.append("image", file);
-        form.append("type", type);
+        form.append("type", "produto");
         form.append("id", id);
 
         try {
@@ -333,7 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Downloads
+  // Downloads (delegado à função atualizada em carregarDownloads)
   async function carregarDownloads() {
     const res = await fetch("/api/downloads");
     const data = await res.json();
@@ -444,18 +438,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    // editar completo
-    container.querySelectorAll(".btn-edit-download").forEach(btn => {
-      btn.addEventListener("click", async (e) => {
-        const id = e.currentTarget.dataset.id;
-        const dData = await fetch("/api/downloads").then(r => r.json());
-        const files = Array.isArray(dData.files) ? dData.files : [];
-        const d = files.find(f => f.id === id);
-        if (!d) return showToast("Download não encontrado", false);
-        abrirModalEdicaoDownload(d);
-      });
-    });
-
     // excluir
     container.querySelectorAll(".btn-delete-download").forEach(btn => {
       btn.addEventListener("click", async (e) => {
@@ -466,62 +448,6 @@ document.addEventListener("DOMContentLoaded", () => {
         carregarDownloads();
         carregarDashboard();
       });
-    });
-  }
-
-  function abrirModalEdicaoDownload(d) {
-    const modalId = "modal-download";
-    let existing = document.getElementById(modalId);
-    if (existing) existing.remove();
-    const modal = document.createElement("div");
-    modal.id = modalId;
-    modal.className = "fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50";
-    modal.innerHTML = `
-      <div class="bg-white rounded shadow max-w-lg w-full p-6 relative">
-        <h2 class="text-xl font-bold mb-4">Editar Download</h2>
-        <div class="space-y-3">
-          <div>
-            <label class="block font-semibold">Nome</label>
-            <input type="text" id="edit-download-name" value="${d.name}" class="w-full border px-2 py-1 rounded" />
-          </div>
-          <div>
-            <label class="block font-semibold">URL</label>
-            <input type="text" id="edit-download-url" value="${d.url}" class="w-full border px-2 py-1 rounded" />
-          </div>
-          <div>
-            <label class="block font-semibold">Descrição</label>
-            <textarea id="edit-download-desc" class="w-full border px-2 py-1 rounded">${d.description || ""}</textarea>
-          </div>
-        </div>
-        <div class="mt-6 flex justify-end gap-3">
-          <button id="close-download-modal" class="px-4 py-2 border rounded">Cancelar</button>
-          <button id="save-download-modal" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button>
-        </div>
-        <button id="x-close-download" class="absolute top-2 right-2 text-gray-500">&times;</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    modal.querySelector("#close-download-modal").addEventListener("click", () => modal.remove());
-    modal.querySelector("#x-close-download").addEventListener("click", () => modal.remove());
-    modal.querySelector("#save-download-modal").addEventListener("click", async () => {
-      const updated = {
-        name: document.getElementById("edit-download-name").value,
-        url: document.getElementById("edit-download-url").value,
-        description: document.getElementById("edit-download-desc").value
-      };
-      const res = await fetch(`/api/downloads/${d.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated)
-      });
-      if (res.ok) {
-        showToast("Download salvo");
-        carregarDownloads();
-        carregarDashboard();
-        modal.remove();
-      } else {
-        showToast("Erro ao salvar", false);
-      }
     });
   }
 
@@ -591,16 +517,6 @@ document.addEventListener("DOMContentLoaded", () => {
           console.error("Erro upload grupo:", err);
           showToast("Erro no upload", false);
         }
-      });
-    });
-
-    container.querySelectorAll(".btn-save-inline-grupo").forEach(btn => {
-      btn.addEventListener("click", async (e) => {
-        const id = e.currentTarget.dataset.id;
-        const updated = {};
-        // não há campos inline separados neste layout além da imagem — poderia expandir se quiser nome/descrição editáveis aqui
-        // para manter consistência, refaz fetch do grupo atual e salva (sem alteração)
-        showToast("Atualizado grupo");
       });
     });
 
@@ -677,7 +593,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // criação rápida
+  // Criação rápida
   document.getElementById("add-produto").addEventListener("click", async () => {
     const novo = {
       id: "prod-" + Date.now(),
@@ -744,7 +660,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // inicial
+  // Inicializações
   carregarDashboard();
   carregarProdutos();
   carregarDownloads();

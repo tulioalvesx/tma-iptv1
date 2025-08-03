@@ -1,3 +1,9 @@
+function normalizeImageSrc(src) {
+  if (!src) return "images/placeholder.jpg";
+  if (src.startsWith("/")) return src;
+  return `/img/${src.replace(/^\/?img\/?/i, "")}`;
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const groupId = urlParams.get("id");
@@ -26,13 +32,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-function normalizeImageSrc(src) {
-  if (!src) return "images/placeholder.jpg";
-  if (src.startsWith("/")) return src;
-  // remove eventual prefix like "img/" ou "/img/"
-  return `/img/${src.replace(/^\/?img\/?/i, "")}`;
-}
-
 function renderProducts(products) {
   const container = document.getElementById("products");
   if (!container) return;
@@ -44,17 +43,14 @@ function renderProducts(products) {
     const card = document.createElement("div");
     card.className = "product-card";
 
-    // Image
     const img = document.createElement("img");
     img.src = product.imagem ? normalizeImageSrc(product.imagem) : "images/placeholder.jpg";
     img.alt = product.nome || product.name || "";
     card.appendChild(img);
 
-    // Details
     const details = document.createElement("div");
     details.className = "product-details";
 
-    // Title
     const title = document.createElement("h3");
     const prodName = (lang === "en" && product.name_en)
       ? product.name_en
@@ -62,7 +58,6 @@ function renderProducts(products) {
     title.textContent = prodName;
     details.appendChild(title);
 
-    // Description
     const desc = document.createElement("p");
     const description = (lang === "en" && product.description_en)
       ? product.description_en
@@ -70,7 +65,6 @@ function renderProducts(products) {
     desc.textContent = description;
     details.appendChild(desc);
 
-    // Price and discount
     const priceLine = document.createElement("div");
     priceLine.className = "price-line";
 
@@ -95,7 +89,7 @@ function renderProducts(products) {
 
     details.appendChild(priceLine);
 
-    // Stock / quantidade
+    // estoque
     let quantity = 1;
     if (product.estoque === undefined || product.estoque > 0) {
       const qtyControl = document.createElement("div");
@@ -146,7 +140,6 @@ function renderProducts(products) {
       details.appendChild(outOfStock);
     }
 
-    // Actions
     const actions = document.createElement("div");
     actions.className = "product-actions mt-3 flex gap-2";
 

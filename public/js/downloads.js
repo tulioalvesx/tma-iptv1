@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const img = document.createElement('img');
           let src = item.imagem;
           if (!src.startsWith('/')) {
-            src = `/img/${src}`;
+            src = `/img/${src.replace(/^\/?img\/?/i, "")}`;
           }
           img.src = src;
           img.alt = item.name;

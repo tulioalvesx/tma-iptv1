@@ -334,34 +334,140 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Downloads
-  async function carregarDownloads() {
-    const res = await fetch("/api/downloads");
-    const data = await res.json();
-    const files = Array.isArray(data.files) ? data.files : [];
-    const container = document.getElementById("downloads-lista");
-    if (!container) return;
-    container.innerHTML = "";
-    files.forEach(d => {
-      const card = document.createElement("div");
-      card.className = "bg-white p-4 rounded shadow flex justify-between items-center";
-      card.innerHTML = `
-        <div class="flex-1 flex gap-3 items-center">
-          <div class="w-16 h-16 bg-gray-100 flex items-center justify-center mr-3">
-            ${d.imagem ? `<img src="${normalizeImagem(d.imagem)}" alt="${d.name}" class="w-full h-full object-contain">` : ""}
+async function carregarDownloads() {
+  const res = await fetch("/api/downloads");
+  const data = await res.json();
+  const files = Array.isArray(data.files) ? data.files : [];
+  const container = document.getElementById("downloads-lista");
+  if (!container) return;
+  container.innerHTML = "";
+
+  files.forEach(d => {
+    const card = document.createElement("div");
+    card.className = "bg-white p-4 rounded shadow flex flex-col gap-3 product-card";
+    card.innerHTML = `
+      <div class="flex justify-between items-start">
+        <div class="flex-1 flex gap-4">
+          <div class="flex-shrink-0">
+            <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-1">
+              ${d.imagem ? `<img src="${normalizeImagem(d.imagem)}" alt="${d.name}" class="object-contain w-full h-full">` : "Sem imagem"}
+            </div>
+            <div class="text-xs mb-1">Upload imagem</div>
+            <input type="file" data-type="download" data-id="${d.id}" class="upload-image-input" accept="image/*" />
           </div>
-          <div>
-            <div class="font-bold">${d.name}</div>
+          <div class="flex-1">
+            <div class="font-bold text-lg">${d.name}</div>
             <div class="text-sm text-gray-500">${d.description || ""}</div>
-            <div class="text-xs text-blue-600"><a href="${d.url}">Link</a></div>
+            <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div>
+                <label class="block font-semibold text-xs">URL</label>
+                <input type="text" value="${d.url || "#"}" data-field="url" data-id="${d.id}" class="inline-input border px-2 py-1 rounded w-full" />
+              </div>
+              <div>
+                <label class="block font-semibold text-xs">Nome</label>
+                <input type="text" value="${d.name}" data-field="name" data-id="${d.id}" class="inline-input border px-2 py-1 rounded w-full" />
+              </div>
+            </div>
           </div>
         </div>
-        <div class="flex flex-col gap-2">
-          <button data-id="${d.id}" class="btn-edit-download bg-yellow-400 text-white px-3 py-1 rounded">Editar</button>
-          <button data-id="${d.id}" class="btn-delete-download bg-red-500 text-white px-3 py-1 rounded">Excluir</button>
+        <div class="flex flex-col gap-2 ml-4">
+          <button data-id="${d.id}" class="btn-save-inline-download bg-blue-500 text-white px-3 py-1 rounded text-sm">Salvar rápido</button>
+          <button data-id="${d.id}" class="btn-edit-download bg-yellow-400 text-white px-3 py-1 rounded text-sm">Editar completo</button>
+          <button data-id="${d.id}" class="btn-delete-download bg-red-500 text-white px-3 py-1 rounded text-sm">Excluir</button>
         </div>
-      `;
-      container.appendChild(card);
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  // upload imagem
+  container.querySelectorAll("input[data-type='download']").forEach(input => {
+    input.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const id = e.target.dataset.id;
+      const form = new FormData();
+      form.append("image", file);
+      form.append("type", "download");
+      form.append("id", id);
+      try {
+        const resUpload = await fetch("/api/upload-image", {
+          method: "POST",
+          body: form
+        });
+        const dataUpload = await resUpload.json();
+        if (dataUpload.success) {
+          await fetch(`/api/downloads/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imagem: dataUpload.filename })
+          });
+          showToast("Imagem de download enviada");
+          carregarDownloads();
+          carregarDashboard();
+        } else {
+          showToast(dataUpload.error || "Erro no upload", false);
+        }
+      } catch (err) {
+        console.error("Erro upload download:", err);
+        showToast("Erro no upload", false);
+      }
     });
+  });
+
+  // salvar inline
+  container.querySelectorAll(".btn-save-inline-download").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      const id = e.currentTarget.dataset.id;
+      const nameInput = document.querySelector(`input[data-field="name"][data-id="${id}"]`);
+      const urlInput = document.querySelector(`input[data-field="url"][data-id="${id}"]`);
+      const updated = {};
+      if (nameInput) updated.name = nameInput.value.trim();
+      if (urlInput) updated.url = urlInput.value.trim();
+      try {
+        const res = await fetch(`/api/downloads/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updated)
+        });
+        if (res.ok) {
+          showToast("Download atualizado");
+          carregarDownloads();
+          carregarDashboard();
+        } else {
+          showToast("Erro ao salvar download", false);
+        }
+      } catch (err) {
+        console.error("Erro inline download:", err);
+        showToast("Erro de rede", false);
+      }
+    });
+  });
+
+  // editar completo
+  container.querySelectorAll(".btn-edit-download").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      const id = e.currentTarget.dataset.id;
+      const dData = await fetch("/api/downloads").then(r => r.json());
+      const files = Array.isArray(dData.files) ? dData.files : [];
+      const d = files.find(f => f.id === id);
+      if (!d) return showToast("Download não encontrado", false);
+      abrirModalEdicaoDownload(d);
+    });
+  });
+
+  // excluir
+  container.querySelectorAll(".btn-delete-download").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      const id = e.currentTarget.dataset.id;
+      if (!confirm("Excluir download?")) return;
+      await fetch(`/api/downloads/${id}`, { method: "DELETE" });
+      showToast("Download excluído");
+      carregarDownloads();
+      carregarDashboard();
+    });
+  });
+}
 
     container.querySelectorAll(".btn-delete-download").forEach(btn => {
       btn.addEventListener("click", async (e) => {

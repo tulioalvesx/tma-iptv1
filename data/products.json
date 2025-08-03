@@ -1,281 +1,172 @@
-{
-  "groups": [
-    {
-      "id": "eppi-cinema",
-      "name": "Eppi Cinema",
-      "name_en": "Eppi Cinema",
-      "image": "img/eppi.jpg",
-      "products": [
-        {
-          "id": "eppi-cinema-mensal",
-          "name": "Eppi Cinema Mensal",
-          "name_en": "Eppi Cinema Monthly",
-          "accessDays": 30,
-          "originalPrice": 24.9,
-          "discountPercentage": 0,
-          "price": 24.9,
-          "description": "30 dias de acesso",
-          "description_en": "30 days of access",
-          "stock": 999,
-          "image": "img/eppi-mensal.jpg"
-        },
-        {
-          "id": "eppi-cinema-trimestral",
-          "name": "Eppi Cinema Trimestral",
-          "name_en": "Eppi Cinema Quarterly",
-          "accessDays": 90,
-          "originalPrice": 69.9,
-          "discountPercentage": 0,
-          "price": 69.9,
-          "description": "90 dias de acesso",
-          "description_en": "90 days of access",
-          "stock": 999,
-          "image": "img/eppi-trimestral.jpg"
-        },
-        {
-          "id": "eppi-cinema-anual",
-          "name": "Eppi Cinema Anual",
-          "name_en": "Eppi Cinema Annual",
-          "accessDays": 365,
-          "originalPrice": 239.9,
-          "discountPercentage": 0,
-          "price": 239.9,
-          "description": "365 dias de acesso",
-          "description_en": "365 days of access",
-          "stock": 999,
-          "image": "img/eppi-anual.jpg"
-        }
-      ]
-    },
-    {
-      "id": "unitv",
-      "name": "Unitv",
-      "name_en": "Unitv",
-      "image": "img/unitv.jpg",
-      "products": [
-        {
-          "id": "unitv-mensal",
-          "name": "Unitv Mensal",
-          "name_en": "Unitv Monthly",
-          "accessDays": 30,
-          "originalPrice": 34.9,
-          "discountPercentage": 0,
-          "price": 34.9,
-          "description": "30 dias de acesso",
-          "description_en": "30 days of access",
-          "stock": 999,
-          "image": "img/unitv-mensal.jpg"
-        },
-        {
-          "id": "unitv-anual",
-          "name": "Unitv Anual",
-          "name_en": "Unitv Annual",
-          "accessDays": 365,
-          "originalPrice": 359.9,
-          "discountPercentage": 0,
-          "price": 359.9,
-          "description": "365 dias de acesso",
-          "description_en": "365 days of access",
-          "stock": 999,
-          "image": "img/unitv-anual.jpg"
-        }
-      ]
-    },
-    {
-      "id": "combo-tv-express-eppi",
-      "name": "Combo TV Express + Eppi",
-      "name_en": "Combo TV Express + Eppi",
-      "image": "img/combo.jpg",
-      "products": [
-        {
-          "id": "combo-tv-express-eppi-mensal",
-          "name": "Combo TV Express + Eppi Mensal",
-          "name_en": "Combo TV Express + Eppi Monthly",
-          "accessDays": 30,
-          "originalPrice": 34.9,
-          "discountPercentage": 0,
-          "price": 34.9,
-          "description": "30 dias de acesso",
-          "description_en": "30 days of access",
-          "stock": 999,
-          "image": "img/combo.jpg"
-        },
-        {
-          "id": "combo-tv-express-eppi-anual",
-          "name": "Combo TV Express + Eppi Anual",
-          "name_en": "Combo TV Express + Eppi Annual",
-          "accessDays": 365,
-          "originalPrice": 359.9,
-          "discountPercentage": 0,
-          "price": 359.9,
-          "description": "365 dias de acesso",
-          "description_en": "365 days of access",
-          "stock": 999,
-          "image": "img/combo.jpg"
-        }
-      ]
-    },
-    {
-      "id": "tv-express",
-      "name": "TV Express",
-      "name_en": "TV Express",
-      "image": "img/tv-express.jpg",
-      "products": [
-        {
-          "id": "tv-express-mensal",
-          "name": "TV Express Mensal",
-          "name_en": "TV Express Monthly",
-          "accessDays": 30,
-          "originalPrice": 29.9,
-          "discountPercentage": 0,
-          "price": 29.9,
-          "description": "30 dias de acesso",
-          "description_en": "30 days of access",
-          "stock": 999,
-          "image": "img/tv-express-mensal.jpg"
-        },
-        {
-          "id": "tv-express-trimestral",
-          "name": "TV Express Trimestral",
-          "name_en": "TV Express Quarterly",
-          "accessDays": 90,
-          "originalPrice": 79.9,
-          "discountPercentage": 0,
-          "price": 79.9,
-          "description": "90 dias de acesso",
-          "description_en": "90 days of access",
-          "stock": 999,
-          "image": "img/tv-express-trimestral.jpg"
-        },
-        {
-          "id": "tv-express-anual",
-          "name": "TV Express Anual",
-          "name_en": "TV Express Annual",
-          "accessDays": 365,
-          "originalPrice": 299.9,
-          "discountPercentage": 0,
-          "price": 299.9,
-          "description": "365 dias de acesso",
-          "description_en": "365 days of access",
-          "stock": 999,
-          "image": "img/tv-express-anual.jpg"
-        }
-      ]
-    },
-    {
-      "id": "hot-app",
-      "name": "HOT App",
-      "name_en": "HOT App",
-      "image": "img/hot.jpg",
-      "products": [
-        {
-          "id": "hot-app-mensal",
-          "name": "HOT App Mensal",
-          "name_en": "HOT App Monthly",
-          "accessDays": 30,
-          "originalPrice": 9.9,
-          "discountPercentage": 0,
-          "price": 9.9,
-          "description": "30 dias de acesso",
-          "description_en": "30 days of access",
-          "stock": 999,
-          "image": "img/hot-app-mensal.jpg"
-        },
-        {
-          "id": "hot-app-anual",
-          "name": "HOT App Anual",
-          "name_en": "HOT App Annual",
-          "accessDays": 365,
-          "originalPrice": 34.9,
-          "discountPercentage": 0,
-          "price": 34.9,
-          "description": "365 dias de acesso",
-          "description_en": "365 days of access",
-          "stock": 999,
-          "image": "img/hot-app-anual.jpg"
-        }
-      ]
-    },
-    {
-      "id": "imperio-tv",
-      "name": "Império TV",
-      "name_en": "Imperio TV",
-      "image": "img/imperio.jpg",
-      "products": [
-        {
-          "id": "imperio-tv-mensal",
-          "name": "Império TV Mensal",
-          "name_en": "Imperio TV Monthly",
-          "accessDays": 30,
-          "originalPrice": 29.9,
-          "discountPercentage": 0,
-          "price": 29.9,
-          "description": "30 dias de acesso",
-          "description_en": "30 days of access",
-          "stock": 999,
-          "image": "img/imperio-mensal.jpg"
-        },
-        {
-          "id": "imperio-tv-trimestral",
-          "name": "Império TV Trimestral",
-          "name_en": "Imperio TV Quarterly",
-          "accessDays": 90,
-          "originalPrice": 79.9,
-          "discountPercentage": 0,
-          "price": 79.9,
-          "description": "90 dias de acesso",
-          "description_en": "90 days of access",
-          "stock": 999,
-          "image": "img/imperio-trimestral.jpg"
-        },
-        {
-          "id": "imperio-tv-anual",
-          "name": "Império TV Anual",
-          "name_en": "Imperio TV Annual",
-          "accessDays": 365,
-          "originalPrice": 299.9,
-          "discountPercentage": 0,
-          "price": 299.9,
-          "description": "365 dias de acesso",
-          "description_en": "365 days of access",
-          "stock": 999,
-          "image": "img/imperio-anual.jpg"
-        }
-      ]
-    },
-    {
-      "id": "blue-tv",
-      "name": "Blue TV",
-      "name_en": "Blue TV",
-      "image": "img/blue.jpg",
-      "products": [
-        {
-          "id": "blue-tv-mensal",
-          "name": "Blue TV Mensal",
-          "name_en": "Blue TV Monthly",
-          "accessDays": 30,
-          "originalPrice": 29.9,
-          "discountPercentage": 0,
-          "price": 29.9,
-          "description": "30 dias de acesso",
-          "description_en": "30 days of access",
-          "stock": 999,
-          "image": "img/bluetv-mensal.jpg"
-        },
-        {
-          "id": "blue-tv-anual",
-          "name": "Blue TV Anual",
-          "name_en": "Blue TV Annual",
-          "accessDays": 365,
-          "originalPrice": 299.9,
-          "discountPercentage": 0,
-          "price": 299.9,
-          "description": "365 dias de acesso",
-          "description_en": "365 days of access",
-          "stock": 999,
-          "image": "img/bluetv-anual.jpg"
-        }
-      ]
-    }
-  ]
-}
+[
+  {
+    "id": "eppi-cinema-mensal",
+    "nome": "Eppi Cinema Mensal",
+    "descricao": "30 dias de acesso",
+    "preco": 24.9,
+    "imagem": "img/eppi-mensal.jpg",
+    "grupo": "eppi-cinema",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "eppi-cinema-trimestral",
+    "nome": "Eppi Cinema Trimestral",
+    "descricao": "90 dias de acesso",
+    "preco": 69.9,
+    "imagem": "img/eppi-trimestral.jpg",
+    "grupo": "eppi-cinema",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "eppi-cinema-anual",
+    "nome": "Eppi Cinema Anual",
+    "descricao": "365 dias de acesso",
+    "preco": 239.9,
+    "imagem": "img/eppi-anual.jpg",
+    "grupo": "eppi-cinema",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "unitv-mensal",
+    "nome": "Unitv Mensal",
+    "descricao": "30 dias de acesso",
+    "preco": 34.9,
+    "imagem": "img/unitv-mensal.jpg",
+    "grupo": "unitv",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "unitv-anual",
+    "nome": "Unitv Anual",
+    "descricao": "365 dias de acesso",
+    "preco": 359.9,
+    "imagem": "img/unitv-anual.jpg",
+    "grupo": "unitv",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "combo-tv-express-eppi-mensal",
+    "nome": "Combo TV Express + Eppi Mensal",
+    "descricao": "30 dias de acesso",
+    "preco": 34.9,
+    "imagem": "img/combo.jpg",
+    "grupo": "combo-tv-express-eppi",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "combo-tv-express-eppi-anual",
+    "nome": "Combo TV Express + Eppi Anual",
+    "descricao": "365 dias de acesso",
+    "preco": 359.9,
+    "imagem": "img/combo.jpg",
+    "grupo": "combo-tv-express-eppi",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "tv-express-mensal",
+    "nome": "TV Express Mensal",
+    "descricao": "30 dias de acesso",
+    "preco": 29.9,
+    "imagem": "img/tv-express-mensal.jpg",
+    "grupo": "tv-express",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "tv-express-trimestral",
+    "nome": "TV Express Trimestral",
+    "descricao": "90 dias de acesso",
+    "preco": 79.9,
+    "imagem": "img/tv-express-trimestral.jpg",
+    "grupo": "tv-express",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "tv-express-anual",
+    "nome": "TV Express Anual",
+    "descricao": "365 dias de acesso",
+    "preco": 299.9,
+    "imagem": "img/tv-express-anual.jpg",
+    "grupo": "tv-express",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "hot-app-mensal",
+    "nome": "HOT App Mensal",
+    "descricao": "30 dias de acesso",
+    "preco": 9.9,
+    "imagem": "img/hot-app-mensal.jpg",
+    "grupo": "hot-app",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "hot-app-anual",
+    "nome": "HOT App Anual",
+    "descricao": "365 dias de acesso",
+    "preco": 34.9,
+    "imagem": "img/hot-app-anual.jpg",
+    "grupo": "hot-app",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "imperio-tv-mensal",
+    "nome": "Império TV Mensal",
+    "descricao": "30 dias de acesso",
+    "preco": 29.9,
+    "imagem": "img/imperio-mensal.jpg",
+    "grupo": "imperio-tv",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "imperio-tv-trimestral",
+    "nome": "Império TV Trimestral",
+    "descricao": "90 dias de acesso",
+    "preco": 79.9,
+    "imagem": "img/imperio-trimestral.jpg",
+    "grupo": "imperio-tv",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "imperio-tv-anual",
+    "nome": "Império TV Anual",
+    "descricao": "365 dias de acesso",
+    "preco": 299.9,
+    "imagem": "img/imperio-anual.jpg",
+    "grupo": "imperio-tv",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "blue-tv-mensal",
+    "nome": "Blue TV Mensal",
+    "descricao": "30 dias de acesso",
+    "preco": 29.9,
+    "imagem": "img/bluetv-mensal.jpg",
+    "grupo": "blue-tv",
+    "desconto": 0,
+    "link": "#"
+  },
+  {
+    "id": "blue-tv-anual",
+    "nome": "Blue TV Anual",
+    "descricao": "365 dias de acesso",
+    "preco": 299.9,
+    "imagem": "img/bluetv-anual.jpg",
+    "grupo": "blue-tv",
+    "desconto": 0,
+    "link": "#"
+  }
+]

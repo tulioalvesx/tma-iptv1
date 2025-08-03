@@ -10,7 +10,7 @@
     "descricao": "Conteúdo premium nacional e internacional."
   },
   {
-    "id": "combo",
+    "id": "combo-tv-express-eppi",
     "nome": "Combo TV Express + Eppi",
     "descricao": "Pacote especial com TV Express + Eppi Cinema."
   },
@@ -20,17 +20,17 @@
     "descricao": "Canais ao vivo, filmes e séries para o Brasil."
   },
   {
-    "id": "hot",
+    "id": "hot-app",
     "nome": "HOT App",
     "descricao": "Aplicativo com conteúdo adulto 24 horas."
   },
   {
-    "id": "imperio",
+    "id": "imperio-tv",
     "nome": "Império TV",
     "descricao": "Canais e conteúdo premium nacional e internacional."
   },
   {
-    "id": "blue",
+    "id": "blue-tv",
     "nome": "Blue TV",
     "descricao": "Streaming completo com estabilidade e qualidade."
   }

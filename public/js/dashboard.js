@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const tabs = document.querySelectorAll(".tab-btn");
   const sections = document.querySelectorAll(".tab-section");
   const toastEl = createToastElement();
+  let chartLock = false;
 
   // Helpers
   function showToast(msg, success = true) {
@@ -40,14 +41,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Normaliza imagem (aceita nome simples ou path completo)
   function normalizeImagem(im) {
     if (!im) return "";
     if (im.startsWith("http") || im.startsWith("/")) return im;
     return `/img/${im}`;
   }
 
-  // Load dashboard data
+  // Dashboard
   async function carregarDashboard() {
     try {
       const [prodRes, groupsRes, downloadsRes, analyticsRes] = await Promise.all([
@@ -74,30 +74,41 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function gerarGrafico(dados) {
-    const canvas = document.getElementById("grafico-acessos");
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    // destrói gráfico anterior se existir
-    if (window._chartInstance) {
-      window._chartInstance.destroy();
-    }
-    window._chartInstance = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: dados.map(d => d.dia),
-        datasets: [{
-          label: "Acessos",
-          data: dados.map(d => d.total),
-          borderColor: "#2563eb",
-          backgroundColor: "rgba(37,99,235,0.2)",
-          fill: true,
-          tension: 0.3
-        }]
-      },
-      options: {
-        scales: { y: { beginAtZero: true } }
+    try {
+      if (chartLock) return;
+      chartLock = true;
+      const canvas = document.getElementById("grafico-acessos");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+
+      if (window._chartInstance) {
+        window._chartInstance.destroy();
+        window._chartInstance = null;
       }
-    });
+
+      window._chartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: dados.map(d => d.dia),
+          datasets: [{
+            label: "Acessos",
+            data: dados.map(d => d.total),
+            borderColor: "#2563eb",
+            backgroundColor: "rgba(37,99,235,0.2)",
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    } catch (err) {
+      console.error("Erro ao gerar gráfico:", err);
+      showToast("Erro ao desenhar gráfico", false);
+    } finally {
+      chartLock = false;
+    }
   }
 
   // Produtos
@@ -105,6 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const res = await fetch("/api/products");
     const produtos = await res.json();
     const container = document.getElementById("produtos-lista");
+    if (!container) return;
     container.innerHTML = "";
 
     if (!Array.isArray(produtos)) {
@@ -118,8 +130,13 @@ document.addEventListener("DOMContentLoaded", () => {
       card.innerHTML = `
         <div class="flex justify-between items-start">
           <div class="flex-1 flex gap-4">
-            <div class="w-20 h-20 bg-gray-100 flex items-center justify-center text-sm">
-              ${p.imagem ? `<img src="${normalizeImagem(p.imagem)}" alt="${p.nome}" class="w-full h-full object-contain">` : "Sem imagem"}
+            <div class="w-24 flex flex-col items-center gap-1">
+              <div class="w-20 h-20 bg-gray-100 flex items-center justify-center text-sm">
+                ${p.imagem ? `<img src="${normalizeImagem(p.imagem)}" alt="${p.nome}" class="w-full h-full object-contain">` : "Sem imagem"}
+              </div>
+              <div>
+                <input type="file" data-type="produto" data-id="${p.id}" class="upload-image-input text-xs mt-1" accept="image/*" />
+              </div>
             </div>
             <div class="flex-1">
               <div class="font-bold text-lg">${p.nome}</div>
@@ -147,6 +164,43 @@ document.addEventListener("DOMContentLoaded", () => {
       container.appendChild(card);
     });
 
+    // upload de imagem inline (produto)
+    container.querySelectorAll(".upload-image-input").forEach(input => {
+      input.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const type = e.target.dataset.type; // "produto"
+        const id = e.target.dataset.id;
+        const form = new FormData();
+        form.append("image", file);
+        form.append("type", type);
+        form.append("id", id);
+
+        try {
+          const res = await fetch("/api/upload-image", {
+            method: "POST",
+            body: form
+          });
+          const data = await res.json();
+          if (data.success) {
+            await fetch(`/api/products/${id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ imagem: data.filename })
+            });
+            showToast("Imagem enviada");
+            await carregarProdutos();
+            await carregarDashboard();
+          } else {
+            showToast(data.error || "Falha no upload", false);
+          }
+        } catch (err) {
+          console.error("Erro upload imagem:", err);
+          showToast("Erro no upload", false);
+        }
+      });
+    });
+
     // salvar inline
     container.querySelectorAll(".btn-save-inline").forEach(btn => {
       btn.addEventListener("click", async (e) => {
@@ -154,19 +208,26 @@ document.addEventListener("DOMContentLoaded", () => {
         const imagemInput = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`);
         const linkInput = document.querySelector(`input[data-field="link"][data-id="${id}"]`);
         const updated = {};
-        if (imagemInput) updated.imagem = imagemInput.value;
-        if (linkInput) updated.link = linkInput.value;
-        const res = await fetch(`/api/products/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updated)
-        });
-        if (res.ok) {
-          showToast("Atualizado inline");
-          carregarProdutos();
-          carregarDashboard();
-        } else {
-          showToast("Erro ao salvar inline", false);
+        if (imagemInput) updated.imagem = imagemInput.value.trim();
+        if (linkInput) updated.link = linkInput.value.trim();
+
+        try {
+          const res = await fetch(`/api/products/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updated)
+          });
+          if (res.ok) {
+            showToast("Atualizado inline");
+            await carregarProdutos();
+            await carregarDashboard();
+          } else {
+            const errBody = await res.json().catch(() => ({}));
+            showToast(errBody.error || "Erro ao salvar inline", false);
+          }
+        } catch (err) {
+          console.error("Erro fetch inline:", err);
+          showToast("Erro de rede ao salvar", false);
         }
       });
     });
@@ -176,7 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.addEventListener("click", async (e) => {
         const id = e.currentTarget.dataset.id;
         const produtos = await fetch("/api/products").then(r => r.json());
-        const prod = produtos.find(p => p.id === id);
+        const prod = Array.isArray(produtos) ? produtos.find(p => p.id === id) : null;
         if (!prod) return showToast("Produto não encontrado", false);
         abrirModalEdicaoProduto(prod);
       });
@@ -273,12 +334,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Downloads
+  // Downloads (sem upload de imagem ainda aqui, pode ser estendido similarmente)
   async function carregarDownloads() {
     const res = await fetch("/api/downloads");
     const data = await res.json();
     const files = Array.isArray(data.files) ? data.files : [];
     const container = document.getElementById("downloads-lista");
+    if (!container) return;
     container.innerHTML = "";
     files.forEach(d => {
       const card = document.createElement("div");
@@ -380,15 +442,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const res = await fetch("/api/groups");
     const grupos = await res.json();
     const container = document.getElementById("grupos-lista");
+    if (!container) return;
     container.innerHTML = "";
     if (!Array.isArray(grupos)) return;
     grupos.forEach(g => {
       const div = document.createElement("div");
       div.className = "bg-white p-4 rounded shadow flex justify-between items-center";
       div.innerHTML = `
-        <div>
-          <div class="font-bold text-lg">${g.nome}</div>
-          <div class="text-sm text-gray-500">${g.descricao || ""}</div>
+        <div class="flex-1 flex gap-3 items-center">
+          <div class="w-16 h-16 bg-gray-100 flex items-center justify-center mr-3">
+            ${g.imagem ? `<img src="${normalizeImagem(g.imagem)}" alt="${g.nome}" class="w-full h-full object-contain">` : "Sem imagem"}
+          </div>
+          <div>
+            <div class="font-bold text-lg">${g.nome}</div>
+            <div class="text-sm text-gray-500">${g.descricao || ""}</div>
+          </div>
         </div>
         <div class="flex gap-2">
           <button data-id="${g.id}" class="btn-edit-grupo bg-yellow-400 text-white px-3 py-1 rounded">Editar</button>

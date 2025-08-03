@@ -1,3 +1,6 @@
+const multer = require("multer");
+const crypto = require("crypto");
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -35,7 +38,7 @@ const saveJson = (filename, data) => {
 const accessFile = path.join(DATA_DIR, "access.json");
 if (!fs.existsSync(accessFile)) saveJson("access.json", {});
 
-// Middleware para logar acesso (exceto chamadas administrativas diretas se quiser filtrar)
+// Middleware de log de acessos (exclui /api/admin se quiser diferenciar)
 app.use((req, res, next) => {
   if (!req.path.startsWith("/api/admin")) {
     const access = loadJson("access.json") || {};
@@ -44,6 +47,49 @@ app.use((req, res, next) => {
     saveJson("access.json", access);
   }
   next();
+});
+
+// ---------- Upload seguro de imagens ----------
+function safeFilename(type, id, originalName) {
+  const ext = path.extname(originalName).toLowerCase();
+  const allowed = [".png", ".jpg", ".jpeg", ".gif", ".webp"];
+  const safeExt = allowed.includes(ext) ? ext : ".png";
+  const hash = crypto.createHash("md5").update(originalName + Date.now()).digest("hex").slice(0, 6);
+  const cleanId = (id || "unknown").replace(/[^a-zA-Z0-9-_]/g, "").toLowerCase();
+  return `${type}-${cleanId}-${hash}${safeExt}`;
+}
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const imgDir = path.join(PUBLIC_DIR, "img");
+      if (!fs.existsSync(imgDir)) fs.mkdirSync(imgDir, { recursive: true });
+      cb(null, imgDir);
+    },
+    filename: (req, file, cb) => {
+      const { type, id } = req.body;
+      let filename;
+      if (type && id) {
+        filename = safeFilename(type, id, file.originalname);
+      } else {
+        filename = Date.now() + path.extname(file.originalname);
+      }
+      cb(null, filename);
+    }
+  }),
+  fileFilter: (req, file, cb) => {
+    const allowed = /jpeg|jpg|png|gif|webp/;
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.test(ext)) cb(null, true);
+    else cb(new Error("Extensão de imagem não permitida"));
+  },
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+});
+
+app.post("/api/upload-image", upload.single("image"), (req, res) => {
+  if (!req.file) return res.status(400).json({ success: false, error: "Arquivo não enviado" });
+  const relativePath = `/img/${req.file.filename}`;
+  res.json({ success: true, path: relativePath, filename: req.file.filename });
 });
 
 // --------- Autenticação ---------
@@ -55,7 +101,7 @@ app.post("/api/admin/login", (req, res) => {
   res.status(401).json({ success: false, error: "Credenciais inválidas." });
 });
 
-// Rota compatível com login antigo/front (username/password)
+// Compatibilidade antiga
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
@@ -71,23 +117,22 @@ app.get("/api/groups", (req, res) => {
 });
 
 app.post("/api/groups", (req, res) => {
-  const { id, nome, descricao } = req.body;
+  const { id, nome, descricao, imagem } = req.body;
   if (!id || !nome) return res.status(400).json({ success: false, error: "id e nome obrigatórios" });
   const groups = loadJson("groups.json") || [];
   if (groups.find(g => g.id === id)) return res.status(409).json({ success: false, error: "Grupo já existe" });
-  groups.push({ id, nome, descricao: descricao || "" });
+  groups.push({ id, nome, descricao: descricao || "", imagem: imagem || "" });
   saveJson("groups.json", groups);
-  res.json({ success: true, group: { id, nome, descricao: descricao || "" } });
+  res.json({ success: true, group: groups.slice(-1)[0] });
 });
 
 app.put("/api/groups/:id", (req, res) => {
   const gid = req.params.id;
-  const { nome, descricao } = req.body;
+  const updates = req.body;
   const groups = loadJson("groups.json") || [];
   const idx = groups.findIndex(g => g.id === gid);
   if (idx === -1) return res.status(404).json({ success: false, error: "Grupo não encontrado" });
-  if (nome !== undefined) groups[idx].nome = nome;
-  if (descricao !== undefined) groups[idx].descricao = descricao;
+  groups[idx] = { ...groups[idx], ...updates };
   saveJson("groups.json", groups);
   res.json({ success: true, group: groups[idx] });
 });
@@ -124,7 +169,7 @@ app.post("/api/products", (req, res) => {
     link: link || ""
   });
   saveJson("products.json", products);
-  res.json({ success: true, product: products[products.length - 1] });
+  res.json({ success: true, product: products.slice(-1)[0] });
 });
 
 app.put("/api/products/:id", (req, res) => {
@@ -155,11 +200,11 @@ app.get("/api/downloads", (req, res) => {
 });
 
 app.post("/api/downloads", (req, res) => {
-  const { id, name, url, description } = req.body;
+  const { id, name, url, description, imagem } = req.body;
   if (!id || !name) return res.status(400).json({ success: false, error: "id e name obrigatórios" });
   const downloadsData = loadJson("downloads.json") || { files: [] };
   if (downloadsData.files.find(f => f.id === id)) return res.status(409).json({ success: false, error: "Download já existe" });
-  downloadsData.files.push({ id, name, url: url || "#", description: description || "" });
+  downloadsData.files.push({ id, name, url: url || "#", description: description || "", imagem: imagem || "" });
   saveJson("downloads.json", downloadsData);
   res.json({ success: true, download: downloadsData.files.slice(-1)[0] });
 });
@@ -196,7 +241,7 @@ app.get("/api/analytics", (req, res) => {
   res.json({ hoje, dias });
 });
 
-// --------- Fallback SPA / arquivos estáticos ---------
+// --------- Fallback SPA / estáticos ---------
 app.get("*", (req, res) => {
   const target = path.join(PUBLIC_DIR, req.path);
   if (fs.existsSync(target) && fs.statSync(target).isFile()) {

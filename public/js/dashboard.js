@@ -725,9 +725,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // inicializa tudo
-  carregarDashboard();
-  carregarProdutos();
-  carregarDownloads();
-  carregarGrupos();
-});
+// inicializa tudo de forma segura
+(async () => {
+  try {
+    await carregarDashboard();
+    await carregarProdutos();
+    await carregarDownloads();
+    if (typeof carregarGruposAdmin === "function") {
+      await carregarGruposAdmin();
+    } else if (typeof carregarGrupos === "function") {
+      await carregarGrupos(); // fallback antigo
+    }
+  } catch (e) {
+    console.error("Erro na inicialização do painel:", e);
+  }
+})();

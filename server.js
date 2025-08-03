@@ -95,7 +95,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB
 });
 
-// Upload de imagem com substituição de anterior
+// Upload de imagem com substituição de anterior (normaliza nome antigo)
 app.post("/api/upload-image", upload.single("image"), (req, res) => {
   const { type, id } = req.body;
   if (!req.file) return res.status(400).json({ success: false, error: "Arquivo não enviado" });
@@ -125,8 +125,11 @@ app.post("/api/upload-image", upload.single("image"), (req, res) => {
   let item = finder(raw);
   if (!item) return res.status(404).json({ success: false, error: "Item não encontrado" });
 
-  const previousImage = item.imagem;
+  // normaliza o nome anterior (remove qualquer prefixo como "img/" ou "/img/")
+  let previousImage = item.imagem || "";
+  previousImage = path.basename(previousImage);
 
+  // atualiza para nova
   item.imagem = filename;
 
   // Persiste alterações

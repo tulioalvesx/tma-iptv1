@@ -17,7 +17,7 @@ function showToast(msg, success = true) {
   }, 2200);
 }
 
-// mesma normalização usada no dashboard.js
+// normalização de imagem (mesma lógica do dashboard)
 function normalizeImagem(im) {
   if (!im) return "";
   if (im.startsWith("http") || im.startsWith("/")) {
@@ -93,7 +93,6 @@ async function carregarGruposAdmin() {
           });
           const info = await up.json();
           if (info.success) {
-            // antes de atualizar, opcional: remover imagem antiga via API se for implementado
             await fetch(`/api/groups/${id}`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },

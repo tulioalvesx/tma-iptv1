@@ -1,69 +1,144 @@
-document.addEventListener('DOMContentLoaded', async () => {
-  const produtosSection = document.getElementById('produtos-section');
-  const downloadsSection = document.getElementById('downloads-section');
+document.addEventListener("DOMContentLoaded", () => {
+  const tabs = document.querySelectorAll(".tab-btn");
+  const sections = document.querySelectorAll(".tab-section");
+  const toast = document.getElementById("toast");
 
-  const totalProdutos = document.getElementById('total-produtos');
-  const totalGrupos = document.getElementById('total-grupos');
-  const totalDownloads = document.getElementById('total-downloads');
+  const showToast = (msg) => {
+    toast.textContent = msg;
+    toast.classList.remove("hidden");
+    setTimeout(() => toast.classList.add("hidden"), 3000);
+  };
 
-  // Alternar abas
-  const tabProdutos = document.getElementById('tab-produtos');
-  const tabDownloads = document.getElementById('tab-downloads');
+  tabs.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabs.forEach(t => t.classList.remove("bg-blue-500", "text-white"));
+      btn.classList.add("bg-blue-500", "text-white");
 
-  if (tabProdutos && tabDownloads && produtosSection && downloadsSection) {
-    tabProdutos.addEventListener('click', () => {
-      produtosSection.classList.remove('hidden');
-      downloadsSection.classList.add('hidden');
+      sections.forEach(sec => sec.classList.add("hidden"));
+      document.getElementById("tab-" + btn.dataset.tab).classList.remove("hidden");
     });
+  });
 
-    tabDownloads.addEventListener('click', () => {
-      produtosSection.classList.add('hidden');
-      downloadsSection.classList.remove('hidden');
-    });
-  }
+  async function carregarDashboard() {
+    try {
+      const res1 = await fetch("/api/products");
+      const produtos = await res1.json();
+      const res2 = await fetch("/api/downloads");
+      const downloads = await res2.json();
+      const res3 = await fetch("/api/groups");
+      const grupos = await res3.json();
+      const res4 = await fetch("/api/analytics");
+      const analytics = await res4.json();
 
-  // Carregar grupos de produtos
-  try {
-    const resGrupos = await fetch('/api/groups');
-    const grupos = await resGrupos.json();
+      document.getElementById("total-produtos").textContent = produtos.length;
+      document.getElementById("total-downloads").textContent = downloads.files.length;
+      document.getElementById("total-grupos").textContent = grupos.length;
+      document.getElementById("acessos-hoje").textContent = analytics.hoje || 0;
 
-    if (Array.isArray(grupos)) {
-      if (totalGrupos) totalGrupos.textContent = grupos.length;
-      if (totalProdutos) totalProdutos.textContent = grupos.length;
-
-      grupos.forEach((grupo) => {
-        const card = document.createElement('div');
-        card.className = 'bg-white p-4 rounded shadow';
-        card.innerHTML = `
-          <h2 class="text-lg font-bold mb-2">${grupo.nome}</h2>
-          <p>${grupo.descricao}</p>
-        `;
-        if (produtosSection) produtosSection.appendChild(card);
-      });
+      gerarGrafico(analytics.dias || []);
+    } catch (err) {
+      console.error("Erro carregando dashboard:", err);
     }
-  } catch (e) {
-    console.error('Erro ao carregar grupos:', e);
   }
 
-  // Carregar downloads
-  try {
-    const resDownloads = await fetch('/api/downloads');
-    const data = await resDownloads.json();
-    const arquivos = Array.isArray(data.files) ? data.files : [];
-
-    if (totalDownloads) totalDownloads.textContent = arquivos.length;
-
-    arquivos.forEach((arquivo) => {
-      const card = document.createElement('div');
-      card.className = 'bg-white p-4 rounded shadow';
-      card.innerHTML = `
-        <h2 class="text-lg font-bold mb-2">${arquivo.name}</h2>
-        <p>${arquivo.description}</p>
-        <a href="${arquivo.url}" class="text-blue-600 underline">Baixar</a>
-      `;
-      if (downloadsSection) downloadsSection.appendChild(card);
+  function gerarGrafico(dados) {
+    const ctx = document.getElementById("grafico-acessos").getContext("2d");
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: dados.map(d => d.dia),
+        datasets: [{
+          label: "Acessos",
+          data: dados.map(d => d.total),
+          backgroundColor: "#3b82f6"
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
     });
-  } catch (e) {
-    console.error('Erro ao carregar downloads:', e);
   }
+
+  async function carregarProdutos() {
+    const res = await fetch("/api/products");
+    const produtos = await res.json();
+    const container = document.getElementById("produtos-lista");
+    container.innerHTML = "";
+    produtos.forEach(p => {
+      const div = document.createElement("div");
+      div.className = "bg-white p-4 rounded shadow";
+      div.innerHTML = `
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 class="font-bold text-lg">${p.nome}</h3>
+            <p class="text-sm text-gray-500">${p.descricao}</p>
+            <p class="mt-1 text-green-600 font-semibold">R$ ${p.preco}</p>
+          </div>
+          <button class="bg-blue-500 text-white px-4 py-1 rounded">Editar</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  async function carregarDownloads() {
+    const res = await fetch("/api/downloads");
+    const { files } = await res.json();
+    const container = document.getElementById("downloads-lista");
+    container.innerHTML = "";
+    files.forEach(d => {
+      const div = document.createElement("div");
+      div.className = "bg-white p-4 rounded shadow";
+      div.innerHTML = `
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 class="font-bold text-lg">${d.name}</h3>
+            <p class="text-sm text-gray-500">${d.description}</p>
+          </div>
+          <button class="bg-blue-500 text-white px-4 py-1 rounded">Editar</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  async function carregarGrupos() {
+    const res = await fetch("/api/groups");
+    const grupos = await res.json();
+    const container = document.getElementById("grupos-lista");
+    container.innerHTML = "";
+    grupos.forEach(g => {
+      const div = document.createElement("div");
+      div.className = "bg-white p-4 rounded shadow";
+      div.innerHTML = `
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 class="font-bold text-lg">${g.nome}</h3>
+            <p class="text-sm text-gray-500">${g.descricao}</p>
+          </div>
+          <button class="bg-blue-500 text-white px-4 py-1 rounded">Editar</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  carregarDashboard();
+  carregarProdutos();
+  carregarDownloads();
+  carregarGrupos();
+
+  document.getElementById("add-produto").addEventListener("click", () => {
+    showToast("Função de adicionar produto em desenvolvimento");
+  });
+
+  document.getElementById("add-download").addEventListener("click", () => {
+    showToast("Função de adicionar download em desenvolvimento");
+  });
+
+  document.getElementById("add-grupo").addEventListener("click", () => {
+    showToast("Função de adicionar grupo em desenvolvimento");
+  });
 });

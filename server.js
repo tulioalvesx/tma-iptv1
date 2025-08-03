@@ -1,49 +1,93 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const bodyParser = require("body-parser");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Admin credentials via env or default
-const ADMIN_USER = process.env.ADMIN_USER || 'admin';
-const ADMIN_PASS = process.env.ADMIN_PASS || 'Tul10@lv3s';
+const ADMIN_USER = process.env.ADMIN_USER || "admin";
+const ADMIN_PASS = process.env.ADMIN_PASS || "Tul10@lv3s";
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+const DATA_DIR = path.join(__dirname, "data");
+const PUBLIC_DIR = path.join(__dirname, "public");
 
-// API pública (GETs)
-app.get('/api/products', (req, res) => {
-  fs.readFile(path.join(__dirname, 'data', 'products.json'), (err, data) => {
-    if (err) return res.status(500).json({ error: 'Erro ao carregar produtos' });
-    res.json(JSON.parse(data));
+// Middlewares
+app.use(bodyParser.json());
+app.use(express.static(PUBLIC_DIR));
+
+// Utilitários
+const loadJson = (file) =>
+  JSON.parse(fs.readFileSync(path.join(DATA_DIR, file), "utf-8"));
+
+const saveJson = (file, data) =>
+  fs.writeFileSync(path.join(DATA_DIR, file), JSON.stringify(data, null, 2));
+
+// 🧠 Contador de acessos diários
+const accessFile = path.join(DATA_DIR, "access.json");
+if (!fs.existsSync(accessFile)) saveJson("access.json", {});
+
+function logAccess() {
+  const accesses = loadJson("access.json");
+  const today = new Date().toISOString().slice(0, 10);
+  accesses[today] = (accesses[today] || 0) + 1;
+  saveJson("access.json", accesses);
+}
+app.use((req, res, next) => {
+  if (!req.path.startsWith("/api/admin")) logAccess();
+  next();
+});
+
+// Rotas públicas
+app.get("/api/groups", (req, res) => {
+  res.json(loadJson("groups.json"));
+});
+
+app.get("/api/products", (req, res) => {
+  res.json(loadJson("products.json"));
+});
+
+app.get("/api/downloads", (req, res) => {
+  res.json(loadJson("downloads.json"));
+});
+
+app.get("/api/analytics", (req, res) => {
+  const data = loadJson("access.json");
+  const sorted = Object.entries(data).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 7).reverse();
+  res.json({
+    hoje: data[new Date().toISOString().slice(0, 10)] || 0,
+    dias: sorted.map(([dia, total]) => ({ dia, total }))
   });
 });
 
-app.get('/api/groups', (req, res) => {
-  fs.readFile(path.join(__dirname, 'data', 'groups.json'), (err, data) => {
-    if (err) return res.status(500).json({ error: 'Erro ao carregar grupos' });
-    res.json(JSON.parse(data));
-  });
-});
-
-app.get('/api/downloads', (req, res) => {
-  fs.readFile(path.join(__dirname, 'data', 'downloads.json'), (err, data) => {
-    if (err) return res.status(500).json({ error: 'Erro ao carregar downloads' });
-    res.json(JSON.parse(data));
-  });
-});
-
-// Corrigido: Login da API em /api/login (não /admin/login)
-app.post('/api/login', (req, res) => {
-  const { username, password } = req.body;
-  if (username === ADMIN_USER && password === ADMIN_PASS) {
-    res.json({ success: true });
-  } else {
-    res.status(401).json({ error: 'Credenciais inválidas' });
+// Autenticação simples
+app.post("/api/admin/login", (req, res) => {
+  const { user, pass } = req.body;
+  if (user === ADMIN_USER && pass === ADMIN_PASS) {
+    return res.json({ success: true });
   }
+  res.status(401).json({ success: false, message: "Credenciais inválidas." });
 });
 
+// Rotas de edição futuras (a implementar)
+app.post("/api/products", (req, res) => {
+  res.status(501).json({ message: "Em desenvolvimento." });
+});
+
+app.post("/api/groups", (req, res) => {
+  res.status(501).json({ message: "Em desenvolvimento." });
+});
+
+app.post("/api/downloads", (req, res) => {
+  res.status(501).json({ message: "Em desenvolvimento." });
+});
+
+// Fallback para SPA
+app.get("*", (req, res) => {
+  res.sendFile(path.join(PUBLIC_DIR, req.path));
+});
+
+// Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
 });

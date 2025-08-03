@@ -345,3 +345,26 @@ a {
   background-color: #e2e3e5;
   color: #41464b;
 }
+.upload-image-input {
+  font-size: 12px;
+  padding: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.inline-input {
+  margin-top: 4px;
+}
+
+.product-card {
+  position: relative;
+}
+
+.product-card .flex-shrink-0 {
+  min-width: 120px;
+}
+
+.product-card img {
+  max-width: 100%;
+  display: block;
+}

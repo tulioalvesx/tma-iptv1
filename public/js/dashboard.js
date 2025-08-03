@@ -126,29 +126,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
     produtos.forEach(p => {
       const card = document.createElement("div");
-      card.className = "bg-white p-4 rounded shadow flex flex-col gap-3";
+      card.className = "product-card bg-white p-4 rounded shadow flex flex-col gap-3";
       card.innerHTML = `
         <div class="flex justify-between items-start">
           <div class="flex-1 flex gap-4">
-            <div class="w-24 flex flex-col items-center gap-1">
-              <div class="w-20 h-20 bg-gray-100 flex items-center justify-center text-sm">
-                ${p.imagem ? `<img src="${normalizeImagem(p.imagem)}" alt="${p.nome}" class="w-full h-full object-contain">` : "Sem imagem"}
+            <div class="flex-shrink-0">
+              <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-1">
+                ${p.imagem ? `<img src="${normalizeImagem(p.imagem)}" alt="${p.nome}" class="object-contain w-full h-full">` : "Sem imagem"}
               </div>
-              <div>
-                <input type="file" data-type="produto" data-id="${p.id}" class="upload-image-input text-xs mt-1" accept="image/*" />
-              </div>
+              <div class="text-xs mb-1">Upload imagem</div>
+              <input type="file" data-type="produto" data-id="${p.id}" class="upload-image-input" accept="image/*" />
             </div>
             <div class="flex-1">
               <div class="font-bold text-lg">${p.nome}</div>
               <div class="text-sm text-gray-500">${p.descricao || ""}</div>
               <div class="mt-1 text-green-600 font-semibold">R$ ${p.preco || "0,00"}</div>
-              <div class="text-xs mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div>
-                  <label class="block font-semibold">Imagem (nome ou caminho)</label>
+                  <label class="block font-semibold text-xs">Imagem (nome ou caminho)</label>
                   <input type="text" value="${p.imagem || ""}" data-field="imagem" data-id="${p.id}" class="inline-input border px-2 py-1 rounded w-full" />
                 </div>
                 <div>
-                  <label class="block font-semibold">Link de download</label>
+                  <label class="block font-semibold text-xs">Link de download</label>
                   <input type="text" value="${p.link || ""}" data-field="link" data-id="${p.id}" class="inline-input border px-2 py-1 rounded w-full" />
                 </div>
               </div>
@@ -334,7 +333,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Downloads (sem upload de imagem ainda aqui, pode ser estendido similarmente)
+  // Downloads
   async function carregarDownloads() {
     const res = await fetch("/api/downloads");
     const data = await res.json();
@@ -346,10 +345,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const card = document.createElement("div");
       card.className = "bg-white p-4 rounded shadow flex justify-between items-center";
       card.innerHTML = `
-        <div class="flex-1">
-          <div class="font-bold">${d.name}</div>
-          <div class="text-sm text-gray-500">${d.description || ""}</div>
-          <div class="text-xs text-blue-600"><a href="${d.url}">Link</a></div>
+        <div class="flex-1 flex gap-3 items-center">
+          <div class="w-16 h-16 bg-gray-100 flex items-center justify-center mr-3">
+            ${d.imagem ? `<img src="${normalizeImagem(d.imagem)}" alt="${d.name}" class="w-full h-full object-contain">` : ""}
+          </div>
+          <div>
+            <div class="font-bold">${d.name}</div>
+            <div class="text-sm text-gray-500">${d.description || ""}</div>
+            <div class="text-xs text-blue-600"><a href="${d.url}">Link</a></div>
+          </div>
         </div>
         <div class="flex flex-col gap-2">
           <button data-id="${d.id}" class="btn-edit-download bg-yellow-400 text-white px-3 py-1 rounded">Editar</button>

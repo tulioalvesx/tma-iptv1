@@ -34,8 +34,8 @@ app.get('/api/downloads', (req, res) => {
   });
 });
 
-// Painel admin básico (exemplo de proteção simples)
-app.post('/admin/login', (req, res) => {
+// Corrigido: Login da API em /api/login (não /admin/login)
+app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
     res.json({ success: true });

@@ -28,7 +28,7 @@ function normalizeImagem(im) {
   return `/img/${im.replace(/^\/?img\/?/i, "")}`;
 }
 
-// Carrega grupos no painel administrativo com upload e edição inline
+// ---------- ADMIN CARREGAMENTO (com edição inline + upload) ----------
 async function carregarGruposAdmin() {
   try {
     const res = await fetch("/api/groups");
@@ -226,6 +226,104 @@ function abrirModalEdicaoGrupo(g) {
   });
 }
 
+// fallback simples (sem os campos estendidos)
+async function carregarGrupos() {
+  try {
+    const res = await fetch("/api/groups");
+    const grupos = await res.json();
+    const container = document.getElementById("grupos-lista");
+    if (!container) return;
+    container.innerHTML = "";
+    if (!Array.isArray(grupos)) return;
+
+    grupos.forEach(g => {
+      const div = document.createElement("div");
+      div.className = "bg-white p-4 rounded shadow flex justify-between items-center mb-3";
+      div.innerHTML = `
+        <div class="flex-1 flex gap-3 items-center">
+          <div class="flex-shrink-0">
+            <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-1">
+              ${g.imagem ? `<img src="${normalizeImagem(g.imagem)}" alt="${g.nome}" class="object-contain w-full h-full">` : "Sem imagem"}
+            </div>
+            <div class="text-xs mb-1">Upload imagem</div>
+            <input type="file" data-type="grupo" data-id="${g.id}" class="upload-image-input mb-2" accept="image/*" />
+          </div>
+          <div>
+            <div class="font-bold text-lg">${g.nome}</div>
+            <div class="text-sm text-gray-500">${g.descricao || ""}</div>
+          </div>
+        </div>
+        <div class="flex flex-col gap-2 ml-4">
+          <button data-id="${g.id}" class="btn-save-inline-grupo bg-blue-500 text-white px-3 py-1 rounded text-sm">Salvar rápido</button>
+          <button data-id="${g.id}" class="btn-edit-grupo bg-yellow-400 text-white px-3 py-1 rounded text-sm">Editar completo</button>
+          <button data-id="${g.id}" class="btn-delete-grupo bg-red-500 text-white px-3 py-1 rounded text-sm">Excluir</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+
+    // upload de imagem grupo (fallback)
+    container.querySelectorAll("input[data-type='grupo']").forEach(input => {
+      input.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const id = e.target.dataset.id;
+        const form = new FormData();
+        form.append("image", file);
+        form.append("type", "grupo");
+        form.append("id", id);
+        try {
+          const up = await fetch("/api/upload-image", {
+            method: "POST",
+            body: form
+          });
+          const info = await up.json();
+          if (info.success) {
+            await fetch(`/api/groups/${id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ imagem: info.filename })
+            });
+            showToast("Imagem do grupo atualizada");
+            await carregarGrupos();
+            if (typeof carregarDashboard === "function") await carregarDashboard();
+          } else {
+            showToast("Erro upload grupo", false);
+          }
+        } catch (err) {
+          console.error(err);
+          showToast("Erro de rede", false);
+        }
+      });
+    });
+
+    // ações básicas (editar/excluir) no fallback
+    container.querySelectorAll(".btn-edit-grupo").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const id = e.currentTarget.dataset.id;
+        const groups = await fetch("/api/groups").then(r => r.json());
+        const group = Array.isArray(groups) ? groups.find(g => g.id === id) : null;
+        if (!group) return showToast("Grupo não encontrado", false);
+        abrirModalEdicaoGrupo(group);
+      });
+    });
+
+    container.querySelectorAll(".btn-delete-grupo").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const id = e.currentTarget.dataset.id;
+        if (!confirm("Excluir grupo?")) return;
+        await fetch(`/api/groups/${id}`, { method: "DELETE" });
+        showToast("Grupo excluído");
+        await carregarGrupos();
+        if (typeof carregarDashboard === "function") await carregarDashboard();
+      });
+    });
+  } catch (err) {
+    console.error("Erro carregar grupos (fallback):", err);
+    showToast("Falha ao carregar grupos", false);
+  }
+}
+
 // criação rápida de grupo (caso botão exista)
 document.getElementById("add-grupo")?.addEventListener("click", async () => {
   const novo = {
@@ -240,7 +338,9 @@ document.getElementById("add-grupo")?.addEventListener("click", async () => {
   });
   if (res.ok) {
     showToast("Grupo criado");
-    await carregarGruposAdmin();
+    // prefer admin se disponível
+    if (typeof carregarGruposAdmin === "function") await carregarGruposAdmin();
+    else await carregarGrupos();
     if (typeof carregarDashboard === "function") await carregarDashboard();
   }
 });

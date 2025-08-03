@@ -40,6 +40,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Normaliza imagem (aceita nome simples ou path completo)
+  function normalizeImagem(im) {
+    if (!im) return "";
+    if (im.startsWith("http") || im.startsWith("/")) return im;
+    return `/img/${im}`;
+  }
+
   // Load dashboard data
   async function carregarDashboard() {
     try {
@@ -54,9 +61,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const downloads = await downloadsRes.json();
       const analytics = await analyticsRes.json();
 
-      document.getElementById("total-produtos").textContent = produtos.length;
+      document.getElementById("total-produtos").textContent = Array.isArray(produtos) ? produtos.length : 0;
       document.getElementById("total-downloads").textContent = (downloads.files || []).length;
-      document.getElementById("total-grupos").textContent = grupos.length;
+      document.getElementById("total-grupos").textContent = Array.isArray(grupos) ? grupos.length : 0;
       document.getElementById("acessos-hoje").textContent = analytics.hoje || 0;
 
       gerarGrafico(analytics.dias || []);
@@ -67,8 +74,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function gerarGrafico(dados) {
-    const ctx = document.getElementById("grafico-acessos").getContext("2d");
-    new Chart(ctx, {
+    const canvas = document.getElementById("grafico-acessos");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    // destrói gráfico anterior se existir
+    if (window._chartInstance) {
+      window._chartInstance.destroy();
+    }
+    window._chartInstance = new Chart(ctx, {
       type: "line",
       data: {
         labels: dados.map(d => d.dia),
@@ -93,29 +106,72 @@ document.addEventListener("DOMContentLoaded", () => {
     const produtos = await res.json();
     const container = document.getElementById("produtos-lista");
     container.innerHTML = "";
+
+    if (!Array.isArray(produtos)) {
+      showToast("Erro ao carregar produtos", false);
+      return;
+    }
+
     produtos.forEach(p => {
       const card = document.createElement("div");
-      card.className = "bg-white p-4 rounded shadow flex justify-between items-start space-x-4";
+      card.className = "bg-white p-4 rounded shadow flex flex-col gap-3";
       card.innerHTML = `
-        <div class="flex-1">
-          <div class="flex items-center gap-3">
-            <div class="w-16 h-16 bg-gray-100 flex items-center justify-center text-sm">${p.imagem ? `<img src="${p.imagem}" alt="${p.nome}" class="w-full h-full object-contain">` : "Sem imagem"}</div>
-            <div>
+        <div class="flex justify-between items-start">
+          <div class="flex-1 flex gap-4">
+            <div class="w-20 h-20 bg-gray-100 flex items-center justify-center text-sm">
+              ${p.imagem ? `<img src="${normalizeImagem(p.imagem)}" alt="${p.nome}" class="w-full h-full object-contain">` : "Sem imagem"}
+            </div>
+            <div class="flex-1">
               <div class="font-bold text-lg">${p.nome}</div>
               <div class="text-sm text-gray-500">${p.descricao || ""}</div>
               <div class="mt-1 text-green-600 font-semibold">R$ ${p.preco || "0,00"}</div>
+              <div class="text-xs mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-semibold">Imagem (nome ou caminho)</label>
+                  <input type="text" value="${p.imagem || ""}" data-field="imagem" data-id="${p.id}" class="inline-input border px-2 py-1 rounded w-full" />
+                </div>
+                <div>
+                  <label class="block font-semibold">Link de download</label>
+                  <input type="text" value="${p.link || ""}" data-field="link" data-id="${p.id}" class="inline-input border px-2 py-1 rounded w-full" />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="flex flex-col gap-2">
-          <button data-id="${p.id}" class="btn-edit bg-yellow-400 text-white px-3 py-1 rounded">Editar</button>
-          <button data-id="${p.id}" class="btn-delete bg-red-500 text-white px-3 py-1 rounded">Excluir</button>
+          <div class="flex flex-col gap-2 ml-4">
+            <button data-id="${p.id}" class="btn-save-inline bg-blue-500 text-white px-3 py-1 rounded text-sm">Salvar rápido</button>
+            <button data-id="${p.id}" class="btn-edit bg-yellow-400 text-white px-3 py-1 rounded text-sm">Editar completo</button>
+            <button data-id="${p.id}" class="btn-delete bg-red-500 text-white px-3 py-1 rounded text-sm">Excluir</button>
+          </div>
         </div>
       `;
       container.appendChild(card);
     });
 
-    // eventos
+    // salvar inline
+    container.querySelectorAll(".btn-save-inline").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const id = e.currentTarget.dataset.id;
+        const imagemInput = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`);
+        const linkInput = document.querySelector(`input[data-field="link"][data-id="${id}"]`);
+        const updated = {};
+        if (imagemInput) updated.imagem = imagemInput.value;
+        if (linkInput) updated.link = linkInput.value;
+        const res = await fetch(`/api/products/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updated)
+        });
+        if (res.ok) {
+          showToast("Atualizado inline");
+          carregarProdutos();
+          carregarDashboard();
+        } else {
+          showToast("Erro ao salvar inline", false);
+        }
+      });
+    });
+
+    // editar completo
     container.querySelectorAll(".btn-edit").forEach(btn => {
       btn.addEventListener("click", async (e) => {
         const id = e.currentTarget.dataset.id;
@@ -125,6 +181,8 @@ document.addEventListener("DOMContentLoaded", () => {
         abrirModalEdicaoProduto(prod);
       });
     });
+
+    // excluir
     container.querySelectorAll(".btn-delete").forEach(btn => {
       btn.addEventListener("click", async (e) => {
         const id = e.currentTarget.dataset.id;
@@ -218,7 +276,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Downloads
   async function carregarDownloads() {
     const res = await fetch("/api/downloads");
-    const { files = [] } = await res.json();
+    const data = await res.json();
+    const files = Array.isArray(data.files) ? data.files : [];
     const container = document.getElementById("downloads-lista");
     container.innerHTML = "";
     files.forEach(d => {
@@ -251,7 +310,8 @@ document.addEventListener("DOMContentLoaded", () => {
     container.querySelectorAll(".btn-edit-download").forEach(btn => {
       btn.addEventListener("click", async (e) => {
         const id = e.currentTarget.dataset.id;
-        const { files = [] } = await fetch("/api/downloads").then(r => r.json());
+        const dData = await fetch("/api/downloads").then(r => r.json());
+        const files = Array.isArray(dData.files) ? dData.files : [];
         const d = files.find(f => f.id === id);
         if (!d) return showToast("Download não encontrado", false);
         abrirModalEdicaoDownload(d);
@@ -321,6 +381,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const grupos = await res.json();
     const container = document.getElementById("grupos-lista");
     container.innerHTML = "";
+    if (!Array.isArray(grupos)) return;
     grupos.forEach(g => {
       const div = document.createElement("div");
       div.className = "bg-white p-4 rounded shadow flex justify-between items-center";
@@ -351,7 +412,7 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.addEventListener("click", async (e) => {
         const id = e.currentTarget.dataset.id;
         const grupos = await fetch("/api/groups").then(r => r.json());
-        const g = grupos.find(gr => gr.id === id);
+        const g = Array.isArray(grupos) ? grupos.find(gr => gr.id === id) : null;
         if (!g) return showToast("Grupo não encontrado", false);
         abrirModalEdicaoGrupo(g);
       });

@@ -4,7 +4,7 @@
     "nome": "Eppi Cinema Mensal",
     "descricao": "30 dias de acesso",
     "preco": 24.9,
-    "imagem": "img/eppi-mensal.jpg",
+    "imagem": "eppi-mensal.jpg",
     "grupo": "eppi-cinema",
     "desconto": 0,
     "link": "#"
@@ -14,7 +14,7 @@
     "nome": "Eppi Cinema Trimestral",
     "descricao": "90 dias de acesso",
     "preco": 69.9,
-    "imagem": "img/eppi-trimestral.jpg",
+    "imagem": "eppi-trimestral.jpg",
     "grupo": "eppi-cinema",
     "desconto": 0,
     "link": "#"
@@ -24,7 +24,7 @@
     "nome": "Eppi Cinema Anual",
     "descricao": "365 dias de acesso",
     "preco": 239.9,
-    "imagem": "img/eppi-anual.jpg",
+    "imagem": "eppi-anual.jpg",
     "grupo": "eppi-cinema",
     "desconto": 0,
     "link": "#"
@@ -34,7 +34,7 @@
     "nome": "Unitv Mensal",
     "descricao": "30 dias de acesso",
     "preco": 34.9,
-    "imagem": "img/unitv-mensal.jpg",
+    "imagem": "unitv-mensal.jpg",
     "grupo": "unitv",
     "desconto": 0,
     "link": "#"
@@ -44,7 +44,7 @@
     "nome": "Unitv Anual",
     "descricao": "365 dias de acesso",
     "preco": 359.9,
-    "imagem": "img/unitv-anual.jpg",
+    "imagem": "unitv-anual.jpg",
     "grupo": "unitv",
     "desconto": 0,
     "link": "#"
@@ -54,7 +54,7 @@
     "nome": "Combo TV Express + Eppi Mensal",
     "descricao": "30 dias de acesso",
     "preco": 34.9,
-    "imagem": "img/combo.jpg",
+    "imagem": "combo.jpg",
     "grupo": "combo-tv-express-eppi",
     "desconto": 0,
     "link": "#"
@@ -64,7 +64,7 @@
     "nome": "Combo TV Express + Eppi Anual",
     "descricao": "365 dias de acesso",
     "preco": 359.9,
-    "imagem": "img/combo.jpg",
+    "imagem": "combo.jpg",
     "grupo": "combo-tv-express-eppi",
     "desconto": 0,
     "link": "#"
@@ -74,7 +74,7 @@
     "nome": "TV Express Mensal",
     "descricao": "30 dias de acesso",
     "preco": 29.9,
-    "imagem": "img/tv-express-mensal.jpg",
+    "imagem": "tv-express-mensal.jpg",
     "grupo": "tv-express",
     "desconto": 0,
     "link": "#"
@@ -84,7 +84,7 @@
     "nome": "TV Express Trimestral",
     "descricao": "90 dias de acesso",
     "preco": 79.9,
-    "imagem": "img/tv-express-trimestral.jpg",
+    "imagem": "tv-express-trimestral.jpg",
     "grupo": "tv-express",
     "desconto": 0,
     "link": "#"
@@ -94,7 +94,7 @@
     "nome": "TV Express Anual",
     "descricao": "365 dias de acesso",
     "preco": 299.9,
-    "imagem": "img/tv-express-anual.jpg",
+    "imagem": "tv-express-anual.jpg",
     "grupo": "tv-express",
     "desconto": 0,
     "link": "#"
@@ -104,7 +104,7 @@
     "nome": "HOT App Mensal",
     "descricao": "30 dias de acesso",
     "preco": 9.9,
-    "imagem": "img/hot-app-mensal.jpg",
+    "imagem": "hot-app-mensal.jpg",
     "grupo": "hot-app",
     "desconto": 0,
     "link": "#"
@@ -114,7 +114,7 @@
     "nome": "HOT App Anual",
     "descricao": "365 dias de acesso",
     "preco": 34.9,
-    "imagem": "img/hot-app-anual.jpg",
+    "imagem": "hot-app-anual.jpg",
     "grupo": "hot-app",
     "desconto": 0,
     "link": "#"
@@ -124,7 +124,7 @@
     "nome": "Império TV Mensal",
     "descricao": "30 dias de acesso",
     "preco": 29.9,
-    "imagem": "img/imperio-mensal.jpg",
+    "imagem": "imperio-mensal.jpg",
     "grupo": "imperio-tv",
     "desconto": 0,
     "link": "#"
@@ -134,7 +134,7 @@
     "nome": "Império TV Trimestral",
     "descricao": "90 dias de acesso",
     "preco": 79.9,
-    "imagem": "img/imperio-trimestral.jpg",
+    "imagem": "imperio-trimestral.jpg",
     "grupo": "imperio-tv",
     "desconto": 0,
     "link": "#"
@@ -144,7 +144,7 @@
     "nome": "Império TV Anual",
     "descricao": "365 dias de acesso",
     "preco": 299.9,
-    "imagem": "img/imperio-anual.jpg",
+    "imagem": "imperio-anual.jpg",
     "grupo": "imperio-tv",
     "desconto": 0,
     "link": "#"
@@ -154,7 +154,7 @@
     "nome": "Blue TV Mensal",
     "descricao": "30 dias de acesso",
     "preco": 29.9,
-    "imagem": "img/bluetv-mensal.jpg",
+    "imagem": "bluetv-mensal.jpg",
     "grupo": "blue-tv",
     "desconto": 0,
     "link": "#"
@@ -164,7 +164,7 @@
     "nome": "Blue TV Anual",
     "descricao": "365 dias de acesso",
     "preco": 299.9,
-    "imagem": "img/bluetv-anual.jpg",
+    "imagem": "bluetv-anual.jpg",
     "grupo": "blue-tv",
     "desconto": 0,
     "link": "#"

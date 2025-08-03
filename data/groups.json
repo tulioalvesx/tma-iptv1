@@ -1,0 +1,37 @@
+[
+  {
+    "id": "eppi-cinema",
+    "nome": "Eppi Cinema",
+    "descricao": "Filmes e séries. Para uso exclusivo no Brasil."
+  },
+  {
+    "id": "unitv",
+    "nome": "UniTV",
+    "descricao": "Conteúdo premium nacional e internacional."
+  },
+  {
+    "id": "combo",
+    "nome": "Combo TV Express + Eppi",
+    "descricao": "Pacote especial com TV Express + Eppi Cinema."
+  },
+  {
+    "id": "tv-express",
+    "nome": "TV Express",
+    "descricao": "Canais ao vivo, filmes e séries para o Brasil."
+  },
+  {
+    "id": "hot",
+    "nome": "HOT App",
+    "descricao": "Aplicativo com conteúdo adulto 24 horas."
+  },
+  {
+    "id": "imperio",
+    "nome": "Império TV",
+    "descricao": "Canais e conteúdo premium nacional e internacional."
+  },
+  {
+    "id": "blue",
+    "nome": "Blue TV",
+    "descricao": "Streaming completo com estabilidade e qualidade."
+  }
+]

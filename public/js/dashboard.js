@@ -1,36 +1,38 @@
 // dashboard.js
+
+let chartInstance = null;
+
+function showToast(msg, success = true) {
+  let toastEl = document.getElementById("toast");
+  if (!toastEl) {
+    toastEl = document.createElement("div");
+    toastEl.id = "toast";
+    toastEl.className = "fixed bottom-4 right-4 text-white px-4 py-2 rounded shadow transition-opacity";
+    document.body.appendChild(toastEl);
+  }
+  toastEl.textContent = msg;
+  toastEl.style.backgroundColor = success ? "#16a34a" : "#dc2626";
+  toastEl.style.opacity = "1";
+  setTimeout(() => {
+    toastEl.style.opacity = "0";
+  }, 2200);
+}
+
+function normalizeImagem(im) {
+  if (!im) return "";
+  if (im.startsWith("http") || im.startsWith("/")) {
+    if (im.startsWith("/img/")) return im;
+    if (im.startsWith("/")) return im;
+    return "/" + im.replace(/^\/?img\/?/i, "");
+  }
+  return `/img/${im.replace(/^\/?img\/?/i, "")}`;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const tabs = document.querySelectorAll(".tab-btn");
   const sections = document.querySelectorAll(".tab-section");
-  let chartInstance = null;
 
-  function showToast(msg, success = true) {
-    let toastEl = document.getElementById("toast");
-    if (!toastEl) {
-      toastEl = document.createElement("div");
-      toastEl.id = "toast";
-      toastEl.className = "fixed bottom-4 right-4 text-white px-4 py-2 rounded shadow transition-opacity";
-      document.body.appendChild(toastEl);
-    }
-    toastEl.textContent = msg;
-    toastEl.style.backgroundColor = success ? "#16a34a" : "#dc2626";
-    toastEl.style.opacity = "1";
-    setTimeout(() => {
-      toastEl.style.opacity = "0";
-    }, 2200);
-  }
-
-  function normalizeImagem(im) {
-    if (!im) return "";
-    if (im.startsWith("http") || im.startsWith("/")) {
-      if (im.startsWith("/img/")) return im;
-      if (im.startsWith("/")) return im;
-      return "/" + im.replace(/^\/?img\/?/i, "");
-    }
-    return `/img/${im.replace(/^\/?img\/?/i, "")}`;
-  }
-
-  // Tab switching
+  // Tab switching with reload for grupos
   tabs.forEach(btn => {
     btn.addEventListener("click", () => {
       tabs.forEach(b => {
@@ -42,22 +44,42 @@ document.addEventListener("DOMContentLoaded", () => {
       sections.forEach(sec => sec.classList.add("hidden"));
       const sel = document.getElementById("tab-" + target);
       if (sel) sel.classList.remove("hidden");
+
+      if (target === "grupos") {
+        if (typeof carregarGruposAdmin === "function") {
+          carregarGruposAdmin();
+        } else if (typeof carregarGrupos === "function") {
+          carregarGrupos();
+        }
+      }
     });
   });
 
-  // Dashboard
   async function carregarDashboard() {
     try {
-      const [prodRes, groupsRes, downloadsRes, analyticsRes] = await Promise.all([
+      // produtos, grupos, downloads
+      const [prodRes, groupsRes, downloadsRes] = await Promise.all([
         fetch("/api/products"),
         fetch("/api/groups"),
-        fetch("/api/downloads"),
-        fetch("/api/analytics")
+        fetch("/api/downloads")
       ]);
       const produtos = await prodRes.json();
       const grupos = await groupsRes.json();
       const downloads = await downloadsRes.json();
-      const analytics = await analyticsRes.json();
+
+      // analytics com fallback
+      let analytics = { hoje: 0, dias: [] };
+      try {
+        const analyticsRes = await fetch("/api/analytics");
+        if (analyticsRes.ok) {
+          const parsed = await analyticsRes.json();
+          analytics = parsed || analytics;
+        } else {
+          console.warn("Falha ao buscar analytics, status:", analyticsRes.status);
+        }
+      } catch (e) {
+        console.warn("Erro ao buscar analytics, usando padrão", e);
+      }
 
       document.getElementById("total-produtos").textContent = Array.isArray(produtos) ? produtos.length : 0;
       document.getElementById("total-downloads").textContent = (downloads.files || []).length;
@@ -75,17 +97,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById("grafico-acessos");
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
+
     if (chartInstance) {
-      chartInstance.destroy();
-      chartInstance = null;
+      try {
+        chartInstance.destroy();
+      } catch (e) {
+        console.warn("Erro destruindo gráfico anterior:", e);
+      }
     }
+
+    const labels = dados.map(d => d.dia);
+    const values = dados.map(d => d.total);
+
     chartInstance = new Chart(ctx, {
       type: "line",
       data: {
-        labels: dados.map(d => d.dia),
+        labels,
         datasets: [{
           label: "Acessos",
-          data: dados.map(d => d.total),
+          data: values,
           borderColor: "#2563eb",
           backgroundColor: "rgba(37,99,235,0.2)",
           fill: true,
@@ -93,12 +123,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }]
       },
       options: {
-        scales: { y: { beginAtZero: true } }
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true }
+        },
+        plugins: {
+          legend: { display: false }
+        }
       }
     });
   }
 
-  // Produtos
   async function carregarProdutos() {
     try {
       const res = await fetch("/api/products");
@@ -236,85 +271,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function abrirModalEdicaoProduto(p) {
-    const modalId = "modal-produto";
-    let existing = document.getElementById(modalId);
-    if (existing) existing.remove();
-
-    const modal = document.createElement("div");
-    modal.id = modalId;
-    modal.className = "fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50";
-    modal.innerHTML = `
-      <div class="bg-white rounded shadow max-w-lg w-full p-6 relative">
-        <h2 class="text-xl font-bold mb-4">Editar Produto</h2>
-        <div class="space-y-3">
-          <div>
-            <label class="block font-semibold">Nome</label>
-            <input type="text" id="edit-nome" value="${p.nome}" class="w-full border px-2 py-1 rounded" />
-          </div>
-          <div>
-            <label class="block font-semibold">Preço</label>
-            <input type="text" id="edit-preco" value="${p.preco}" class="w-full border px-2 py-1 rounded" />
-          </div>
-          <div>
-            <label class="block font-semibold">Imagem</label>
-            <input type="text" id="edit-imagem" value="${p.imagem || ""}" class="w-full border px-2 py-1 rounded" />
-          </div>
-          <div>
-            <label class="block font-semibold">Descrição</label>
-            <textarea id="edit-descricao" class="w-full border px-2 py-1 rounded">${p.descricao || ""}</textarea>
-          </div>
-          <div>
-            <label class="block font-semibold">Grupo</label>
-            <input type="text" id="edit-grupo" value="${p.grupo || ""}" class="w-full border px-2 py-1 rounded" />
-          </div>
-          <div>
-            <label class="block font-semibold">Link</label>
-            <input type="text" id="edit-link" value="${p.link || ""}" class="w-full border px-2 py-1 rounded" />
-          </div>
-          <div>
-            <label class="block font-semibold">Desconto (%)</label>
-            <input type="number" id="edit-desconto" value="${p.desconto || 0}" class="w-full border px-2 py-1 rounded" />
-          </div>
-        </div>
-        <div class="mt-6 flex justify-end gap-3">
-          <button id="close-modal" class="px-4 py-2 border rounded">Cancelar</button>
-          <button id="save-modal" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button>
-        </div>
-        <button id="x-close" class="absolute top-2 right-2 text-gray-500">&times;</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    modal.querySelector("#close-modal").addEventListener("click", () => modal.remove());
-    modal.querySelector("#x-close").addEventListener("click", () => modal.remove());
-    modal.querySelector("#save-modal").addEventListener("click", async () => {
-      const updated = {
-        nome: document.getElementById("edit-nome").value,
-        preco: document.getElementById("edit-preco").value,
-        imagem: document.getElementById("edit-imagem").value,
-        descricao: document.getElementById("edit-descricao").value,
-        grupo: document.getElementById("edit-grupo").value,
-        link: document.getElementById("edit-link").value,
-        desconto: Number(document.getElementById("edit-desconto").value || 0)
-      };
-      const res = await fetch(`/api/products/${p.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated)
-      });
-      if (res.ok) {
-        showToast("Produto salvo");
-        await carregarProdutos();
-        await carregarDashboard();
-        modal.remove();
-      } else {
-        showToast("Erro ao salvar", false);
-      }
-    });
-  }
-
-  // Downloads
   async function carregarDownloads() {
     try {
       const res = await fetch("/api/downloads");
@@ -364,7 +320,6 @@ document.addEventListener("DOMContentLoaded", () => {
         container.appendChild(card);
       });
 
-      // upload
       container.querySelectorAll("input[data-type='download']").forEach(input => {
         input.addEventListener("change", async (e) => {
           const file = e.target.files[0];
@@ -399,7 +354,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       });
 
-      // salvar inline
       container.querySelectorAll(".btn-save-inline-download").forEach(btn => {
         btn.addEventListener("click", async (e) => {
           const id = e.currentTarget.dataset.id;
@@ -430,7 +384,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       });
 
-      // editar completo (modal)
       container.querySelectorAll(".btn-edit-download").forEach(btn => {
         btn.addEventListener("click", async (e) => {
           const id = e.currentTarget.dataset.id;
@@ -438,6 +391,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const item = Array.isArray(downloads.files) ? downloads.files.find(f => f.id === id) : null;
           if (!item) return showToast("Download não encontrado", false);
 
+          // modal de edição (similar implementado)
           const modalId = "modal-download";
           let existing = document.getElementById(modalId);
           if (existing) existing.remove();
@@ -515,228 +469,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Grupos
-  async function carregarGrupos() {
+  // inicializa tudo de forma segura
+  (async () => {
     try {
-      const res = await fetch("/api/groups");
-      const grupos = await res.json();
-      const container = document.getElementById("grupos-lista");
-      if (!container) return;
-      container.innerHTML = "";
-      if (!Array.isArray(grupos)) return;
-
-      grupos.forEach(g => {
-        const div = document.createElement("div");
-        div.className = "bg-white p-4 rounded shadow flex justify-between items-center mb-3";
-        div.innerHTML = `
-          <div class="flex-1 flex gap-3 items-center">
-            <div class="flex-shrink-0">
-              <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-1">
-                ${g.imagem ? `<img src="${normalizeImagem(g.imagem)}" alt="${g.nome}" class="object-contain w-full h-full">` : "Sem imagem"}
-              </div>
-              <div class="text-xs mb-1">Upload imagem</div>
-              <input type="file" data-type="grupo" data-id="${g.id}" class="upload-image-input mb-2" accept="image/*" />
-            </div>
-            <div>
-              <div class="font-bold text-lg">${g.nome}</div>
-              <div class="text-sm text-gray-500">${g.descricao || ""}</div>
-            </div>
-          </div>
-          <div class="flex flex-col gap-2 ml-4">
-            <button data-id="${g.id}" class="btn-save-inline-grupo bg-blue-500 text-white px-3 py-1 rounded text-sm">Salvar rápido</button>
-            <button data-id="${g.id}" class="btn-edit-grupo bg-yellow-400 text-white px-3 py-1 rounded text-sm">Editar completo</button>
-            <button data-id="${g.id}" class="btn-delete-grupo bg-red-500 text-white px-3 py-1 rounded text-sm">Excluir</button>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-
-      // upload de imagem grupo
-      container.querySelectorAll("input[data-type='grupo']").forEach(input => {
-        input.addEventListener("change", async (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const id = e.target.dataset.id;
-          const form = new FormData();
-          form.append("image", file);
-          form.append("type", "grupo");
-          form.append("id", id);
-          try {
-            const up = await fetch("/api/upload-image", {
-              method: "POST",
-              body: form
-            });
-            const info = await up.json();
-            if (info.success) {
-              await fetch(`/api/groups/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ imagem: info.filename })
-              });
-              showToast("Imagem do grupo atualizada");
-              await carregarGrupos();
-              await carregarDashboard();
-            } else {
-              showToast("Erro upload grupo", false);
-            }
-          } catch (err) {
-            console.error(err);
-            showToast("Erro de rede", false);
-          }
-        });
-      });
-
-      // editar completo grupo
-      container.querySelectorAll(".btn-edit-grupo").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          const id = e.currentTarget.dataset.id;
-          const groups = await fetch("/api/groups").then(r => r.json());
-          const group = Array.isArray(groups) ? groups.find(g => g.id === id) : null;
-          if (!group) return showToast("Grupo não encontrado", false);
-          abrirModalEdicaoGrupo(group);
-        });
-      });
-
-      container.querySelectorAll(".btn-delete-grupo").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          const id = e.currentTarget.dataset.id;
-          if (!confirm("Excluir grupo?")) return;
-          await fetch(`/api/groups/${id}`, { method: "DELETE" });
-          showToast("Grupo excluído");
-          await carregarGrupos();
-          await carregarDashboard();
-        });
-      });
-    } catch (err) {
-      console.error("Erro carregar grupos:", err);
-      showToast("Falha grupos", false);
-    }
-  }
-
-  function abrirModalEdicaoGrupo(g) {
-    const modalId = "modal-grupo";
-    let existing = document.getElementById(modalId);
-    if (existing) existing.remove();
-    const modal = document.createElement("div");
-    modal.id = modalId;
-    modal.className = "fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50";
-    modal.innerHTML = `
-      <div class="bg-white rounded shadow max-w-md w-full p-6 relative">
-        <h2 class="text-xl font-bold mb-4">Editar Grupo</h2>
-        <div class="space-y-3">
-          <div>
-            <label class="block font-semibold">Nome</label>
-            <input type="text" id="edit-grupo-nome" value="${g.nome}" class="w-full border px-2 py-1 rounded" />
-          </div>
-          <div>
-            <label class="block font-semibold">Descrição</label>
-            <textarea id="edit-grupo-desc" class="w-full border px-2 py-1 rounded">${g.descricao || ""}</textarea>
-          </div>
-        </div>
-        <div class="mt-6 flex justify-end gap-3">
-          <button id="close-grupo-modal" class="px-4 py-2 border rounded">Cancelar</button>
-          <button id="save-grupo-modal" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button>
-        </div>
-        <button id="x-close-grupo" class="absolute top-2 right-2 text-gray-500">&times;</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    modal.querySelector("#close-grupo-modal").addEventListener("click", () => modal.remove());
-    modal.querySelector("#x-close-grupo").addEventListener("click", () => modal.remove());
-    modal.querySelector("#save-grupo-modal").addEventListener("click", async () => {
-      const updated = {
-        nome: document.getElementById("edit-grupo-nome").value,
-        descricao: document.getElementById("edit-grupo-desc").value
-      };
-      const res = await fetch(`/api/groups/${g.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated)
-      });
-      if (res.ok) {
-        showToast("Grupo salvo");
-        await carregarGrupos();
-        await carregarDashboard();
-        modal.remove();
-      } else {
-        showToast("Erro ao salvar grupo", false);
-      }
-    });
-  }
-
-  // criação rápida
-  document.getElementById("add-produto")?.addEventListener("click", async () => {
-    const novo = {
-      id: "prod-" + Date.now(),
-      nome: "Novo Produto",
-      descricao: "",
-      preco: "0,00",
-      imagem: "",
-      grupo: "",
-      desconto: 0,
-      link: ""
-    };
-    const res = await fetch("/api/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(novo)
-    });
-    if (res.ok) {
-      showToast("Produto criado");
+      await carregarDashboard();
       await carregarProdutos();
-      await carregarDashboard();
-    }
-  });
-
-  document.getElementById("add-download")?.addEventListener("click", async () => {
-    const novo = {
-      id: "dl-" + Date.now(),
-      name: "Novo Download",
-      url: "#",
-      description: ""
-    };
-    const res = await fetch("/api/downloads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(novo)
-    });
-    if (res.ok) {
-      showToast("Download criado");
       await carregarDownloads();
-      await carregarDashboard();
+      if (typeof carregarGruposAdmin === "function") {
+        await carregarGruposAdmin();
+      } else if (typeof carregarGrupos === "function") {
+        await carregarGrupos(); // fallback antigo
+      }
+    } catch (e) {
+      console.error("Erro na inicialização do painel:", e);
     }
-  });
-
-  document.getElementById("add-grupo")?.addEventListener("click", async () => {
-    const novo = {
-      id: "grp-" + Date.now(),
-      nome: "Novo Grupo",
-      descricao: ""
-    };
-    const res = await fetch("/api/groups", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(novo)
-    });
-    if (res.ok) {
-      showToast("Grupo criado");
-      await carregarGrupos();
-      await carregarDashboard();
-    }
-  });
-
-// inicializa tudo de forma segura
-(async () => {
-  try {
-    await carregarDashboard();
-    await carregarProdutos();
-    await carregarDownloads();
-    if (typeof carregarGruposAdmin === "function") {
-      await carregarGruposAdmin();
-    } else if (typeof carregarGrupos === "function") {
-      await carregarGrupos(); // fallback antigo
-    }
-  } catch (e) {
-    console.error("Erro na inicialização do painel:", e);
-  }
-})();
+  })();
+});

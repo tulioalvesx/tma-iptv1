@@ -55,9 +55,92 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // criação rápida via botões "+ Novo ..."
+  document.getElementById("add-produto")?.addEventListener("click", async () => {
+    const novo = {
+      id: "prod-" + Date.now(),
+      nome: "Novo Produto",
+      descricao: "",
+      preco: "0,00",
+      grupo: "",
+      imagem: "",
+      link: ""
+    };
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(novo)
+      });
+      if (res.ok) {
+        showToast("Produto criado");
+        await carregarProdutos();
+        await carregarDashboard();
+      } else {
+        showToast("Erro ao criar produto", false);
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("Erro de rede criando produto", false);
+    }
+  });
+
+  document.getElementById("add-download")?.addEventListener("click", async () => {
+    const novo = {
+      id: "dl-" + Date.now(),
+      name: "Novo App",
+      url: "#",
+      description: "",
+      imagem: ""
+    };
+    try {
+      const res = await fetch("/api/downloads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files: [novo] }) // dependendo do backend, talvez só novo
+      });
+      if (res.ok) {
+        showToast("Download criado");
+        await carregarDownloads();
+        await carregarDashboard();
+      } else {
+        showToast("Erro ao criar download", false);
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("Erro de rede criando download", false);
+    }
+  });
+
+  document.getElementById("add-grupo")?.addEventListener("click", async () => {
+    const novo = {
+      id: "grp-" + Date.now(),
+      nome: "Novo Grupo",
+      descricao: "",
+      imagem: ""
+    };
+    try {
+      const res = await fetch("/api/groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(novo)
+      });
+      if (res.ok) {
+        showToast("Grupo criado");
+        if (typeof carregarGruposAdmin === "function") await carregarGruposAdmin();
+        else if (typeof carregarGrupos === "function") await carregarGrupos();
+        await carregarDashboard();
+      } else {
+        showToast("Erro ao criar grupo", false);
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("Erro de rede criando grupo", false);
+    }
+  });
+
   async function carregarDashboard() {
     try {
-      // produtos, grupos, downloads
       const [prodRes, groupsRes, downloadsRes] = await Promise.all([
         fetch("/api/products"),
         fetch("/api/groups"),
@@ -67,7 +150,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const grupos = await groupsRes.json();
       const downloads = await downloadsRes.json();
 
-      // analytics com fallback
       let analytics = { hoje: 0, dias: [] };
       try {
         const analyticsRes = await fetch("/api/analytics");
@@ -75,10 +157,10 @@ document.addEventListener("DOMContentLoaded", () => {
           const parsed = await analyticsRes.json();
           analytics = parsed || analytics;
         } else {
-          console.warn("Falha ao buscar analytics, status:", analyticsRes.status);
+          console.warn("Falha analytics status:", analyticsRes.status);
         }
       } catch (e) {
-        console.warn("Erro ao buscar analytics, usando padrão", e);
+        console.warn("Erro buscando analytics, usando padrão", e);
       }
 
       document.getElementById("total-produtos").textContent = Array.isArray(produtos) ? produtos.length : 0;
@@ -391,7 +473,6 @@ document.addEventListener("DOMContentLoaded", () => {
           const item = Array.isArray(downloads.files) ? downloads.files.find(f => f.id === id) : null;
           if (!item) return showToast("Download não encontrado", false);
 
-          // modal de edição (similar implementado)
           const modalId = "modal-download";
           let existing = document.getElementById(modalId);
           if (existing) existing.remove();
@@ -478,7 +559,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typeof carregarGruposAdmin === "function") {
         await carregarGruposAdmin();
       } else if (typeof carregarGrupos === "function") {
-        await carregarGrupos(); // fallback antigo
+        await carregarGrupos();
       }
     } catch (e) {
       console.error("Erro na inicialização do painel:", e);

@@ -5,14 +5,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const list = document.getElementById('download-list');
       if (!list) return;
       list.innerHTML = '';
-      (Array.isArray(data.files) ? data.files : []).forEach(item => {
+      const files = Array.isArray(data.files) ? data.files : [];
+      files.forEach(item => {
         const li = document.createElement('li');
         li.style.marginBottom = '16px';
         li.className = 'flex gap-4 items-center';
 
         if (item.imagem) {
           const img = document.createElement('img');
-          img.src = item.imagem.startsWith('/') ? item.imagem : `/img/${item.imagem}`;
+          let src = item.imagem;
+          if (!src.startsWith('/')) {
+            src = `/img/${src}`;
+          }
+          img.src = src;
           img.alt = item.name;
           img.style.width = '60px';
           img.style.height = '60px';
@@ -22,11 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const content = document.createElement('div');
         const link = document.createElement('a');
-        link.href = item.url;
+        link.href = item.url || "#";
         link.textContent = item.name;
         link.style.fontWeight = '600';
+        link.target = "_blank";
         const desc = document.createElement('p');
-        desc.textContent = item.description;
+        desc.textContent = item.description || "";
         desc.style.margin = '4px 0 0 0';
         content.appendChild(link);
         content.appendChild(desc);
@@ -34,5 +40,5 @@ document.addEventListener('DOMContentLoaded', () => {
         list.appendChild(li);
       });
     })
-    .catch(err => console.error(err));
+    .catch(err => console.error("Erro ao carregar downloads:", err));
 });

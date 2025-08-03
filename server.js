@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(PUBLIC_DIR));
 
-// Helpers
+// Helpers genéricos
 const loadJson = (filename) => {
   const filePath = path.join(DATA_DIR, filename);
   if (!fs.existsSync(filePath)) return null;
@@ -34,11 +34,11 @@ const saveJson = (filename, data) => {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
 };
 
-// Garantir existence de access.json
+// Garante existence de access.json
 const accessFile = path.join(DATA_DIR, "access.json");
 if (!fs.existsSync(accessFile)) saveJson("access.json", {});
 
-// Middleware de log de acessos (exclui /api/admin se quiser diferenciar)
+// Middleware de log de acessos (não conta admin/login)
 app.use((req, res, next) => {
   if (!req.path.startsWith("/api/admin")) {
     const access = loadJson("access.json") || {};
@@ -49,16 +49,25 @@ app.use((req, res, next) => {
   next();
 });
 
-// ---------- Upload seguro de imagens ----------
+// ---------- Funções auxiliares de imagem ----------
 function safeFilename(type, id, originalName) {
   const ext = path.extname(originalName).toLowerCase();
   const allowed = [".png", ".jpg", ".jpeg", ".gif", ".webp"];
   const safeExt = allowed.includes(ext) ? ext : ".png";
   const hash = crypto.createHash("md5").update(originalName + Date.now()).digest("hex").slice(0, 6);
-  const cleanId = (id || "unknown").replace(/[^a-zA-Z0-9-_]/g, "").toLowerCase();
+  const cleanId = (id || "unknown").toString().replace(/[^a-zA-Z0-9-_]/g, "").toLowerCase();
   return `${type}-${cleanId}-${hash}${safeExt}`;
 }
 
+function tryDeleteFile(filepath) {
+  fs.unlink(filepath, (err) => {
+    if (err && err.code !== "ENOENT") {
+      console.warn("Erro ao deletar antigo arquivo:", err);
+    }
+  });
+}
+
+// Multer para upload
 const upload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
@@ -78,18 +87,64 @@ const upload = multer({
     }
   }),
   fileFilter: (req, file, cb) => {
-    const allowed = /jpeg|jpg|png|gif|webp/;
+    const allowedExt = [".jpeg", ".jpg", ".png", ".gif", ".webp"];
     const ext = path.extname(file.originalname).toLowerCase();
-    if (allowed.test(ext)) cb(null, true);
+    if (allowedExt.includes(ext)) cb(null, true);
     else cb(new Error("Extensão de imagem não permitida"));
   },
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB
 });
 
+// Upload de imagem com substituição de anterior
 app.post("/api/upload-image", upload.single("image"), (req, res) => {
+  const { type, id } = req.body;
   if (!req.file) return res.status(400).json({ success: false, error: "Arquivo não enviado" });
-  const relativePath = `/img/${req.file.filename}`;
-  res.json({ success: true, path: relativePath, filename: req.file.filename });
+  if (!type || !id) return res.status(400).json({ success: false, error: "type e id são obrigatórios" });
+
+  const filename = req.file.filename;
+  const relativePath = `/img/${filename}`;
+
+  let dataFilePath;
+  let finder;
+  if (type === "produto") {
+    dataFilePath = path.join(DATA_DIR, "products.json");
+    finder = (arr) => arr.find(p => p.id === id);
+  } else if (type === "download") {
+    dataFilePath = path.join(DATA_DIR, "downloads.json");
+    finder = (obj) => (Array.isArray(obj.files) ? obj.files.find(d => d.id === id) : null);
+  } else if (type === "grupo") {
+    dataFilePath = path.join(DATA_DIR, "groups.json");
+    finder = (arr) => arr.find(g => g.id === id);
+  } else {
+    return res.status(400).json({ success: false, error: "Tipo inválido" });
+  }
+
+  const raw = loadJson(path.basename(dataFilePath));
+  if (!raw) return res.status(500).json({ success: false, error: "Erro ao ler dados" });
+
+  let item = finder(raw);
+  if (!item) return res.status(404).json({ success: false, error: "Item não encontrado" });
+
+  const previousImage = item.imagem;
+
+  item.imagem = filename;
+
+  // Persiste alterações
+  if (type === "download") {
+    saveJson("downloads.json", raw);
+  } else if (type === "produto") {
+    saveJson("products.json", raw);
+  } else if (type === "grupo") {
+    saveJson("groups.json", raw);
+  }
+
+  // Remove antiga se diferente
+  if (previousImage && previousImage !== filename) {
+    const oldPath = path.join(PUBLIC_DIR, "img", previousImage);
+    tryDeleteFile(oldPath);
+  }
+
+  return res.json({ success: true, path: relativePath, filename });
 });
 
 // --------- Autenticação ---------

@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const lang = localStorage.getItem("lang") || "pt";
     const titleEl = document.getElementById("group-title");
-    const groupName = (lang === "en" && group.name_en) ? group.name_en : group.nome || group.name;
+    const groupName = (lang === "en" && group.name_en) ? group.name_en : (group.nome || group.name);
     if (titleEl) titleEl.textContent = groupName;
 
     const filtered = Array.isArray(produtos) ? produtos.filter(p => p.grupo === groupId) : [];

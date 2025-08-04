@@ -182,33 +182,55 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       });
 
-      container.querySelectorAll(".btn-save-inline").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          const id = e.currentTarget.dataset.id;
-          const imagemInput = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`);
-          const linkInput = document.querySelector(`input[data-field="link"][data-id="${id}"]`);
-          const updated = {};
-          if (imagemInput) updated.imagem = imagemInput.value.trim();
-          if (linkInput) updated.link = linkInput.value.trim();
-          try {
-            const res = await fetch(`/api/products/${id}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(updated)
-            });
-            if (res.ok) {
-              showToast("Produto salvo");
-              await carregarProdutos();
-              await carregarDashboard();
-            } else {
-              showToast("Erro ao salvar produto", false);
-            }
-          } catch (err) {
-            console.error(err);
-            showToast("Erro de rede", false);
-          }
-        });
+// handler robusto para Salvar rápido de grupo, incluindo imagem digitada
+container.querySelectorAll(".btn-save-inline-grupo").forEach(btn => {
+  btn.addEventListener("click", async (e) => {
+    const id = e.currentTarget.dataset.id;
+    // coleta todos os campos inline que queremos salvar
+    const imagemInput = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`);
+    const updated = {};
+
+    if (imagemInput) {
+      const val = imagemInput.value.trim();
+      if (val) {
+        updated.imagem = val;
+      }
+    }
+
+    if (Object.keys(updated).length === 0) {
+      showToast("Nada para salvar"); // nada mudou
+      return;
+    }
+
+    // atualiza preview local imediatamente
+    const groupCard = btn.closest('[data-id]') || btn.parentElement.parentElement;
+    const imgEl = groupCard ? groupCard.querySelector('img') : null;
+    if (imgEl && updated.imagem) {
+      imgEl.src = normalizeImagem(updated.imagem);
+    }
+
+    try {
+      const res = await fetch(`/api/groups/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
       });
+      const body = await res.json();
+      if (res.ok) {
+        showToast("Grupo salvo");
+        // força recarregar para refletir persistência
+        await carregarGrupos();
+        await carregarDashboard();
+      } else {
+        console.warn("Erro ao salvar grupo:", body);
+        showToast("Erro ao salvar grupo", false);
+      }
+    } catch (err) {
+      console.error("Erro de rede ao salvar grupo:", err);
+      showToast("Erro de rede", false);
+    }
+  });
+});
 
       container.querySelectorAll(".btn-edit").forEach(btn => {
         btn.addEventListener("click", async (e) => {

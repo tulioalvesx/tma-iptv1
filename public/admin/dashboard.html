@@ -8,6 +8,74 @@
   <script src="/js/dashboard.js" defer></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
+  <!-- Modal Regra -->
+  <div id="modal-rule" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-96">
+      <h2 class="text-lg font-semibold mb-4">Nova Regra</h2>
+      <form id="form-rule" class="space-y-4">
+        <div>
+          <label class="block text-sm">ID</label>
+          <input id="rule-id" name="rule-id" type="text" required
+                 class="w-full border px-3 py-2 rounded"/>
+        </div>
+        <div>
+          <label class="block text-sm">Tipo</label>
+          <select id="rule-type" name="rule-type" required
+                  class="w-full border px-3 py-2 rounded">
+            <option value="keyword">Palavra-chave</option>
+            <option value="message">Mensagem exata</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm">Padrão</label>
+          <input id="rule-pattern" name="rule-pattern" type="text" required
+                 class="w-full border px-3 py-2 rounded"/>
+        </div>
+        <div>
+          <label class="block text-sm">Resposta</label>
+          <input id="rule-reply" name="rule-reply" type="text" required
+                 class="w-full border px-3 py-2 rounded"/>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button id="cancel-rule" type="button"
+                  class="px-4 py-2 border rounded">Cancelar</button>
+          <button type="submit"
+                  class="px-4 py-2 bg-blue-500 text-white rounded">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Webhook -->
+  <div id="modal-hook" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-96">
+      <h2 class="text-lg font-semibold mb-4">Novo Webhook</h2>
+      <form id="form-hook" class="space-y-4">
+        <div>
+          <label class="block text-sm">ID</label>
+          <input id="hook-id" name="hook-id" type="text" required
+                 class="w-full border px-3 py-2 rounded"/>
+        </div>
+        <div>
+          <label class="block text-sm">URL</label>
+          <input id="hook-url" name="hook-url" type="url" required
+                 class="w-full border px-3 py-2 rounded"/>
+        </div>
+        <div>
+          <label class="block text-sm">Headers (JSON)</label>
+          <textarea id="hook-headers" name="hook-headers" rows="3"
+                    class="w-full border px-3 py-2 rounded">{}</textarea>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button id="cancel-hook" type="button"
+                  class="px-4 py-2 border rounded">Cancelar</button>
+          <button type="submit"
+                  class="px-4 py-2 bg-blue-500 text-white rounded">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
 <body class="bg-gray-100 min-h-screen">
 
   <header class="bg-gray-900 text-white p-4 flex justify-between items-center">

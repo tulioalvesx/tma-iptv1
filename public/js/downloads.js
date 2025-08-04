@@ -1,40 +1,40 @@
-document.addEventListener('DOMContentLoaded', () => {
-  fetch('/api/downloads')
+// downloads.js
+document.addEventListener("DOMContentLoaded", () => {
+  fetch("/api/downloads")
     .then(res => res.json())
     .then(data => {
-      const list = document.getElementById('download-list');
+      const list = document.getElementById("download-list");
       if (!list) return;
-      list.innerHTML = '';
+      list.innerHTML = "";
       const files = Array.isArray(data.files) ? data.files : [];
       files.forEach(item => {
-        const li = document.createElement('li');
-        li.style.marginBottom = '16px';
-        li.className = 'flex gap-4 items-center';
+        const li = document.createElement("li");
+        li.className = "flex gap-4 items-center mb-4";
 
         if (item.imagem) {
-          const img = document.createElement('img');
+          const img = document.createElement("img");
           let src = item.imagem;
-          if (!src.startsWith('/')) {
-            src = `/img/${src}`;
+          if (!src.startsWith("/")) {
+            src = `/img/${src.replace(/^\/?img\/?/i, "")}`;
           }
           img.src = src;
           img.alt = item.name;
-          img.style.width = '60px';
-          img.style.height = '60px';
-          img.style.objectFit = 'contain';
+          img.style.width = "60px";
+          img.style.height = "60px";
+          img.style.objectFit = "contain";
           li.appendChild(img);
         }
 
-        const content = document.createElement('div');
-        const link = document.createElement('a');
-        link.href = item.url || "#";
-        link.textContent = item.name;
-        link.style.fontWeight = '600';
-        link.target = "_blank";
-        const desc = document.createElement('p');
+        const content = document.createElement("div");
+        const a = document.createElement("a");
+        a.href = item.url || "#";
+        a.textContent = item.name;
+        a.target = "_blank";
+        a.style.fontWeight = "600";
+        const desc = document.createElement("p");
         desc.textContent = item.description || "";
-        desc.style.margin = '4px 0 0 0';
-        content.appendChild(link);
+        desc.style.margin = "4px 0 0 0";
+        content.appendChild(a);
         content.appendChild(desc);
         li.appendChild(content);
         list.appendChild(li);

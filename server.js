@@ -15,6 +15,12 @@ const DATA_DIR = path.join(__dirname, "data");
 const PUBLIC_DIR = path.join(__dirname, "public");
 
 app.use(express.json());
+
+// Health check para verificar se o servidor está ativo
+app.get('/health', (req, res) => {
+  res.send('OK');
+});
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(PUBLIC_DIR));
 
@@ -351,6 +357,11 @@ app.get("/api/analytics", (req, res) => {
     .map(([dia, total]) => ({ dia, total }));
   res.json({ hoje, dias });
 });
+
+// ---------- Chatbot Rules Engine ----------
+const rules = loadJson("rules.json") || [];
+console.log(`Loaded ${rules.length} chatbot rules`);
+
 
 
 // --------- Chatbot Endpoint ---------

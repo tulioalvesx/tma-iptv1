@@ -768,3 +768,68 @@ if (gruposLista) {
   carregarDownloads();
   carregarGrupos();
 });
+
+// ---------- Admin Rules Functions ----------
+async function loadRules() {
+  const rules = await fetch('/api/admin/rules').then(r => r.json());
+  const tbody = document.querySelector('#rules-table tbody');
+  tbody.innerHTML = '';
+  rules.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="border px-4 py-2">${r.id}</td>
+      <td class="border px-4 py-2">${r.type}</td>
+      <td class="border px-4 py-2">${r.pattern}</td>
+      <td class="border px-4 py-2">${r.reply}</td>
+      <td class="border px-4 py-2">
+        <button onclick="editRule('${r.id}')" class="text-blue-600">Editar</button>
+        <button onclick="deleteRule('${r.id}')" class="text-red-600 ml-2">Excluir</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function deleteRule(id) {
+  await fetch(`/api/admin/rules/${id}`, { method: 'DELETE' });
+  loadRules();
+}
+
+function editRule(id) {
+  alert('Implementar edição de regra: ' + id);
+}
+
+document.getElementById('new-rule-btn').addEventListener('click', () => {
+  alert('Implementar formulário de nova regra');
+});
+
+// ---------- Admin Webhooks Functions ----------
+async function loadHooks() {
+  const hooks = await fetch('/api/admin/webhooks').then(r => r.json());
+  const tbody = document.querySelector('#webhooks-table tbody');
+  tbody.innerHTML = '';
+  hooks.forEach(h => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="border px-4 py-2">${h.id}</td>
+      <td class="border px-4 py-2">${h.url}</td>
+      <td class="border px-4 py-2">${JSON.stringify(h.headers)}</td>
+      <td class="border px-4 py-2">
+        <button onclick="editHook('${h.id}')" class="text-blue-600">Editar</button>
+        <button onclick="deleteHook('${h.id}')" class="text-red-600 ml-2">Excluir</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function deleteHook(id) {
+  await fetch(`/api/admin/webhooks/${id}`, { method: 'DELETE' });
+  loadHooks();
+}
+
+function editHook(id) {
+  alert('Implementar edição de webhook: ' + id);
+}
+
+document.getElementById('new-hook-btn').addEventListener('click', () => {
+  alert('Implementar formulário de novo webhook');
+});

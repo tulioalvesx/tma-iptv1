@@ -358,6 +358,63 @@ app.get("/api/analytics", (req, res) => {
   res.json({ hoje, dias });
 });
 
+// ---------- Admin Rules CRUD ----------
+app.get('/api/admin/rules', (req, res) => {
+  const rules = loadJson('rules.json') || [];
+  res.json(rules);
+});
+app.post('/api/admin/rules', (req, res) => {
+  const newRule = req.body;
+  const rules = loadJson('rules.json') || [];
+  rules.push(newRule);
+  saveJson('rules.json', rules);
+  res.status(201).json(newRule);
+});
+app.put('/api/admin/rules/:id', (req, res) => {
+  const { id } = req.params;
+  const updated = req.body;
+  let rules = loadJson('rules.json') || [];
+  rules = rules.map(r => r.id === id ? updated : r);
+  saveJson('rules.json', rules);
+  res.json(updated);
+});
+app.delete('/api/admin/rules/:id', (req, res) => {
+  const { id } = req.params;
+  let rules = loadJson('rules.json') || [];
+  rules = rules.filter(r => r.id !== id);
+  saveJson('rules.json', rules);
+  res.status(204).send();
+});
+
+// ---------- Admin Webhooks CRUD ----------
+app.get('/api/admin/webhooks', (req, res) => {
+  const hooks = loadJson('webhooks.json') || [];
+  res.json(hooks);
+});
+app.post('/api/admin/webhooks', (req, res) => {
+  const newHook = req.body;
+  const hooks = loadJson('webhooks.json') || [];
+  hooks.push(newHook);
+  saveJson('webhooks.json', hooks);
+  res.status(201).json(newHook);
+});
+app.put('/api/admin/webhooks/:id', (req, res) => {
+  const { id } = req.params;
+  const updated = req.body;
+  let hooks = loadJson('webhooks.json') || [];
+  hooks = hooks.map(h => h.id === id ? updated : h);
+  saveJson('webhooks.json', hooks);
+  res.json(updated);
+});
+app.delete('/api/admin/webhooks/:id', (req, res) => {
+  const { id } = req.params;
+  let hooks = loadJson('webhooks.json') || [];
+  hooks = hooks.filter(h => h.id !== id);
+  saveJson('webhooks.json', hooks);
+  res.status(204).send();
+});
+
+
 // ---------- Chatbot Rules Engine ----------
 const rules = loadJson("rules.json") || [];
 console.log(`Loaded ${rules.length} chatbot rules`);

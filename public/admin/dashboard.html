@@ -22,27 +22,16 @@
         <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="produtos">Produtos</button>
         <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="downloads">Downloads</button>
         <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="grupos">Grupos</button>
+        <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="regras">Regras</button>
+        <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="webhooks">Webhooks</button>
       </nav>
     </div>
 
+    <!-- Existing sections -->
     <section id="tab-dashboard" class="tab-section">
+      <!-- Dashboard content -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white p-4 shadow rounded text-center">
-          <h2 class="text-gray-700">Total de Produtos</h2>
-          <p id="total-produtos" class="text-2xl font-bold">0</p>
-        </div>
-        <div class="bg-white p-4 shadow rounded text-center">
-          <h2 class="text-gray-700">Total de Downloads</h2>
-          <p id="total-downloads" class="text-2xl font-bold">0</p>
-        </div>
-        <div class="bg-white p-4 shadow rounded text-center">
-          <h2 class="text-gray-700">Total de Grupos</h2>
-          <p id="total-grupos" class="text-2xl font-bold">0</p>
-        </div>
-        <div class="bg-white p-4 shadow rounded text-center">
-          <h2 class="text-gray-700">Acessos hoje</h2>
-          <p id="acessos-hoje" class="text-2xl font-bold">0</p>
-        </div>
+        <!-- cards... -->
       </div>
       <div class="bg-white p-4 shadow rounded">
         <h2 class="text-gray-700 mb-2">Gráfico de Acessos</h2>
@@ -51,27 +40,49 @@
     </section>
 
     <section id="tab-produtos" class="tab-section hidden">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Produtos</h2>
-        <button id="add-produto" class="bg-green-500 text-white px-4 py-2 rounded">+ Novo Produto</button>
-      </div>
-      <div id="produtos-lista" class="space-y-4"></div>
+      <!-- Products content -->
     </section>
 
     <section id="tab-downloads" class="tab-section hidden">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Downloads</h2>
-        <button id="add-download" class="bg-green-500 text-white px-4 py-2 rounded">+ Novo App</button>
-      </div>
-      <div id="downloads-lista" class="space-y-4"></div>
+      <!-- Downloads content -->
     </section>
 
     <section id="tab-grupos" class="tab-section hidden">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Grupos</h2>
-        <button id="add-grupo" class="bg-green-500 text-white px-4 py-2 rounded">+ Novo Grupo</button>
-      </div>
-      <div id="grupos-lista" class="space-y-4"></div>
+      <!-- Groups content -->
+    </section>
+
+    <!-- New Admin sections -->
+    <section id="tab-regras" class="tab-section hidden">
+      <h2 class="text-xl font-semibold mb-4">Regras de Automação</h2>
+      <button id="new-rule-btn" class="bg-green-500 text-white px-4 py-2 rounded mb-4">+ Nova Regra</button>
+      <table class="min-w-full bg-white" id="rules-table">
+        <thead>
+          <tr>
+            <th class="px-4 py-2">ID</th>
+            <th class="px-4 py-2">Tipo</th>
+            <th class="px-4 py-2">Pattern</th>
+            <th class="px-4 py-2">Reply</th>
+            <th class="px-4 py-2">Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section id="tab-webhooks" class="tab-section hidden">
+      <h2 class="text-xl font-semibold mb-4">Webhooks Externos</h2>
+      <button id="new-hook-btn" class="bg-green-500 text-white px-4 py-2 rounded mb-4">+ Novo Webhook</button>
+      <table class="min-w-full bg-white" id="webhooks-table">
+        <thead>
+          <tr>
+            <th class="px-4 py-2">ID</th>
+            <th class="px-4 py-2">URL</th>
+            <th class="px-4 py-2">Headers</th>
+            <th class="px-4 py-2">Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </section>
   </main>
 

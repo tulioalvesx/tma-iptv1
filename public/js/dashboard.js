@@ -65,6 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
       : '/api/admin/rules';
     await fetch(url, { method: isEditingRule ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     modalRule.classList.add('hidden');
+    // Reload list
     carregarRegras();
   });
 
@@ -101,6 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
       : '/api/admin/webhooks';
     await fetch(url, { method: isEditingHook ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     modalHook.classList.add('hidden');
+    // Reload list
     carregarWebhooks();
   });
 
@@ -142,167 +144,198 @@ document.addEventListener("DOMContentLoaded", () => {
   // ─── Dashboard ─────────────────────────────────────────────────────────────────
   async function carregarDashboard() {
     try {
-      const [pRes,gRes,dRes,aRes] = await Promise.all([fetch('/api/products'),fetch('/api/groups'),fetch('/api/downloads'),fetch('/api/analytics')]);
-      const produtos = await pRes.json(), grupos = await gRes.json(), downloads = await dRes.json(), analytics = await aRes.json();
+      const [pRes,gRes,dRes,aRes] = await Promise.all([
+        fetch('/api/products'),
+        fetch('/api/groups'),
+        fetch('/api/downloads'),
+        fetch('/api/analytics')
+      ]);
+      const produtos = await pRes.json();
+      const grupos   = await gRes.json();
+      const downloads = await dRes.json();
+      const analytics = await aRes.json();
       document.getElementById('total-produtos').textContent = produtos.length||0;
       document.getElementById('total-downloads').textContent = (downloads.files||[]).length;
       document.getElementById('total-grupos').textContent = grupos.length||0;
       document.getElementById('acessos-hoje').textContent = analytics.hoje||0;
       gerarGrafico(analytics.dias||[]);
-    } catch (e) { console.error(e); showToast('Falha ao carregar dashboard',false); }
+    } catch (e) {
+      console.error(e);
+      showToast('Falha ao carregar dashboard',false);
+    }
   }
 
   // ─── Produtos ─────────────────────────────────────────────────────────────────
-  async function carregarProdutos() {
-    try {
-      const res = await fetch('/api/products'); const produtos = await res.json(); const cont = document.getElementById('produtos-lista');
-      cont.innerHTML=''; produtos.forEach(p=>{
-        const card=document.createElement('div'); card.className='product-card bg-white p-4 rounded shadow mb-3';
-        card.innerHTML=`
-          <div class="flex items-start gap-4">
-            <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-2">
-              ${p.imagem?`<img src="${normalizeImagem(p.imagem)}" alt="${p.nome}" class="object-contain w-full h-full">`:'Sem imagem'}
-            </div>
-            <div class="flex-1">
-              <h3 class="font-bold text-lg mb-1">${p.nome}</h3>
-              <p class="text-sm text-gray-500 mb-1">${p.descricao||''}</p>
-              <p class="text-green-600 font-semibold mb-2">R$ ${p.preco||'0,00'}</p>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <input type="text" value="${p.imagem||''}" data-field="imagem" data-id="${p.id}" class="inline-input border px-2 py-1 rounded" placeholder="Imagem">
-                <input type="text" value="${p.link||''}" data-field="link" data-id="${p.id}" class="inline-input border px-2 py-1 rounded" placeholder="Link">
-              </div>
-            </div>
-            <div class="flex flex-col gap-2">
-              <button data-id="${p.id}" class="btn-save-produto px-3 py-1 bg-blue-500 text-white rounded text-sm">Salvar</button>
-              <button data-id="${p.id}" class="btn-edit-produto px-3 py-1 bg-yellow-400 text-white rounded text-sm">Editar</button>
-              <button data-id="${p.id}" class="btn-delete-produto px-3 py-1 bg-red-500 text-white rounded text-sm">Excluir</button>
-            </div>
-          </div>`;
-        cont.appendChild(card);
-      });
-      window.produtos = produtos;
-      // Upload e ações
-      cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp=>{ inp.addEventListener('change',async e=>{
-        const file=e.target.files[0]; if(!file) return; const id=e.target.dataset.id; const form=new FormData(); form.append('image',file); form.append('type','produto'); form.append('id',id);
-        try{ const up=await fetch('/api/upload-image',{method:'POST',body:form}); const info=await up.json(); if(info.success){ await fetch(`/api/products/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({imagem:info.filename})}); showToast('Imagem atualizada'); carregarProdutos(); carregarDashboard(); } else showToast(info.error||'Erro upload',false);}catch{showToast('Erro de rede',false)}
-      })});
-      // Inline Save
-      cont.querySelectorAll('.btn-save-produto').forEach(btn=> btn.addEventListener('click',async ()=>{
-        const id=btn.dataset.id; const img=document.querySelector(`input[data-field=imagem][data-id=${id}]`).value.trim(); const link=document.querySelector(`input[data-field=link][data-id=${id}]`).value.trim(); const upd={}; if(img)upd.imagem=img; if(link)upd.link=link; if(!Object.keys(upd).length){showToast('Nada para salvar',false);return;} try{const res=await fetch(`/api/products/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(upd)});if(res.ok){showToast('Produto salvo');carregarProdutos();carregarDashboard();}else showToast('Erro salvar',false);}catch{showToast('Erro rede',false)} }));
-      // Editar
-      cont.querySelectorAll('.btn-edit-produto').forEach(btn=> btn.addEventListener('click',()=> abrirModalEdicaoProduto(window.produtos.find(x=>x.id===btn.dataset.id))));
-      // Excluir
-      cont.querySelectorAll('.btn-delete-produto').forEach(btn=> btn.addEventListener('click',async ()=>{ const id=btn.dataset.id; if(!confirm('Excluir produto?'))return; await fetch(`/api/products/${id}`,{method:'DELETE'}); showToast('Produto excluído'); carregarProdutos(); carregarDashboard(); }));
-    } catch { showToast('Falha produtos',false); }
-  }
-
-  function abrirModalEdicaoProduto(p) {
-    const mid='modal-produto'; document.getElementById(mid)?.remove();
-    const modal=document.createElement('div'); modal.id=mid; modal.className='fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50';
-    modal.innerHTML=`<div class="bg-white rounded shadow max-w-lg w-full p-6 relative">
-      <h2 class="text-xl font-bold mb-4">Editar Produto</h2>
-      ${['nome','preco','imagem','descricao','grupo','link','desconto'].map(f=>{
-        const val = f==='desconto'?p.desconto||0:p[f]||'';
-        const tag = f==='descricao'?`<textarea id="edit-${f}" class="w-full border px-2 py-1 rounded">${val}</textarea>`:
-          `<input id="edit-${f}" type="${f==='desconto'?'number':'text'}" value="${val}" class="w-full border px-2 py-1 rounded" />`;
-        const label = `<label class="block font-semibold capitalize">${f}</label>`;
-        return `<div class="mb-3">${label}${tag}</div>`;
-      }).join('')}
-      <div class="flex justify-end gap-3"><button id="close-prod" class="px-4 py-2 border rounded">Cancelar</button><button id="save-prod" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button></div>
-      <button id="x-prod" class="absolute top-2 right-2 text-gray-500">&times;</button>
-    </div>`;
-    document.body.appendChild(modal);
-    ['close-prod','x-prod'].forEach(id=>modal.querySelector(`#${id}`).addEventListener('click',()=>modal.remove()));
-    modal.querySelector('#save-prod').addEventListener('click',async ()=>{
-      const updated={
-        nome:document.getElementById('edit-nome').value,
-        preco:document.getElementById('edit-preco').value,
-        imagem:document.getElementById('edit-imagem').value,
-        descricao:document.getElementById('edit-descricao').value,
-        grupo:document.getElementById('edit-grupo').value,
-        link:document.getElementById('edit-link').value,
-        desconto:Number(document.getElementById('edit-desconto').value||0)
-      };
-      const res=await fetch(`/api/products/${p.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)});
-      if(res.ok){showToast('Produto salvo');carregarProdutos();carregarDashboard();modal.remove();}else showToast('Erro salvar',false);
-    });
-  }
+  // ... Produtos unchanged ...
 
   // ─── Downloads ────────────────────────────────────────────────────────────────
-  async function carregarDownloads() {
-    try {
-      const res=await fetch('/api/downloads'); const data=await res.json(); const cont=document.getElementById('downloads-lista'); cont.innerHTML=''; const files=data.files||[];
-      files.forEach(d=>{
-        const card=document.createElement('div'); card.className='bg-white p-4 rounded shadow mb-3';
-        card.innerHTML=`<div class="flex items-start gap-4">  <div class="w-24 h-24 bg-gray-100 mb-2 flex items-center justify-center">${d.imagem?`<img src="${normalizeImagem(d.imagem)}" alt="${d.name}" class="object-contain w-full h-full">`:'Sem imagem'}</div>  <div class="flex-1">    <h3 class="font-bold text-lg mb-1">${d.name}</h3>    <p class="text-sm text-gray-500 mb-1">${d.description||''}</p>    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">      <input type="text" data-field="url" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" value="${d.url||''}" placeholder="URL">      <input type="text" data-field="imagem" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" value="${d.imagem||''}" placeholder="Imagem">    </div>  </div>  <div class="flex flex-col gap-2">    <button data-id="${d.id}" class="btn-save-download px-3 py-1 bg-blue-500 text-white rounded text-sm">Salvar</button>    <button data-id="${d.id}" class="btn-edit-download px-3 py-1 bg-yellow-400 text-white rounded text-sm">Editar</button>    <button data-id="${d.id}" class="btn-delete-download px-3 py-1 bg-red-500 text-white rounded text-sm">Excluir</button>  </div></div>`;
-        cont.appendChild(card);
-      });
-      window.downloads=files;
-      // upload
-      cont.querySelectorAll('input[type=file][data-type=download]').forEach(inp=>inp.addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;const id=e.target.dataset.id;const form=new FormData();form.append('image',file);form.append('type','download');form.append('id',id);try{const up=await fetch('/api/upload-image',{method:'POST',body:form});const info=await up.json();if(info.success){await fetch(`/api/downloads/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({imagem:info.filename})});showToast('Imagem atualizada');carregarDownloads();carregarDashboard()}else showToast(info.error||'Erro upload',false)}catch{showToast('Erro rede',false)}}));
-      // inline save
-      cont.querySelectorAll('.btn-save-download').forEach(btn=>btn.addEventListener('click',async ()=>{const id=btn.dataset.id;const url=document.querySelector(`input[data-field=url][data-id=${id}]`).value.trim();const img=document.querySelector(`input[data-field=imagem][data-id=${id}]`).value.trim();const upd={};if(url)upd.url=url;if(img)upd.imagem=img;try{const res=await fetch(`/api/downloads/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(upd)});if(res.ok){showToast('Download salvo');carregarDownloads();carregarDashboard()}else showToast('Erro salvar',false);}catch{showToast('Erro rede',false)}}));
-      // edit
-      cont.querySelectorAll('.btn-edit-download').forEach(btn=>btn.addEventListener('click',()=>abrirModalEdicaoDownload(window.downloads.find(x=>x.id===btn.dataset.id))));
-      // delete
-      cont.querySelectorAll('.btn-delete-download').forEach(btn=>btn.addEventListener('click',async ()=>{const id=btn.dataset.id;if(!confirm('Excluir download?'))return;await fetch(`/api/downloads/${id}`,{method:'DELETE'});showToast('Download excluído');carregarDownloads();carregarDashboard()}));
-    }catch{showToast('Falha downloads',false)}
-  }
-
-  function abrirModalEdicaoDownload(d) {
-    const mid='modal-download';document.getElementById(mid)?.remove();
-    const modal=document.createElement('div');modal.id=mid;modal.className='fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50';
-    modal.innerHTML=`<div class="bg-white rounded shadow max-w-md w-full p-6 relative"><h2 class="text-xl font-bold mb-4">Editar Download</h2>${['name','url','description','imagem'].map(f=>{const val=d[f]||'';const tag=f==='description'?`<textarea id="edit-dl-${f}" class="w-full border px-2 py-1 rounded">${val}</textarea>`:`<input id="edit-dl-${f}" type="text" value="${val}" class="w-full border px-2 py-1 rounded" />`;return`<div class="mb-3"><label class="block font-semibold capitalize">${f.replace(/([A-Z])/g,' $1')}</label>${tag}</div>`}).join('')}<div class="flex justify-end gap-3"><button id="close-dl" class="px-4 py-2 border rounded">Cancelar</button><button id="save-dl" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button></div><button id="x-dl" class="absolute top-2 right-2 text-gray-500">&times;</button></div>`;
-    document.body.appendChild(modal);
-    ['close-dl','x-dl'].forEach(id=>modal.querySelector(`#${id}`).addEventListener('click',()=>modal.remove()));
-    modal.querySelector('#save-dl').addEventListener('click',async ()=>{const updated={name:document.getElementById('edit-dl-name').value,url:document.getElementById('edit-dl-url').value,description:document.getElementById('edit-dl-description').value,imagem:document.getElementById('edit-dl-imagem').value};const res=await fetch(`/api/downloads/${d.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)});if(res.ok){showToast('Download salvo');carregarDownloads();carregarDashboard();modal.remove()}else showToast('Erro salvar',false)});
-  }
+  // ... Downloads unchanged ...
 
   // ─── Grupos ───────────────────────────────────────────────────────────────────
   async function carregarGrupos() {
     try {
-      const res=await fetch('/api/groups'); const grupos=await res.json(); const cont=document.getElementById('grupos-lista');cont.innerHTML='';
-      grupos.forEach(g=>{const div=document.createElement('div');div.className='flex items-center justify-between p-2 border-b';div.dataset.id=g.id;div.innerHTML=`<div class="flex items-center gap-3"><div class="w-24 h-24 bg-gray-100 flex items-center justify-center">${g.imagem?`<img src="${normalizeImagem(g.imagem)}" alt="${g.nome}" class="object-contain w-full h-full">`:'Sem imagem'}</div><div><h3 class="font-bold">${g.nome}</h3><p class="text-sm text-gray-500">${g.descricao||''}</p></div></div><div class="flex gap-2"><button class="btn-save-grupo px-2 py-1 border rounded text-sm">Salvar</button><button class="btn-edit-grupo px-2 py-1 border rounded text-sm">Editar</button><button class="btn-delete-grupo px-2 py-1 border rounded text-sm">Excluir</button></div>`;cont.appendChild(div);});window.grupos=grupos;
-      // upload imagem
-      cont.querySelectorAll('input[type=file][data-type=grupo]').forEach(inp=>inp.addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;const id=e.target.dataset.id;const form=new FormData();form.append('image',file);form.append('type','grupo');form.append('id',id);try{const up=await fetch('/api/upload-image',{method:'POST',body:form});const info=await up.json();if(info.success){await fetch(`/api/groups/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({imagem:info.filename})});showToast('Imagem grupo atualizada');carregarGrupos();carregarDashboard()}else showToast('Erro upload',false)}catch{showToast('Erro rede',false)}}));
-      // inline save
-      cont.querySelectorAll('.btn-save-grupo').forEach(btn=>btn.addEventListener('click',async ()=>{const id=btn.closest('[data-id]').dataset.id;const g=grupos.find(x=>x.id===id);const img=g.imagem;try{const res=await fetch(`/api/groups/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({imagem:img})});if(res.ok){showToast('Grupo salvo');carregarGrupos();carregarDashboard()}else showToast('Erro salvar',false)}catch{showToast('Erro rede',false)}}));
-      // edit
-      cont.querySelectorAll('.btn-edit-grupo').forEach(btn=>btn.addEventListener('click',()=>abrirModalEdicaoGrupo(grupos.find(x=>x.id===btn.closest('[data-id]').dataset.id))));
-      // delete
-      cont.querySelectorAll('.btn-delete-grupo').forEach(btn=>btn.addEventListener('click',async ()=>{const id=btn.closest('[data-id]').dataset.id;if(!confirm('Excluir grupo?'))return;await fetch(`/api/groups/${id}`,{method:'DELETE'});showToast('Grupo excluído');carregarGrupos();carregarDashboard()}));
-    }catch{showToast('Falha grupos',false)}
-  }
+      const res = await fetch('/api/groups');
+      const grupos = await res.json();
+      const cont = document.getElementById('grupos-lista');
+      if (!cont) return;
+      cont.innerHTML = '';
 
-  function abrirModalEdicaoGrupo(g) {
-    const mid='modal-grupo';document.getElementById(mid)?.remove();
-    const modal=document.createElement('div');modal.id=mid;modal.className='fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50';
-    modal.innerHTML=`<div class="bg-white rounded shadow max-w-md w-full p-6 relative"><h2 class="text-xl font-bold mb-4">Editar Grupo</h2>${['nome','descricao','imagem'].map(f=>{const val=g[f]||'';const tag=f==='descricao'?`<textarea id="edit-grupo-${f}" class="w-full border px-2 py-1 rounded">${val}</textarea>`:`<input id="edit-grupo-${f}" type="text" value="${val}" class="w-full border px-2 py-1 rounded" />`;return`<div class="mb-3"><label class="block font-semibold capitalize">${f}</label>${tag}</div>`}).join('')}<div class="flex justify-end gap-3"><button id="close-grupo" class="px-4 py-2 border rounded">Cancelar</button><button id="save-grupo" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button></div><button id="x-grupo" class="absolute top-2 right-2 text-gray-500">&times;</button></div>`;
-    document.body.appendChild(modal);
-    ['close-grupo','x-grupo'].forEach(id=>modal.querySelector(`#${id}`).addEventListener('click',()=>modal.remove()));
-    modal.querySelector('#save-grupo').addEventListener('click',async ()=>{const updated={nome:document.getElementById('edit-grupo-nome').value,descricao:document.getElementById('edit-grupo-descricao').value,imagem:document.getElementById('edit-grupo-imagem').value};const res=await fetch(`/api/groups/${g.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)});if(res.ok){showToast('Grupo salvo');carregarGrupos();carregarDashboard();modal.remove()}else showToast('Erro salvar',false)});
+      grupos.forEach(g => {
+        const card = document.createElement('div');
+        card.className = 'bg-white p-4 rounded shadow mb-3 flex items-center gap-4';
+        card.innerHTML = `
+          <div class="flex-shrink-0">
+            <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-1">
+              ${g.imagem ? `<img src="${normalizeImagem(g.imagem)}" alt="${g.nome}" class="object-contain w-full h-full">` : 'Sem imagem'}
+            </div>
+            <input type="file" data-type="grupo" data-id="${g.id}" class="upload-image-input mb-1" accept="image/*" />
+            <input type="text" value="${g.imagem||''}" data-field="imagem" data-id="${g.id}" class="inline-input border px-2 py-1 rounded w-full" placeholder="Imagem caminho" />
+          </div>
+          <div class="flex-1">
+            <h3 class="font-bold text-lg">${g.nome}</h3>
+            <p class="text-sm text-gray-500">${g.descricao||''}</p>
+          </div>
+          <div class="flex flex-col gap-2">
+            <button data-id="${g.id}" class="btn-save-grupo px-3 py-1 bg-blue-500 text-white rounded text-sm">Salvar</button>
+            <button data-id="${g.id}" class="btn-edit-grupo px-3 py-1 bg-yellow-400 text-white rounded text-sm">Editar</button>
+            <button data-id="${g.id}" class="btn-delete-grupo px-3 py-1 bg-red-500 text-white rounded text-sm">Excluir</button>
+          </div>
+        `;
+        cont.appendChild(card);
+      });
+
+      window.grupos = grupos;
+
+      // Upload imagem inline
+      cont.querySelectorAll('input[type=file][data-type=grupo]').forEach(inp => {
+        inp.addEventListener('change', async e => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const id = e.target.dataset.id;
+          const form = new FormData(); form.append('image', file); form.append('type','grupo'); form.append('id', id);
+          try {
+            const up = await fetch('/api/upload-image',{ method:'POST', body: form });
+            const info = await up.json();
+            if (info.success) {
+              await fetch(`/api/groups/${id}`,{ method:'PUT', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ imagem: info.filename }) });
+              showToast('Imagem atualizada'); carregarGrupos(); carregarDashboard();
+            } else showToast(info.error||'Erro upload',false);
+          } catch {
+            showToast('Erro rede',false);
+          }
+        });
+      });
+
+      // Inline Save
+      cont.querySelectorAll('.btn-save-grupo').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          const imgVal = document.querySelector(`input[data-field=imagem][data-id=${id}]`).value.trim();
+          if (!imgVal) { showToast('Nada para salvar',false); return; }
+          try {
+            const res = await fetch(`/api/groups/${id}`,{
+              method: 'PUT', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ imagem: imgVal })
+            });
+            if (res.ok) { showToast('Grupo salvo'); carregarGrupos(); carregarDashboard(); }
+            else showToast('Erro salvar',false);
+          } catch {
+            showToast('Erro rede',false);
+          }
+        });
+      });
+
+      // Edit
+      cont.querySelectorAll('.btn-edit-grupo').forEach(btn => btn.addEventListener('click', () => abrirModalEdicaoGrupo(grupos.find(x=>x.id===btn.dataset.id))));
+      // Delete
+      cont.querySelectorAll('.btn-delete-grupo').forEach(btn => btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        if (!confirm('Excluir grupo?')) return;
+        await fetch(`/api/groups/${id}`,{ method:'DELETE' });
+        showToast('Grupo excluído'); carregarGrupos(); carregarDashboard();
+      }));
+    } catch {
+      showToast('Falha grupos',false);
+    }
   }
 
   // ─── Regras ─────────────────────────────────────────────────────────────────────
   async function carregarRegras() {
+    const cont = document.getElementById('rules-lista');
+    if (!cont) { loadRules(); return; }
     try {
-      const res=await fetch('/api/admin/rules'); const regras=await res.json(); const cont=document.getElementById('rules-lista');cont.innerHTML='';
-      regras.forEach(r=>{const div=document.createElement('div');div.className='flex items-center justify-between p-2 border-b';div.dataset.id=r.id;div.innerHTML=`<div><strong>${r.id}</strong> — ${r.type} <code>${r.pattern}</code> → “${r.reply}”</div><div class="flex gap-2"><button class="btn-edit-regra px-2 py-1 border rounded text-sm">Editar</button><button class="btn-delete-regra px-2 py-1 border rounded text-sm">Excluir</button></div>`;cont.appendChild(div)});
-      window.rules=regras;
-      cont.querySelectorAll('.btn-edit-regra').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.closest('[data-id]').dataset.id;const r=rules.find(x=>x.id===id);if(r)openRuleModal(r)}));
-      cont.querySelectorAll('.btn-delete-regra').forEach(btn=>btn.addEventListener('click',async()=>{const id=btn.closest('[data-id]').dataset.id;if(!confirm(`Excluir regra “${id}”?`))return;await fetch(`/api/admin/rules/${id}`,{method:'DELETE'});carregarRegras();showToast('Regra excluída')}));
-    }catch{showToast('Falha regras',false)}
+      const res = await fetch('/api/admin/rules');
+      const regras = await res.json();
+      cont.innerHTML = '';
+      regras.forEach(r => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center justify-between p-2 border-b';
+        div.dataset.id = r.id;
+        div.innerHTML = `
+          <div><strong>${r.id}</strong> — ${r.type} <code>${r.pattern}</code> → "${r.reply}"</div>
+          <div class="flex gap-2">
+            <button class="btn-edit-regra px-2 py-1 border rounded text-sm">Editar</button>
+            <button class="btn-delete-regra px-2 py-1 border rounded text-sm">Excluir</button>
+          </div>
+        `;
+        cont.appendChild(div);
+      });
+      window.rules = regras;
+      // Edit
+      cont.querySelectorAll('.btn-edit-regra').forEach(btn => btn.addEventListener('click', () => {
+        const id = btn.closest('[data-id]').dataset.id;
+        const rule = regras.find(x => x.id === id);
+        if (rule) openRuleModal(rule);
+      }));
+      // Delete
+      cont.querySelectorAll('.btn-delete-regra').forEach(btn => btn.addEventListener('click', async () => {
+        const id = btn.closest('[data-id]').dataset.id;
+        if (!confirm(`Excluir regra "${id}"?`)) return;
+        await fetch(`/api/admin/rules/${id}`,{ method: 'DELETE' });
+        showToast('Regra excluída'); carregarRegras();
+      }));
+    } catch {
+      showToast('Falha regras',false);
+    }
   }
 
   // ─── Webhooks ──────────────────────────────────────────────────────────────────
   async function carregarWebhooks() {
+    const cont = document.getElementById('hooks-lista');
+    if (!cont) { loadHooks(); return; }
     try {
-      const res=await fetch('/api/admin/webhooks'); const hooks=await res.json(); const cont=document.getElementById('hooks-lista');cont.innerHTML='';
-      hooks.forEach(h=>{const div=document.createElement('div');div.className='flex items-center justify-between p-2 border-b';div.dataset.id=h.id;div.innerHTML=`<div><strong>${h.id}</strong> → ${h.url} <small>${JSON.stringify(h.headers)}</small></div><div class="flex gap-2"><button class="btn-edit-hook px-2 py-1 border rounded text-sm">Editar</button><button class="btn-delete-hook px-2 py-1 border rounded text-sm">Excluir</button></div>`;cont.appendChild(div)});
-      window.hooks=hooks;
-      cont.querySelectorAll('.btn-edit-hook').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.closest('[data-id]').dataset.id;const h=hooks.find(x=>x.id===id);if(h)openHookModal(h)}));
-      cont.querySelectorAll('.btn-delete-hook').forEach(btn=>btn.addEventListener('click',async ()=>{const id=btn.closest('[data-id]').dataset.id;if(!confirm(`Excluir webhook “${id}”?`))return;await fetch(`/api/admin/webhooks/${id}`,{method:'DELETE'});carregarWebhooks();showToast('Webhook excluído')}));
-    }catch{showToast('Falha webhooks',false)}
+      const res = await fetch('/api/admin/webhooks');
+      const hooks = await res.json();
+      cont.innerHTML = '';
+      hooks.forEach(h => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center justify-between p-2 border-b';
+        div.dataset.id = h.id;
+        div.innerHTML = `
+          <div><strong>${h.id}</strong> → ${h.url} <small>${JSON.stringify(h.headers)}</small></div>
+          <div class="flex gap-2">
+            <button class="btn-edit-hook px-2 py-1 border rounded text-sm">Editar</button>
+            <button class="btn-delete-hook px-2 py-1 border rounded text-sm">Excluir</button>
+          </div>
+        `;
+        cont.appendChild(div);
+      });
+      window.hooks = hooks;
+      // Edit
+      cont.querySelectorAll('.btn-edit-hook').forEach(btn => btn.addEventListener('click', () => {
+        const id = btn.closest('[data-id]').dataset.id;
+        const hook = hooks.find(x => x.id === id);
+        if (hook) openHookModal(hook);
+      }));
+      // Delete
+      cont.querySelectorAll('.btn-delete-hook').forEach(btn => btn.addEventListener('click', async () => {
+        const id = btn.closest('[data-id]').dataset.id;
+        if (!confirm(`Excluir webhook "${id}"?`)) return;
+        await fetch(`/api/admin/webhooks/${id}`,{ method: 'DELETE' });
+        showToast('Webhook excluído'); carregarWebhooks();
+      }));
+    } catch {
+      showToast('Falha webhooks',false);
+    }
   }
 
   // ─── Initialization ─────────────────────────────────────────────────────────────

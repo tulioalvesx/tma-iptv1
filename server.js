@@ -202,13 +202,45 @@ app.post("/api/groups", (req, res) => {
 
 app.put("/api/groups/:id", (req, res) => {
   const gid = req.params.id;
-  const updates = req.body;
+  const updates = req.body || {};
   const groups = loadJson("groups.json") || [];
   const idx = groups.findIndex(g => g.id === gid);
   if (idx === -1) return res.status(404).json({ success: false, error: "Grupo não encontrado" });
-  groups[idx] = { ...groups[idx], ...updates };
+
+  // Sincroniza imagem <-> image
+  if (updates.imagem !== undefined) {
+    updates.image = updates.imagem;
+  }
+  if (updates.image !== undefined) {
+    updates.imagem = updates.image;
+  }
+
+  // Mescla mantendo o que já existia e normaliza nome/nome_en
+  const existing = groups[idx];
+  const merged = {
+    ...existing,
+    ...updates,
+    name: updates.nome || updates.name || existing.name || existing.nome,
+    nome: updates.nome || updates.name || existing.nome || existing.name,
+  };
+
+  groups[idx] = merged;
   saveJson("groups.json", groups);
-  res.json({ success: true, group: groups[idx] });
+
+  function ensureGroupImageUrl(raw) {
+    if (!raw) return 'images/placeholder.jpg';
+    raw = raw.trim();
+    if (raw.startsWith('/')) return raw;
+    return `/img/${raw.replace(/^\/?img\/?/i, '')}`;
+  }
+
+  const responseGroup = {
+    ...merged,
+    image: ensureGroupImageUrl(merged.imagem || merged.image || ""),
+    imagem: merged.imagem || merged.image || "",
+  };
+
+  res.json({ success: true, group: responseGroup });
 });
 
 app.delete("/api/groups/:id", (req, res) => {

@@ -672,25 +672,33 @@ if (gruposLista) {
     document.body.appendChild(modal);
     modal.querySelector("#close-grupo-modal").addEventListener("click", () => modal.remove());
     modal.querySelector("#x-close-grupo").addEventListener("click", () => modal.remove());
-    modal.querySelector("#save-grupo-modal").addEventListener("click", async () => {
-      const updated = {
-        nome: document.getElementById("edit-grupo-nome").value,
-        descricao: document.getElementById("edit-grupo-desc").value
-      };
-      const res = await fetch(`/api/groups/${g.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated)
-      });
-      if (res.ok) {
-        showToast("Grupo salvo");
-        await carregarGrupos();
-        await carregarDashboard();
-        modal.remove();
-      } else {
-        showToast("Erro ao salvar grupo", false);
-      }
+	modal.querySelector("#save-grupo-modal").addEventListener("click", async () => {
+	const updated = {
+    nome: document.getElementById("edit-grupo-nome").value,
+    descricao: document.getElementById("edit-grupo-desc").value,
+    imagem: document.getElementById("edit-grupo-imagem").value.trim()
+  };
+  try {
+    const res = await fetch(`/api/groups/${g.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updated)
     });
+    if (res.ok) {
+      showToast("Grupo salvo");
+      await carregarGrupos();
+      await carregarDashboard();
+      modal.remove();
+    } else {
+      const body = await res.json();
+      console.warn("Erro ao salvar grupo completo:", body);
+      showToast("Erro ao salvar grupo", false);
+    }
+  } catch (err) {
+    console.error("Erro de rede ao salvar grupo completo:", err);
+    showToast("Erro de rede", false);
+  }
+});
   }
 
   // criação rápida

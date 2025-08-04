@@ -848,17 +848,6 @@ if (gruposLista) {
   loadRules();
   loadHooks();
   
-  // ---------- Rule Modal Initialization ----------
-  const modalRule = document.getElementById('modal-rule');
-  const formRule  = document.getElementById('form-rule');
-  let isEditingRule = false, editingRuleId = null;
-  
-  // ---------- Hook Modal Initialization ----------
-  const modalHook = document.getElementById('modal-hook');
-  const formHook  = document.getElementById('form-hook');
-  let isEditingHook = false, editingHookId = null;
-  
-
   function openRuleModal(rule = null) {
     if (rule) {
       isEditingRule = true;

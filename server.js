@@ -203,7 +203,7 @@ app.post("/api/groups", (req, res) => {
 app.put("/api/groups/:id", (req, res) => {
   const gid = req.params.id;
   const updates = req.body || {};
-  console.log("[DEBUG] PUT /api/groups/:id payload before sync:", updates);
+//  console.log("[DEBUG] PUT /api/groups/:id payload before sync:", updates);
 
   const groups = loadJson("groups.json") || [];
   const idx = groups.findIndex(g => g.id === gid);
@@ -216,7 +216,7 @@ app.put("/api/groups/:id", (req, res) => {
   if (updates.image !== undefined) {
     updates.imagem = updates.image;
   }
-  console.log("[DEBUG] PUT /api/groups/:id after sync imagem/image:", updates);
+//  console.log("[DEBUG] PUT /api/groups/:id after sync imagem/image:", updates);
 
   // Mescla mantendo o que já existia e normaliza nome/nome_en
   const existing = groups[idx];
@@ -229,7 +229,7 @@ app.put("/api/groups/:id", (req, res) => {
 
   groups[idx] = merged;
   saveJson("groups.json", groups);
-  console.log("[DEBUG] Grupo salvo no JSON:", merged);
+//  console.log("[DEBUG] Grupo salvo no JSON:", merged);
 
   function ensureGroupImageUrl(raw) {
     if (!raw) return 'images/placeholder.jpg';

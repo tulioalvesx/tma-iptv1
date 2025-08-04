@@ -20,13 +20,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 2200);
   }
 
-  function normalizeImagem(im) {
-    if (!im) return "";
-    if (im.startsWith("http") || im.startsWith("/")) {
-      if (im.startsWith("/img/")) return im;
-      if (im.startsWith("/")) return im;
-      return "/" + im.replace(/^\/?img\/?/i, "");
+  function normalizeImagem(im){
+    if(!im) return '';
+    im = im.trim();
+    if(im.startsWith('http')||im.startsWith('/')){
+      if(im.startsWith('/img/')) return im;
+      if(im.startsWith('/')) return im;
+      return '/'+im.replace(/^\/?img\/?/i,'');
     }
+    return `/img/${im.replace(/^\/?img\/?/i,'')}`;
+  }
     return `/img/${im.replace(/^\/?img\/?/i, "")}`;
   }
 

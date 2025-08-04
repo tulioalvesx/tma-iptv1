@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const fetch = require("node-fetch");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -350,6 +351,74 @@ app.get("/api/analytics", (req, res) => {
     .slice(-7)
     .map(([dia, total]) => ({ dia, total }));
   res.json({ hoje, dias });
+});
+
+
+// --------- Chatbot Endpoint ---------
+app.get("/api/chat", async (req, res) => {
+  const message = req.query.message || "";
+  const now = new Date();
+  for (const rule of rules) {
+    let matched = false;
+    if (rule.type === "keyword" && new RegExp(rule.pattern, "i").test(message)) {
+      matched = true;
+    } else if (rule.type === "message" && message === rule.pattern) {
+      matched = true;
+    }
+    if (!matched) continue;
+    // Checar horário ativo
+    if (rule.activeHours) {
+      const hour = now.getHours();
+      const { start, end } = rule.activeHours;
+      if (hour < start || hour >= end) continue;
+    }
+    // Webhook externo
+    if (rule.externalWebhook) {
+      try {
+        await fetch(rule.externalWebhook.url, {
+          method: "POST",
+          headers: rule.externalWebhook.headers || { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
+      } catch (err) { console.error("Webhook error:", err); }
+    }
+    // Ação de integração: listar produtos
+    if (rule.integrationAction === "products") {
+      const prods = loadJson("products.json") || [];
+      return res.json({ reply: "Aqui estão nossos produtos:", options: prods });
+    }
+    // Resposta padrão
+    return res.json({ reply: rule.reply });
+  }
+  // Fallback do chat
+  return res.json({ reply: "Desculpe, não entendi. Pode reformular?" });
+});
+
+// --------- Orders Proxy Endpoints ---------
+app.post("/api/orders", async (req, res) => {
+  try {
+    const apiRes = await fetch("https://your-site-api.com/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req.body)
+    });
+    const data = await apiRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error("Order API error:", err);
+    res.status(500).json({ error: "Falha ao criar pedido" });
+  }
+});
+app.get("/api/orders/:id/status", async (req, res) => {
+  const id = req.params.id;
+  try {
+    const apiRes = await fetch(`https://your-site-api.com/orders/${id}/status`);
+    const data = await apiRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error("Order status error:", err);
+    res.status(500).json({ error: "Falha ao consultar status do pedido" });
+  }
 });
 
 // --------- Fallback SPA / estáticos ---------

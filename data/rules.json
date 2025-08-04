@@ -1,0 +1,11 @@
+[
+  {
+    "id": "example_keyword_rule",
+    "type": "keyword",
+    "pattern": "(.*)preço(.*)",
+    "reply": "Você gostaria de consultar o preço de algum produto específico? Digite 'ver produtos'.",
+    "activeHours": null,
+    "externalWebhook": null,
+    "integrationAction": null
+  }
+]

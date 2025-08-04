@@ -1,11 +1,12 @@
 // dashboard.js
-document.addEventListener("DOMContentLoaded", () => {
-  const tabs = document.querySelectorAll(".tab-btn");
-  const sections = document.querySelectorAll(".tab-section");
-  let chartInstance = null;
-  let isEditing = false;
-  let editingId = null;
 
+document.addEventListener("DOMContentLoaded", () => {
+  // ─── Variables ───────────────────────────────────────────────────────────────
+  let chartInstance = null;
+  let isEditingRule = false, editingRuleId = null;
+  let isEditingHook = false, editingHookId = null;
+
+  // ─── Helper Functions ──────────────────────────────────────────────────────────
   function showToast(msg, success = true) {
     let toastEl = document.getElementById("toast");
     if (!toastEl) {
@@ -17,77 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
     toastEl.textContent = msg;
     toastEl.style.backgroundColor = success ? "#16a34a" : "#dc2626";
     toastEl.style.opacity = "1";
-    setTimeout(() => {
-      toastEl.style.opacity = "0";
-    }, 2200);
+    setTimeout(() => toastEl.style.opacity = "0", 2200);
   }
-  
-function openRuleModal(rule = null) {
-  const modal = document.getElementById('modal-rule');
-  const form  = document.getElementById('form-rule');
-
-  if (rule) {
-    // Modo edição
-    isEditing = true;
-    editingId = rule.id;
-    document.getElementById('rule-id').value      = rule.id;
-    document.getElementById('rule-id').disabled   = true; // ID não pode mudar
-    document.getElementById('rule-type').value    = rule.type;
-    document.getElementById('rule-pattern').value = rule.pattern;
-    document.getElementById('rule-reply').value   = rule.reply;
-  } else {
-    // Modo criação
-    isEditing = false;
-    editingId = null;
-    form.reset();
-    document.getElementById('rule-id').disabled = false;
-  }
-
-  modal.classList.remove('hidden');
-}
-
-// Chama openRuleModal() sem parâmetro para nova regra
-document.getElementById('new-rule-btn').addEventListener('click', () => {
-  openRuleModal();
-});
-
-// Submissão do form
-document.getElementById('form-rule').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const payload = {
-    id:      document.getElementById('rule-id').value.trim(),
-    type:    document.getElementById('rule-type').value,
-    pattern: document.getElementById('rule-pattern').value.trim(),
-    reply:   document.getElementById('rule-reply').value.trim()
-  };
-
-  if (isEditing) {
-    // editar (PUT)
-    await fetch(`/api/admin/rules/${encodeURIComponent(editingId)}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-  } else {
-    // criar (POST)
-    await fetch('/api/admin/rules', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-  }
-
-  // Fechar modal e recarregar tabela
-  document.getElementById('modal-rule').classList.add('hidden');
-  loadRules();
-});
-
-// Função de edição disparada pelo botão na tabela
-function editRule(id) {
-  const rule = (window.rules || []).find(r => r.id === id);
-  if (!rule) return alert('Regra não encontrada');
-  openRuleModal(rule);
-}
 
   function normalizeImagem(im) {
     if (!im) return "";
@@ -99,892 +31,285 @@ function editRule(id) {
     return `/img/${im.replace(/^\/?img\/?/i, "")}`;
   }
 
-  // Tab switching
-  tabs.forEach(btn => {
-    btn.addEventListener("click", () => {
-      tabs.forEach(b => {
-        b.classList.remove("bg-blue-500", "text-white");
-        b.classList.add("bg-gray-300");
-      });
-      btn.classList.add("bg-blue-500", "text-white");
-      const target = btn.dataset.tab;
-      sections.forEach(sec => sec.classList.add("hidden"));
-      const sel = document.getElementById("tab-" + target);
-      if (sel) sel.classList.remove("hidden");
-// ––– Carregar conteúdo da aba –––
-      switch (target) {
-      case "dashboard":  carregarDashboard();  break;
-      case "produtos":   carregarProdutos();   break;
-      case "downloads":  carregarDownloads();  break;
-      case "grupos":     carregarGrupos();     break;
-      case "regras":     loadRules();          break;
-      case "webhooks":   loadHooks();          break;
-    }
-    });
-  });
-
-  // Dashboard
-  async function carregarDashboard() {
-    try {
-      const [prodRes, groupsRes, downloadsRes, analyticsRes] = await Promise.all([
-        fetch("/api/products"),
-        fetch("/api/groups"),
-        fetch("/api/downloads"),
-        fetch("/api/analytics")
-      ]);
-      const produtos = await prodRes.json();
-      const grupos = await groupsRes.json();
-      const downloads = await downloadsRes.json();
-      const analytics = await analyticsRes.json();
-
-      document.getElementById("total-produtos").textContent = Array.isArray(produtos) ? produtos.length : 0;
-      document.getElementById("total-downloads").textContent = (downloads.files || []).length;
-      document.getElementById("total-grupos").textContent = Array.isArray(grupos) ? grupos.length : 0;
-      document.getElementById("acessos-hoje").textContent = analytics.hoje || 0;
-
-      gerarGrafico(analytics.dias || []);
-    } catch (e) {
-      console.error("Erro dashboard:", e);
-      showToast("Falha ao carregar dashboard", false);
-    }
-  }
-
   function gerarGrafico(dados) {
     const canvas = document.getElementById("grafico-acessos");
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    if (chartInstance) {
-      chartInstance.destroy();
-      chartInstance = null;
-    }
+    if (chartInstance) chartInstance.destroy();
     chartInstance = new Chart(ctx, {
       type: "line",
       data: {
         labels: dados.map(d => d.dia),
-        datasets: [{
-          label: "Acessos",
-          data: dados.map(d => d.total),
-          borderColor: "#2563eb",
-          backgroundColor: "rgba(37,99,235,0.2)",
-          fill: true,
-          tension: 0.3
-        }]
+        datasets: [{ label: "Acessos", data: dados.map(d => d.total), tension: 0.3, fill: true, borderColor: "#2563eb", backgroundColor: "rgba(37,99,235,0.2)" }]
       },
-      options: {
-        scales: { y: { beginAtZero: true } }
-      }
+      options: { scales: { y: { beginAtZero: true } } }
     });
   }
 
-  // Produtos
-  async function carregarProdutos() {
-    try {
-      const res = await fetch("/api/products");
-      const produtos = await res.json();
-      const container = document.getElementById("produtos-lista");
-      if (!container) return;
-      container.innerHTML = "";
-      if (!Array.isArray(produtos)) return;
-
-      produtos.forEach(p => {
-        const card = document.createElement("div");
-        card.className = "product-card bg-white p-4 rounded shadow flex flex-col gap-3 mb-3";
-        card.innerHTML = `
-          <div class="flex justify-between items-start">
-            <div class="flex-1 flex gap-4">
-              <div class="flex-shrink-0">
-                <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-1">
-                  ${p.imagem ? `<img src="${normalizeImagem(p.imagem)}" alt="${p.nome}" class="object-contain w-full h-full">` : "Sem imagem"}
-                </div>
-                <div class="text-xs mb-1">Upload imagem</div>
-                <input type="file" data-type="produto" data-id="${p.id}" class="upload-image-input mb-2" accept="image/*" />
-              </div>
-              <div class="flex-1">
-                <div class="font-bold text-lg">${p.nome}</div>
-                <div class="text-sm text-gray-500">${p.descricao || ""}</div>
-                <div class="mt-1 text-green-600 font-semibold">R$ ${p.preco || "0,00"}</div>
-                <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <div>
-                    <label class="block font-semibold text-xs">Imagem (nome ou caminho)</label>
-                    <input type="text" value="${p.imagem || ""}" data-field="imagem" data-id="${p.id}" class="inline-input border px-2 py-1 rounded w-full" />
-                  </div>
-                  <div>
-                    <label class="block font-semibold text-xs">Link de download</label>
-                    <input type="text" value="${p.link || ""}" data-field="link" data-id="${p.id}" class="inline-input border px-2 py-1 rounded w-full" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="flex flex-col gap-2 ml-4">
-              <button data-id="${p.id}" class="btn-save-inline bg-blue-500 text-white px-3 py-1 rounded text-sm">Salvar rápido</button>
-              <button data-id="${p.id}" class="btn-edit bg-yellow-400 text-white px-3 py-1 rounded text-sm">Editar completo</button>
-              <button data-id="${p.id}" class="btn-delete bg-red-500 text-white px-3 py-1 rounded text-sm">Excluir</button>
-            </div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-  
-      // handlers
-      container.querySelectorAll("input[data-type='produto']").forEach(input => {
-        input.addEventListener("change", async (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const id = e.target.dataset.id;
-          const form = new FormData();
-          form.append("image", file);
-          form.append("type", "produto");
-          form.append("id", id);
-          try {
-            const up = await fetch("/api/upload-image", {
-              method: "POST",
-              body: form
-            });
-            const info = await up.json();
-            if (info.success) {
-              await fetch(`/api/products/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ imagem: info.filename })
-              });
-              showToast("Imagem atualizada");
-              await carregarProdutos();
-              await carregarDashboard();
-            } else {
-              showToast(info.error || "Erro upload", false);
-            }
-          } catch (err) {
-            console.error(err);
-            showToast("Erro de rede", false);
-          }
-        });
-      });
-
-// delegação: escuta clique em "Salvar rápido" para grupos mesmo se recriado dinamicamente
-const gruposLista = document.getElementById("grupos-lista");
-if (gruposLista) {
-  gruposLista.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".btn-save-inline-grupo");
-    if (!btn) return;
-    const id = btn.dataset.id;
-    if (!id) return;
-
-    // coleta valor manual de imagem
-    const imagemInput = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`);
-    const updated = {};
-    if (imagemInput) {
-      const val = imagemInput.value.trim();
-      if (val) updated.imagem = val;
-    }
-
-    if (!Object.keys(updated).length) {
-      showToast("Nada para salvar");
-      return;
-    }
-
-    // atualiza preview local imediatamente
-    const groupCard = btn.closest('[data-id]') || btn.parentElement.parentElement;
-    const imgEl = groupCard ? groupCard.querySelector('img') : null;
-    if (imgEl && updated.imagem) {
-      imgEl.src = normalizeImagem(updated.imagem);
-    }
-
-    try {
-      const res = await fetch(`/api/groups/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
-      });
-      const body = await res.json();
-      if (res.ok) {
-        showToast("Grupo salvo");
-        await carregarGrupos();
-        await carregarDashboard();
-      } else {
-        console.warn("Erro ao salvar grupo:", body);
-        showToast("Erro ao salvar grupo", false);
-      }
-    } catch (err) {
-      console.error("Erro de rede ao salvar grupo:", err);
-      showToast("Erro de rede", false);
-    }
-  });
-}
-
-      container.querySelectorAll(".btn-edit").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          const id = e.currentTarget.dataset.id;
-          const produtos = await fetch("/api/products").then(r => r.json());
-          const prod = Array.isArray(produtos) ? produtos.find(p => p.id === id) : null;
-          if (!prod) return showToast("Produto não encontrado", false);
-          abrirModalEdicaoProduto(prod);
-        });
-      });
-
-      container.querySelectorAll(".btn-delete").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          const id = e.currentTarget.dataset.id;
-          if (!confirm("Excluir produto?")) return;
-          await fetch(`/api/products/${id}`, { method: "DELETE" });
-          showToast("Produto excluído");
-          await carregarProdutos();
-          await carregarDashboard();
-        });
-      });
-    } catch (err) {
-      console.error("Erro carregar produtos:", err);
-      showToast("Falha produtos", false);
-    }
-  }
-
-  function abrirModalEdicaoProduto(p) {
-    const modalId = "modal-produto";
-    let existing = document.getElementById(modalId);
-    if (existing) existing.remove();
-
-    const modal = document.createElement("div");
-    modal.id = modalId;
-    modal.className = "fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50";
-    modal.innerHTML = `
-      <div class="bg-white rounded shadow max-w-lg w-full p-6 relative">
-        <h2 class="text-xl font-bold mb-4">Editar Produto</h2>
-        <div class="space-y-3">
-          <div>
-            <label class="block font-semibold">Nome</label>
-            <input type="text" id="edit-nome" value="${p.nome}" class="w-full border px-2 py-1 rounded" />
-          </div>
-          <div>
-            <label class="block font-semibold">Preço</label>
-            <input type="text" id="edit-preco" value="${p.preco}" class="w-full border px-2 py-1 rounded" />
-          </div>
-          <div>
-            <label class="block font-semibold">Imagem</label>
-            <input type="text" id="edit-imagem" value="${p.imagem || ""}" class="w-full border px-2 py-1 rounded" />
-          </div>
-          <div>
-            <label class="block font-semibold">Descrição</label>
-            <textarea id="edit-descricao" class="w-full border px-2 py-1 rounded">${p.descricao || ""}</textarea>
-          </div>
-          <div>
-            <label class="block font-semibold">Grupo</label>
-            <input type="text" id="edit-grupo" value="${p.grupo || ""}" class="w-full border px-2 py-1 rounded" />
-          </div>
-          <div>
-            <label class="block font-semibold">Link</label>
-            <input type="text" id="edit-link" value="${p.link || ""}" class="w-full border px-2 py-1 rounded" />
-          </div>
-          <div>
-            <label class="block font-semibold">Desconto (%)</label>
-            <input type="number" id="edit-desconto" value="${p.desconto || 0}" class="w-full border px-2 py-1 rounded" />
-          </div>
-        </div>
-        <div class="mt-6 flex justify-end gap-3">
-          <button id="close-modal" class="px-4 py-2 border rounded">Cancelar</button>
-          <button id="save-modal" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button>
-        </div>
-        <button id="x-close" class="absolute top-2 right-2 text-gray-500">&times;</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    modal.querySelector("#close-modal").addEventListener("click", () => modal.remove());
-    modal.querySelector("#x-close").addEventListener("click", () => modal.remove());
-    modal.querySelector("#save-modal").addEventListener("click", async () => {
-      const updated = {
-        nome: document.getElementById("edit-nome").value,
-        preco: document.getElementById("edit-preco").value,
-        imagem: document.getElementById("edit-imagem").value,
-        descricao: document.getElementById("edit-descricao").value,
-        grupo: document.getElementById("edit-grupo").value,
-        link: document.getElementById("edit-link").value,
-        desconto: Number(document.getElementById("edit-desconto").value || 0)
-      };
-      const res = await fetch(`/api/products/${p.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated)
-      });
-      if (res.ok) {
-        showToast("Produto salvo");
-        await carregarProdutos();
-        await carregarDashboard();
-        modal.remove();
-      } else {
-        showToast("Erro ao salvar", false);
-      }
-    });
-  }
-
-  // Downloads
-  async function carregarDownloads() {
-    try {
-      const res = await fetch("/api/downloads");
-      const data = await res.json();
-      const files = Array.isArray(data.files) ? data.files : [];
-      const container = document.getElementById("downloads-lista");
-      if (!container) return;
-      container.innerHTML = "";
-
-      files.forEach(d => {
-        const card = document.createElement("div");
-        card.className = "bg-white p-4 rounded shadow flex flex-col gap-3 mb-3";
-        card.innerHTML = `
-          <div class="flex justify-between items-start">
-            <div class="flex-1 flex gap-4">
-              <div class="flex-shrink-0">
-                <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-1">
-                  ${d.imagem ? `<img src="${normalizeImagem(d.imagem)}" alt="${d.name}" class="object-contain w-full h-full">` : "Sem imagem"}
-                </div>
-                <div class="text-xs mb-1">Upload imagem</div>
-                <input type="file" data-type="download" data-id="${d.id}" class="upload-image-input mb-2" accept="image/*" />
-                <div class="text-xs mb-1">Imagem (nome ou caminho)</div>
-                <input type="text" value="${d.imagem || ""}" data-field="imagem" data-id="${d.id}" class="border px-2 py-1 rounded w-full mb-1" />
-              </div>
-              <div class="flex-1">
-                <div class="font-bold text-lg">${d.name}</div>
-                <div class="text-sm text-gray-500">${d.description || ""}</div>
-                <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <div>
-                    <label class="block font-semibold text-xs">URL</label>
-                    <input type="text" value="${d.url || "#"}" data-field="url" data-id="${d.id}" class="inline-input border px-2 py-1 rounded w-full" />
-                  </div>
-                  <div>
-                    <label class="block font-semibold text-xs">Nome</label>
-                    <input type="text" value="${d.name}" data-field="name" data-id="${d.id}" class="inline-input border px-2 py-1 rounded w-full" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="flex flex-col gap-2 ml-4">
-              <button data-id="${d.id}" class="btn-save-inline-download bg-blue-500 text-white px-3 py-1 rounded text-sm">Salvar rápido</button>
-              <button data-id="${d.id}" class="btn-edit-download bg-yellow-400 text-white px-3 py-1 rounded text-sm">Editar completo</button>
-              <button data-id="${d.id}" class="btn-delete-download bg-red-500 text-white px-3 py-1 rounded text-sm">Excluir</button>
-            </div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-
-      // upload
-      container.querySelectorAll("input[data-type='download']").forEach(input => {
-        input.addEventListener("change", async (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const id = e.target.dataset.id;
-          const form = new FormData();
-          form.append("image", file);
-          form.append("type", "download");
-          form.append("id", id);
-          try {
-            const up = await fetch("/api/upload-image", {
-              method: "POST",
-              body: form
-            });
-            const info = await up.json();
-            if (info.success) {
-              await fetch(`/api/downloads/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ imagem: info.filename })
-              });
-              showToast("Imagem de download atualizada");
-              await carregarDownloads();
-              await carregarDashboard();
-            } else {
-              showToast("Erro upload", false);
-            }
-          } catch (err) {
-            console.error(err);
-            showToast("Erro rede", false);
-          }
-        });
-      });
-
-      // salvar inline
-      container.querySelectorAll(".btn-save-inline-download").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          const id = e.currentTarget.dataset.id;
-          const nameInput = document.querySelector(`input[data-field="name"][data-id="${id}"]`);
-          const urlInput = document.querySelector(`input[data-field="url"][data-id="${id}"]`);
-          const imgInput = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`);
-          const updated = {};
-          if (nameInput) updated.name = nameInput.value.trim();
-          if (urlInput) updated.url = urlInput.value.trim();
-          if (imgInput) updated.imagem = imgInput.value.trim();
-          try {
-            const res = await fetch(`/api/downloads/${id}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(updated)
-            });
-            if (res.ok) {
-              showToast("Download atualizado");
-              await carregarDownloads();
-              await carregarDashboard();
-            } else {
-              showToast("Erro salvar download", false);
-            }
-          } catch (err) {
-            console.error(err);
-            showToast("Erro rede download", false);
-          }
-        });
-      });
-
-      // editar completo (modal)
-      container.querySelectorAll(".btn-edit-download").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          const id = e.currentTarget.dataset.id;
-          const downloads = await fetch("/api/downloads").then(r => r.json());
-          const item = Array.isArray(downloads.files) ? downloads.files.find(f => f.id === id) : null;
-          if (!item) return showToast("Download não encontrado", false);
-
-          const modalId = "modal-download";
-          let existing = document.getElementById(modalId);
-          if (existing) existing.remove();
-          const modal = document.createElement("div");
-          modal.id = modalId;
-          modal.className = "fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50";
-          modal.innerHTML = `
-            <div class="bg-white rounded shadow max-w-md w-full p-6 relative">
-              <h2 class="text-xl font-bold mb-4">Editar Download</h2>
-              <div class="space-y-3">
-                <div>
-                  <label class="block font-semibold">Nome</label>
-                  <input type="text" id="edit-dl-name" value="${item.name}" class="w-full border px-2 py-1 rounded" />
-                </div>
-                <div>
-                  <label class="block font-semibold">URL</label>
-                  <input type="text" id="edit-dl-url" value="${item.url}" class="w-full border px-2 py-1 rounded" />
-                </div>
-                <div>
-                  <label class="block font-semibold">Descrição</label>
-                  <textarea id="edit-dl-desc" class="w-full border px-2 py-1 rounded">${item.description || ""}</textarea>
-                </div>
-                <div>
-                  <label class="block font-semibold">Imagem</label>
-                  <input type="text" id="edit-dl-img" value="${item.imagem || ""}" class="w-full border px-2 py-1 rounded" />
-                </div>
-              </div>
-              <div class="mt-6 flex justify-end gap-3">
-                <button id="close-dl-modal" class="px-4 py-2 border rounded">Cancelar</button>
-                <button id="save-dl-modal" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button>
-              </div>
-              <button id="x-close-dl" class="absolute top-2 right-2 text-gray-500">&times;</button>
-            </div>
-          `;
-          document.body.appendChild(modal);
-          modal.querySelector("#close-dl-modal").addEventListener("click", () => modal.remove());
-          modal.querySelector("#x-close-dl").addEventListener("click", () => modal.remove());
-          modal.querySelector("#save-dl-modal").addEventListener("click", async () => {
-            const updated = {
-              name: document.getElementById("edit-dl-name").value,
-              url: document.getElementById("edit-dl-url").value,
-              description: document.getElementById("edit-dl-desc").value,
-              imagem: document.getElementById("edit-dl-img").value
-            };
-            const res = await fetch(`/api/downloads/${id}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(updated)
-            });
-            if (res.ok) {
-              showToast("Download salvo");
-              await carregarDownloads();
-              await carregarDashboard();
-              modal.remove();
-            } else {
-              showToast("Erro ao salvar download", false);
-            }
-          });
-        });
-      });
-
-      container.querySelectorAll(".btn-delete-download").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          const id = e.currentTarget.dataset.id;
-          if (!confirm("Excluir download?")) return;
-          await fetch(`/api/downloads/${id}`, { method: "DELETE" });
-          showToast("Download excluído");
-          await carregarDownloads();
-          await carregarDashboard();
-        });
-      });
-    } catch (err) {
-      console.error("Erro carregar downloads:", err);
-      showToast("Falha downloads", false);
-    }
-  }
-
-  // Grupos
-  async function carregarGrupos() {
-    try {
-      const res = await fetch("/api/groups");
-      const grupos = await res.json();
-      const container = document.getElementById("grupos-lista");
-      if (!container) return;
-      container.innerHTML = "";
-      if (!Array.isArray(grupos)) return;
-
-      grupos.forEach(g => {
-        const div = document.createElement("div");
-        div.className = "bg-white p-4 rounded shadow flex justify-between items-center mb-3";
-        div.innerHTML = `
-          <div class="flex-1 flex gap-3 items-center">
-            <div class="flex-shrink-0">
-              <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-1">
-                ${g.imagem ? `<img src="${normalizeImagem(g.imagem)}" alt="${g.nome}" class="object-contain w-full h-full">` : "Sem imagem"}
-              </div>
-              <div class="text-xs mb-1">Upload imagem</div>
-              <input type="file" data-type="grupo" data-id="${g.id}" class="upload-image-input mb-2" accept="image/*" />
-              <div class="text-xs mb-1">Imagem (nome ou caminho)</div>
-              <input type="text" value="${g.imagem || ""}" data-field="imagem" data-id="${g.id}" class="inline-input border px-2 py-1 rounded w-full" />
-            </div>
-            <div>
-              <div class="font-bold text-lg">${g.nome}</div>
-              <div class="text-sm text-gray-500">${g.descricao || ""}</div>
-            </div>
-          </div>
-          <div class="flex flex-col gap-2 ml-4">
-            <button data-id="${g.id}" class="btn-save-inline-grupo bg-blue-500 text-white px-3 py-1 rounded text-sm">Salvar rápido</button>
-            <button data-id="${g.id}" class="btn-edit-grupo bg-yellow-400 text-white px-3 py-1 rounded text-sm">Editar completo</button>
-            <button data-id="${g.id}" class="btn-delete-grupo bg-red-500 text-white px-3 py-1 rounded text-sm">Excluir</button>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-
-      // upload de imagem grupo
-      container.querySelectorAll("input[data-type='grupo']").forEach(input => {
-        input.addEventListener("change", async (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const id = e.target.dataset.id;
-          const form = new FormData();
-          form.append("image", file);
-          form.append("type", "grupo");
-          form.append("id", id);
-          try {
-            const up = await fetch("/api/upload-image", {
-              method: "POST",
-              body: form
-            });
-            const info = await up.json();
-            if (info.success) {
-              await fetch(`/api/groups/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ imagem: info.filename })
-              });
-              showToast("Imagem do grupo atualizada");
-              await carregarGrupos();
-              await carregarDashboard();
-            } else {
-              showToast("Erro upload grupo", false);
-            }
-          } catch (err) {
-            console.error(err);
-            showToast("Erro de rede", false);
-          }
-        });
-      });
-
-      // editar completo grupo
-      container.querySelectorAll(".btn-edit-grupo").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          const id = e.currentTarget.dataset.id;
-          const groups = await fetch("/api/groups").then(r => r.json());
-          const group = Array.isArray(groups) ? groups.find(g => g.id === id) : null;
-          if (!group) return showToast("Grupo não encontrado", false);
-          abrirModalEdicaoGrupo(group);
-        });
-      });
-
-      container.querySelectorAll(".btn-delete-grupo").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          const id = e.currentTarget.dataset.id;
-          if (!confirm("Excluir grupo?")) return;
-          await fetch(`/api/groups/${id}`, { method: "DELETE" });
-          showToast("Grupo excluído");
-          await carregarGrupos();
-          await carregarDashboard();
-        });
-      });
-    } catch (err) {
-      console.error("Erro carregar grupos:", err);
-      showToast("Falha grupos", false);
-    }
-  }
-
-  function abrirModalEdicaoGrupo(g) {
-    const modalId = "modal-grupo";
-    let existing = document.getElementById(modalId);
-    if (existing) existing.remove();
-    const modal = document.createElement("div");
-    modal.id = modalId;
-    modal.className = "fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50";
-    modal.innerHTML = `
-      <div class="bg-white rounded shadow max-w-md w-full p-6 relative">
-        <h2 class="text-xl font-bold mb-4">Editar Grupo</h2>
-        <div class="space-y-3">
-          <div>
-            <label class="block font-semibold">Nome</label>
-            <input type="text" id="edit-grupo-nome" value="${g.nome}" class="w-full border px-2 py-1 rounded" />
-          </div>
-          <div>
-            <label class="block font-semibold">Descrição</label>
-            <textarea id="edit-grupo-desc" class="w-full border px-2 py-1 rounded">${g.descricao || ""}</textarea>
-          </div>
-          <div>
-            <label class="block font-semibold">Imagem (nome ou caminho)</label>
-            <input type="text" id="edit-grupo-imagem" value="${g.imagem || ""}" class="w-full border px-2 py-1 rounded" />
-          </div>
-        </div>
-        <div class="mt-6 flex justify-end gap-3">
-          <button id="close-grupo-modal" class="px-4 py-2 border rounded">Cancelar</button>
-          <button id="save-grupo-modal" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button>
-        </div>
-        <button id="x-close-grupo" class="absolute top-2 right-2 text-gray-500">&times;</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    modal.querySelector("#close-grupo-modal").addEventListener("click", () => modal.remove());
-    modal.querySelector("#x-close-grupo").addEventListener("click", () => modal.remove());
-	modal.querySelector("#save-grupo-modal").addEventListener("click", async () => {
-	const updated = {
-    nome: document.getElementById("edit-grupo-nome").value,
-    descricao: document.getElementById("edit-grupo-desc").value,
-    imagem: document.getElementById("edit-grupo-imagem").value.trim()
-  };
-  try {
-    const res = await fetch(`/api/groups/${g.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updated)
-    });
-    if (res.ok) {
-      showToast("Grupo salvo");
-      await carregarGrupos();
-      await carregarDashboard();
-      modal.remove();
-    } else {
-      const body = await res.json();
-      console.warn("Erro ao salvar grupo completo:", body);
-      showToast("Erro ao salvar grupo", false);
-    }
-  } catch (err) {
-    console.error("Erro de rede ao salvar grupo completo:", err);
-    showToast("Erro de rede", false);
-  }
-});
-  }
-
-  // criação rápida
-  document.getElementById("add-produto")?.addEventListener("click", async () => {
-    const novo = {
-      id: "prod-" + Date.now(),
-      nome: "Novo Produto",
-      descricao: "",
-      preco: "0,00",
-      imagem: "",
-      grupo: "",
-      desconto: 0,
-      link: ""
-    };
-    const res = await fetch("/api/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(novo)
-    });
-    if (res.ok) {
-      showToast("Produto criado");
-      await carregarProdutos();
-      await carregarDashboard();
-    }
-  });
-
-  document.getElementById("add-download")?.addEventListener("click", async () => {
-    const novo = {
-      id: "dl-" + Date.now(),
-      name: "Novo Download",
-      url: "#",
-      description: ""
-    };
-    const res = await fetch("/api/downloads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(novo)
-    });
-    if (res.ok) {
-      showToast("Download criado");
-      await carregarDownloads();
-      await carregarDashboard();
-    }
-  });
-
-  document.getElementById("add-grupo")?.addEventListener("click", async () => {
-    const novo = {
-      id: "grp-" + Date.now(),
-      nome: "Novo Grupo",
-      descricao: ""
-    };
-    const res = await fetch("/api/groups", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(novo)
-    });
-    if (res.ok) {
-      showToast("Grupo criado");
-      await carregarGrupos();
-      await carregarDashboard();
-    }
-  });
-
-  // inicializa tudo
-  carregarDashboard();
-  carregarProdutos();
-  carregarDownloads();
-  carregarGrupos();
-  loadRules();
-  loadHooks();
-  
-  // ---------- Rule Modal Initialization ----------
+  // ─── Modal Setup ────────────────────────────────────────────────────────────────
+  // Rules
   const modalRule = document.getElementById('modal-rule');
   const formRule  = document.getElementById('form-rule');
-  let isEditingRule = false, editingRuleId = null; 
+  document.getElementById('new-rule-btn').addEventListener('click', () => openRuleModal());
+  document.getElementById('cancel-rule').addEventListener('click', () => modalRule.classList.add('hidden'));
+  formRule.addEventListener('submit', async e => {
+    e.preventDefault();
+    const payload = {
+      id: formRule['rule-id'].value.trim(),
+      type: formRule['rule-type'].value,
+      pattern: formRule['rule-pattern'].value.trim(),
+      reply: formRule['rule-reply'].value.trim()
+    };
+    const url = isEditingRule
+      ? `/api/admin/rules/${encodeURIComponent(editingRuleId)}`
+      : '/api/admin/rules';
+    await fetch(url, { method: isEditingRule ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    modalRule.classList.add('hidden');
+    carregarRegras();
+  });
 
   function openRuleModal(rule = null) {
     if (rule) {
       isEditingRule = true;
       editingRuleId = rule.id;
-      formRule['rule-id'].value      = rule.id;
-      formRule['rule-id'].disabled   = true;
-      formRule['rule-type'].value    = rule.type;
+      formRule['rule-id'].value = rule.id;
+      formRule['rule-id'].disabled = true;
+      formRule['rule-type'].value = rule.type;
       formRule['rule-pattern'].value = rule.pattern;
-      formRule['rule-reply'].value   = rule.reply;
+      formRule['rule-reply'].value = rule.reply;
     } else {
-      isEditingRule = false;
-      editingRuleId = null;
-      formRule.reset();
-      formRule['rule-id'].disabled = false;
+      isEditingRule = false; editingRuleId = null;
+      formRule.reset(); formRule['rule-id'].disabled = false;
     }
     modalRule.classList.remove('hidden');
   }
 
-  document.getElementById('cancel-rule').addEventListener('click', () => modalRule.classList.add('hidden'));
-
-  formRule.addEventListener('submit', async e => {
+  // Hooks
+  const modalHook = document.getElementById('modal-hook');
+  const formHook  = document.getElementById('form-hook');
+  document.getElementById('new-hook-btn').addEventListener('click', () => openHookModal());
+  document.getElementById('cancel-hook').addEventListener('click', () => modalHook.classList.add('hidden'));
+  formHook.addEventListener('submit', async e => {
     e.preventDefault();
     const payload = {
-      id:      formRule['rule-id'].value.trim(),
-      type:    formRule['rule-type'].value,
-      pattern: formRule['rule-pattern'].value.trim(),
-      reply:   formRule['rule-reply'].value.trim()
+      id: formHook['hook-id'].value.trim(),
+      url: formHook['hook-url'].value.trim(),
+      headers: JSON.parse(formHook['hook-headers'].value)
     };
-    const url = isEditingRule
-      ? `/api/admin/rules/${encodeURIComponent(editingRuleId)}`
-      : '/api/admin/rules';
-    const method = isEditingRule ? 'PUT' : 'POST';
-    await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    modalRule.classList.add('hidden');
-    loadRules();
+    const url = isEditingHook
+      ? `/api/admin/webhooks/${encodeURIComponent(editingHookId)}`
+      : '/api/admin/webhooks';
+    await fetch(url, { method: isEditingHook ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    modalHook.classList.add('hidden');
+    carregarWebhooks();
   });
 
   function openHookModal(hook = null) {
     if (hook) {
       isEditingHook = true;
       editingHookId = hook.id;
-      formHook['hook-id'].value      = hook.id;
-      formHook['hook-id'].disabled   = true;
-      formHook['hook-url'].value     = hook.url;
+      formHook['hook-id'].value = hook.id;
+      formHook['hook-id'].disabled = true;
+      formHook['hook-url'].value = hook.url;
       formHook['hook-headers'].value = JSON.stringify(hook.headers||{}, null, 2);
     } else {
-      isEditingHook = false;
-      editingHookId = null;
-      formHook.reset();
-      formHook['hook-id'].disabled = false;
+      isEditingHook = false; editingHookId = null;
+      formHook.reset(); formHook['hook-id'].disabled = false;
       formHook['hook-headers'].value = '{}';
     }
     modalHook.classList.remove('hidden');
   }
 
-  document.getElementById('new-hook-btn').addEventListener('click', () => openHookModal());
-  document.getElementById('cancel-hook').addEventListener('click', () => modalHook.classList.add('hidden'));
-
-  formHook.addEventListener('submit', async e => {
-    e.preventDefault();
-    const payload = {
-      id:      formHook['hook-id'].value.trim(),
-      url:     formHook['hook-url'].value.trim(),
-      headers: JSON.parse(formHook['hook-headers'].value)
-    };
-    const url = isEditingHook
-      ? `/api/admin/webhooks/${encodeURIComponent(editingHookId)}`
-      : '/api/admin/webhooks';
-    const method = isEditingHook ? 'PUT' : 'POST';
-    await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    modalHook.classList.add('hidden');
-    loadHooks();
+  // ─── Tab Switching ──────────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.replace('bg-blue-500','bg-gray-300') && b.classList.remove('text-white'));
+      btn.classList.replace('bg-gray-300','bg-blue-500'); btn.classList.add('text-white');
+      document.querySelectorAll('.tab-section').forEach(sec => sec.classList.add('hidden'));
+      const target = btn.dataset.tab;
+      document.getElementById('tab-'+target).classList.remove('hidden');
+      switch(target) {
+        case 'dashboard': carregarDashboard(); break;
+        case 'produtos': carregarProdutos(); break;
+        case 'downloads': carregarDownloads(); break;
+        case 'grupos': carregarGrupos(); break;
+        case 'regras': carregarRegras(); break;
+        case 'webhooks': carregarWebhooks(); break;
+      }
+    });
   });
+
+  // ─── Dashboard ─────────────────────────────────────────────────────────────────
+  async function carregarDashboard() {
+    try {
+      const [pRes,gRes,dRes,aRes] = await Promise.all([fetch('/api/products'),fetch('/api/groups'),fetch('/api/downloads'),fetch('/api/analytics')]);
+      const produtos = await pRes.json(), grupos = await gRes.json(), downloads = await dRes.json(), analytics = await aRes.json();
+      document.getElementById('total-produtos').textContent = produtos.length||0;
+      document.getElementById('total-downloads').textContent = (downloads.files||[]).length;
+      document.getElementById('total-grupos').textContent = grupos.length||0;
+      document.getElementById('acessos-hoje').textContent = analytics.hoje||0;
+      gerarGrafico(analytics.dias||[]);
+    } catch (e) { console.error(e); showToast('Falha ao carregar dashboard',false); }
+  }
+
+  // ─── Produtos ─────────────────────────────────────────────────────────────────
+  async function carregarProdutos() {
+    try {
+      const res = await fetch('/api/products'); const produtos = await res.json(); const cont = document.getElementById('produtos-lista');
+      cont.innerHTML=''; produtos.forEach(p=>{
+        const card=document.createElement('div'); card.className='product-card bg-white p-4 rounded shadow mb-3';
+        card.innerHTML=`
+          <div class="flex items-start gap-4">
+            <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-2">
+              ${p.imagem?`<img src="${normalizeImagem(p.imagem)}" alt="${p.nome}" class="object-contain w-full h-full">`:'Sem imagem'}
+            </div>
+            <div class="flex-1">
+              <h3 class="font-bold text-lg mb-1">${p.nome}</h3>
+              <p class="text-sm text-gray-500 mb-1">${p.descricao||''}</p>
+              <p class="text-green-600 font-semibold mb-2">R$ ${p.preco||'0,00'}</p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <input type="text" value="${p.imagem||''}" data-field="imagem" data-id="${p.id}" class="inline-input border px-2 py-1 rounded" placeholder="Imagem">
+                <input type="text" value="${p.link||''}" data-field="link" data-id="${p.id}" class="inline-input border px-2 py-1 rounded" placeholder="Link">
+              </div>
+            </div>
+            <div class="flex flex-col gap-2">
+              <button data-id="${p.id}" class="btn-save-produto px-3 py-1 bg-blue-500 text-white rounded text-sm">Salvar</button>
+              <button data-id="${p.id}" class="btn-edit-produto px-3 py-1 bg-yellow-400 text-white rounded text-sm">Editar</button>
+              <button data-id="${p.id}" class="btn-delete-produto px-3 py-1 bg-red-500 text-white rounded text-sm">Excluir</button>
+            </div>
+          </div>`;
+        cont.appendChild(card);
+      });
+      window.produtos = produtos;
+      // Upload e ações
+      cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp=>{ inp.addEventListener('change',async e=>{
+        const file=e.target.files[0]; if(!file) return; const id=e.target.dataset.id; const form=new FormData(); form.append('image',file); form.append('type','produto'); form.append('id',id);
+        try{ const up=await fetch('/api/upload-image',{method:'POST',body:form}); const info=await up.json(); if(info.success){ await fetch(`/api/products/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({imagem:info.filename})}); showToast('Imagem atualizada'); carregarProdutos(); carregarDashboard(); } else showToast(info.error||'Erro upload',false);}catch{showToast('Erro de rede',false)}
+      })});
+      // Inline Save
+      cont.querySelectorAll('.btn-save-produto').forEach(btn=> btn.addEventListener('click',async ()=>{
+        const id=btn.dataset.id; const img=document.querySelector(`input[data-field=imagem][data-id=${id}]`).value.trim(); const link=document.querySelector(`input[data-field=link][data-id=${id}]`).value.trim(); const upd={}; if(img)upd.imagem=img; if(link)upd.link=link; if(!Object.keys(upd).length){showToast('Nada para salvar',false);return;} try{const res=await fetch(`/api/products/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(upd)});if(res.ok){showToast('Produto salvo');carregarProdutos();carregarDashboard();}else showToast('Erro salvar',false);}catch{showToast('Erro rede',false)} }));
+      // Editar
+      cont.querySelectorAll('.btn-edit-produto').forEach(btn=> btn.addEventListener('click',()=> abrirModalEdicaoProduto(window.produtos.find(x=>x.id===btn.dataset.id))));
+      // Excluir
+      cont.querySelectorAll('.btn-delete-produto').forEach(btn=> btn.addEventListener('click',async ()=>{ const id=btn.dataset.id; if(!confirm('Excluir produto?'))return; await fetch(`/api/products/${id}`,{method:'DELETE'}); showToast('Produto excluído'); carregarProdutos(); carregarDashboard(); }));
+    } catch { showToast('Falha produtos',false); }
+  }
+
+  function abrirModalEdicaoProduto(p) {
+    const mid='modal-produto'; document.getElementById(mid)?.remove();
+    const modal=document.createElement('div'); modal.id=mid; modal.className='fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50';
+    modal.innerHTML=`<div class="bg-white rounded shadow max-w-lg w-full p-6 relative">
+      <h2 class="text-xl font-bold mb-4">Editar Produto</h2>
+      ${['nome','preco','imagem','descricao','grupo','link','desconto'].map(f=>{
+        const val = f==='desconto'?p.desconto||0:p[f]||'';
+        const tag = f==='descricao'?`<textarea id="edit-${f}" class="w-full border px-2 py-1 rounded">${val}</textarea>`:
+          `<input id="edit-${f}" type="${f==='desconto'?'number':'text'}" value="${val}" class="w-full border px-2 py-1 rounded" />`;
+        const label = `<label class="block font-semibold capitalize">${f}</label>`;
+        return `<div class="mb-3">${label}${tag}</div>`;
+      }).join('')}
+      <div class="flex justify-end gap-3"><button id="close-prod" class="px-4 py-2 border rounded">Cancelar</button><button id="save-prod" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button></div>
+      <button id="x-prod" class="absolute top-2 right-2 text-gray-500">&times;</button>
+    </div>`;
+    document.body.appendChild(modal);
+    ['close-prod','x-prod'].forEach(id=>modal.querySelector(`#${id}`).addEventListener('click',()=>modal.remove()));
+    modal.querySelector('#save-prod').addEventListener('click',async ()=>{
+      const updated={
+        nome:document.getElementById('edit-nome').value,
+        preco:document.getElementById('edit-preco').value,
+        imagem:document.getElementById('edit-imagem').value,
+        descricao:document.getElementById('edit-descricao').value,
+        grupo:document.getElementById('edit-grupo').value,
+        link:document.getElementById('edit-link').value,
+        desconto:Number(document.getElementById('edit-desconto').value||0)
+      };
+      const res=await fetch(`/api/products/${p.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)});
+      if(res.ok){showToast('Produto salvo');carregarProdutos();carregarDashboard();modal.remove();}else showToast('Erro salvar',false);
+    });
+  }
+
+  // ─── Downloads ────────────────────────────────────────────────────────────────
+  async function carregarDownloads() {
+    try {
+      const res=await fetch('/api/downloads'); const data=await res.json(); const cont=document.getElementById('downloads-lista'); cont.innerHTML=''; const files=data.files||[];
+      files.forEach(d=>{
+        const card=document.createElement('div'); card.className='bg-white p-4 rounded shadow mb-3';
+        card.innerHTML=`<div class="flex items-start gap-4">  <div class="w-24 h-24 bg-gray-100 mb-2 flex items-center justify-center">${d.imagem?`<img src="${normalizeImagem(d.imagem)}" alt="${d.name}" class="object-contain w-full h-full">`:'Sem imagem'}</div>  <div class="flex-1">    <h3 class="font-bold text-lg mb-1">${d.name}</h3>    <p class="text-sm text-gray-500 mb-1">${d.description||''}</p>    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">      <input type="text" data-field="url" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" value="${d.url||''}" placeholder="URL">      <input type="text" data-field="imagem" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" value="${d.imagem||''}" placeholder="Imagem">    </div>  </div>  <div class="flex flex-col gap-2">    <button data-id="${d.id}" class="btn-save-download px-3 py-1 bg-blue-500 text-white rounded text-sm">Salvar</button>    <button data-id="${d.id}" class="btn-edit-download px-3 py-1 bg-yellow-400 text-white rounded text-sm">Editar</button>    <button data-id="${d.id}" class="btn-delete-download px-3 py-1 bg-red-500 text-white rounded text-sm">Excluir</button>  </div></div>`;
+        cont.appendChild(card);
+      });
+      window.downloads=files;
+      // upload
+      cont.querySelectorAll('input[type=file][data-type=download]').forEach(inp=>inp.addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;const id=e.target.dataset.id;const form=new FormData();form.append('image',file);form.append('type','download');form.append('id',id);try{const up=await fetch('/api/upload-image',{method:'POST',body:form});const info=await up.json();if(info.success){await fetch(`/api/downloads/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({imagem:info.filename})});showToast('Imagem atualizada');carregarDownloads();carregarDashboard()}else showToast(info.error||'Erro upload',false)}catch{showToast('Erro rede',false)}}));
+      // inline save
+      cont.querySelectorAll('.btn-save-download').forEach(btn=>btn.addEventListener('click',async ()=>{const id=btn.dataset.id;const url=document.querySelector(`input[data-field=url][data-id=${id}]`).value.trim();const img=document.querySelector(`input[data-field=imagem][data-id=${id}]`).value.trim();const upd={};if(url)upd.url=url;if(img)upd.imagem=img;try{const res=await fetch(`/api/downloads/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(upd)});if(res.ok){showToast('Download salvo');carregarDownloads();carregarDashboard()}else showToast('Erro salvar',false);}catch{showToast('Erro rede',false)}}));
+      // edit
+      cont.querySelectorAll('.btn-edit-download').forEach(btn=>btn.addEventListener('click',()=>abrirModalEdicaoDownload(window.downloads.find(x=>x.id===btn.dataset.id))));
+      // delete
+      cont.querySelectorAll('.btn-delete-download').forEach(btn=>btn.addEventListener('click',async ()=>{const id=btn.dataset.id;if(!confirm('Excluir download?'))return;await fetch(`/api/downloads/${id}`,{method:'DELETE'});showToast('Download excluído');carregarDownloads();carregarDashboard()}));
+    }catch{showToast('Falha downloads',false)}
+  }
+
+  function abrirModalEdicaoDownload(d) {
+    const mid='modal-download';document.getElementById(mid)?.remove();
+    const modal=document.createElement('div');modal.id=mid;modal.className='fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50';
+    modal.innerHTML=`<div class="bg-white rounded shadow max-w-md w-full p-6 relative"><h2 class="text-xl font-bold mb-4">Editar Download</h2>${['name','url','description','imagem'].map(f=>{const val=d[f]||'';const tag=f==='description'?`<textarea id="edit-dl-${f}" class="w-full border px-2 py-1 rounded">${val}</textarea>`:`<input id="edit-dl-${f}" type="text" value="${val}" class="w-full border px-2 py-1 rounded" />`;return`<div class="mb-3"><label class="block font-semibold capitalize">${f.replace(/([A-Z])/g,' $1')}</label>${tag}</div>`}).join('')}<div class="flex justify-end gap-3"><button id="close-dl" class="px-4 py-2 border rounded">Cancelar</button><button id="save-dl" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button></div><button id="x-dl" class="absolute top-2 right-2 text-gray-500">&times;</button></div>`;
+    document.body.appendChild(modal);
+    ['close-dl','x-dl'].forEach(id=>modal.querySelector(`#${id}`).addEventListener('click',()=>modal.remove()));
+    modal.querySelector('#save-dl').addEventListener('click',async ()=>{const updated={name:document.getElementById('edit-dl-name').value,url:document.getElementById('edit-dl-url').value,description:document.getElementById('edit-dl-description').value,imagem:document.getElementById('edit-dl-imagem').value};const res=await fetch(`/api/downloads/${d.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)});if(res.ok){showToast('Download salvo');carregarDownloads();carregarDashboard();modal.remove()}else showToast('Erro salvar',false)});
+  }
+
+  // ─── Grupos ───────────────────────────────────────────────────────────────────
+  async function carregarGrupos() {
+    try {
+      const res=await fetch('/api/groups'); const grupos=await res.json(); const cont=document.getElementById('grupos-lista');cont.innerHTML='';
+      grupos.forEach(g=>{const div=document.createElement('div');div.className='flex items-center justify-between p-2 border-b';div.dataset.id=g.id;div.innerHTML=`<div class="flex items-center gap-3"><div class="w-24 h-24 bg-gray-100 flex items-center justify-center">${g.imagem?`<img src="${normalizeImagem(g.imagem)}" alt="${g.nome}" class="object-contain w-full h-full">`:'Sem imagem'}</div><div><h3 class="font-bold">${g.nome}</h3><p class="text-sm text-gray-500">${g.descricao||''}</p></div></div><div class="flex gap-2"><button class="btn-save-grupo px-2 py-1 border rounded text-sm">Salvar</button><button class="btn-edit-grupo px-2 py-1 border rounded text-sm">Editar</button><button class="btn-delete-grupo px-2 py-1 border rounded text-sm">Excluir</button></div>`;cont.appendChild(div);});window.grupos=grupos;
+      // upload imagem
+      cont.querySelectorAll('input[type=file][data-type=grupo]').forEach(inp=>inp.addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;const id=e.target.dataset.id;const form=new FormData();form.append('image',file);form.append('type','grupo');form.append('id',id);try{const up=await fetch('/api/upload-image',{method:'POST',body:form});const info=await up.json();if(info.success){await fetch(`/api/groups/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({imagem:info.filename})});showToast('Imagem grupo atualizada');carregarGrupos();carregarDashboard()}else showToast('Erro upload',false)}catch{showToast('Erro rede',false)}}));
+      // inline save
+      cont.querySelectorAll('.btn-save-grupo').forEach(btn=>btn.addEventListener('click',async ()=>{const id=btn.closest('[data-id]').dataset.id;const g=grupos.find(x=>x.id===id);const img=g.imagem;try{const res=await fetch(`/api/groups/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({imagem:img})});if(res.ok){showToast('Grupo salvo');carregarGrupos();carregarDashboard()}else showToast('Erro salvar',false)}catch{showToast('Erro rede',false)}}));
+      // edit
+      cont.querySelectorAll('.btn-edit-grupo').forEach(btn=>btn.addEventListener('click',()=>abrirModalEdicaoGrupo(grupos.find(x=>x.id===btn.closest('[data-id]').dataset.id))));
+      // delete
+      cont.querySelectorAll('.btn-delete-grupo').forEach(btn=>btn.addEventListener('click',async ()=>{const id=btn.closest('[data-id]').dataset.id;if(!confirm('Excluir grupo?'))return;await fetch(`/api/groups/${id}`,{method:'DELETE'});showToast('Grupo excluído');carregarGrupos();carregarDashboard()}));
+    }catch{showToast('Falha grupos',false)}
+  }
+
+  function abrirModalEdicaoGrupo(g) {
+    const mid='modal-grupo';document.getElementById(mid)?.remove();
+    const modal=document.createElement('div');modal.id=mid;modal.className='fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50';
+    modal.innerHTML=`<div class="bg-white rounded shadow max-w-md w-full p-6 relative"><h2 class="text-xl font-bold mb-4">Editar Grupo</h2>${['nome','descricao','imagem'].map(f=>{const val=g[f]||'';const tag=f==='descricao'?`<textarea id="edit-grupo-${f}" class="w-full border px-2 py-1 rounded">${val}</textarea>`:`<input id="edit-grupo-${f}" type="text" value="${val}" class="w-full border px-2 py-1 rounded" />`;return`<div class="mb-3"><label class="block font-semibold capitalize">${f}</label>${tag}</div>`}).join('')}<div class="flex justify-end gap-3"><button id="close-grupo" class="px-4 py-2 border rounded">Cancelar</button><button id="save-grupo" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button></div><button id="x-grupo" class="absolute top-2 right-2 text-gray-500">&times;</button></div>`;
+    document.body.appendChild(modal);
+    ['close-grupo','x-grupo'].forEach(id=>modal.querySelector(`#${id}`).addEventListener('click',()=>modal.remove()));
+    modal.querySelector('#save-grupo').addEventListener('click',async ()=>{const updated={nome:document.getElementById('edit-grupo-nome').value,descricao:document.getElementById('edit-grupo-descricao').value,imagem:document.getElementById('edit-grupo-imagem').value};const res=await fetch(`/api/groups/${g.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)});if(res.ok){showToast('Grupo salvo');carregarGrupos();carregarDashboard();modal.remove()}else showToast('Erro salvar',false)});
+  }
+
+  // ─── Regras ─────────────────────────────────────────────────────────────────────
+  async function carregarRegras() {
+    try {
+      const res=await fetch('/api/admin/rules'); const regras=await res.json(); const cont=document.getElementById('rules-lista');cont.innerHTML='';
+      regras.forEach(r=>{const div=document.createElement('div');div.className='flex items-center justify-between p-2 border-b';div.dataset.id=r.id;div.innerHTML=`<div><strong>${r.id}</strong> — ${r.type} <code>${r.pattern}</code> → “${r.reply}”</div><div class="flex gap-2"><button class="btn-edit-regra px-2 py-1 border rounded text-sm">Editar</button><button class="btn-delete-regra px-2 py-1 border rounded text-sm">Excluir</button></div>`;cont.appendChild(div)});
+      window.rules=regras;
+      cont.querySelectorAll('.btn-edit-regra').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.closest('[data-id]').dataset.id;const r=rules.find(x=>x.id===id);if(r)openRuleModal(r)}));
+      cont.querySelectorAll('.btn-delete-regra').forEach(btn=>btn.addEventListener('click',async()=>{const id=btn.closest('[data-id]').dataset.id;if(!confirm(`Excluir regra “${id}”?`))return;await fetch(`/api/admin/rules/${id}`,{method:'DELETE'});carregarRegras();showToast('Regra excluída')}));
+    }catch{showToast('Falha regras',false)}
+  }
+
+  // ─── Webhooks ──────────────────────────────────────────────────────────────────
+  async function carregarWebhooks() {
+    try {
+      const res=await fetch('/api/admin/webhooks'); const hooks=await res.json(); const cont=document.getElementById('hooks-lista');cont.innerHTML='';
+      hooks.forEach(h=>{const div=document.createElement('div');div.className='flex items-center justify-between p-2 border-b';div.dataset.id=h.id;div.innerHTML=`<div><strong>${h.id}</strong> → ${h.url} <small>${JSON.stringify(h.headers)}</small></div><div class="flex gap-2"><button class="btn-edit-hook px-2 py-1 border rounded text-sm">Editar</button><button class="btn-delete-hook px-2 py-1 border rounded text-sm">Excluir</button></div>`;cont.appendChild(div)});
+      window.hooks=hooks;
+      cont.querySelectorAll('.btn-edit-hook').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.closest('[data-id]').dataset.id;const h=hooks.find(x=>x.id===id);if(h)openHookModal(h)}));
+      cont.querySelectorAll('.btn-delete-hook').forEach(btn=>btn.addEventListener('click',async ()=>{const id=btn.closest('[data-id]').dataset.id;if(!confirm(`Excluir webhook “${id}”?`))return;await fetch(`/api/admin/webhooks/${id}`,{method:'DELETE'});carregarWebhooks();showToast('Webhook excluído')}));
+    }catch{showToast('Falha webhooks',false)}
+  }
+
+  // ─── Initialization ─────────────────────────────────────────────────────────────
+  carregarDashboard();
+  carregarProdutos();
+  carregarDownloads();
+  carregarGrupos();
+  carregarRegras();
+  carregarWebhooks();
 });
-
-// ---------- Admin Rules Functions ----------
-async function loadRules() {
-  const rules = await fetch('/api/admin/rules').then(r => r.json());
-  window.rules = rules;   // ← expõe globalmente para o editRule
-  const tbody = document.querySelector('#rules-table tbody');
-  tbody.innerHTML = '';
-  rules.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="border px-4 py-2">${r.id}</td>
-      <td class="border px-4 py-2">${r.type}</td>
-      <td class="border px-4 py-2">${r.pattern}</td>
-      <td class="border px-4 py-2">${r.reply}</td>
-      <td class="border px-4 py-2">
-        <button onclick="editRule('${r.id}')" class="text-blue-600">Editar</button>
-        <button onclick="deleteRule('${r.id}')" class="text-red-600 ml-2">Excluir</button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-async function deleteRule(id) {
-  await fetch(`/api/admin/rules/${id}`, { method: 'DELETE' });
-  loadRules();
-}
-
-function editRule(id) {
-  alert('Implementar edição de regra: ' + id);
-}
-
-// ---------- Admin Webhooks Functions ----------
-async function loadHooks() {
-  const hooks = await fetch('/api/admin/webhooks').then(r => r.json());
-  window.hooks = hooks;   // ← expõe globalmente para o editHook
-  const tbody = document.querySelector('#webhooks-table tbody');
-  tbody.innerHTML = '';
-  hooks.forEach(h => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="border px-4 py-2">${h.id}</td>
-      <td class="border px-4 py-2">${h.url}</td>
-      <td class="border px-4 py-2">${JSON.stringify(h.headers)}</td>
-      <td class="border px-4 py-2">
-        <button onclick="editHook('${h.id}')" class="text-blue-600">Editar</button>
-        <button onclick="deleteHook('${h.id}')" class="text-red-600 ml-2">Excluir</button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-async function deleteHook(id) {
-  await fetch(`/api/admin/webhooks/${id}`, { method: 'DELETE' });
-  loadHooks();
-}
-
-function editHook(id) {
-  const hook = (window.hooks || []).find(h => h.id === id);
-  if (!hook) return alert('Webhook não encontrado');
-  openHookModal(hook);
-}

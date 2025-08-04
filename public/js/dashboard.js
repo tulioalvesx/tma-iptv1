@@ -182,23 +182,25 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       });
 
-// handler robusto para Salvar rápido de grupo, incluindo imagem digitada
-container.querySelectorAll(".btn-save-inline-grupo").forEach(btn => {
-  btn.addEventListener("click", async (e) => {
-    const id = e.currentTarget.dataset.id;
-    // coleta todos os campos inline que queremos salvar
+// delegação: escuta clique em "Salvar rápido" para grupos mesmo se recriado dinamicamente
+const gruposLista = document.getElementById("grupos-lista");
+if (gruposLista) {
+  gruposLista.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".btn-save-inline-grupo");
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (!id) return;
+
+    // coleta valor manual de imagem
     const imagemInput = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`);
     const updated = {};
-
     if (imagemInput) {
       const val = imagemInput.value.trim();
-      if (val) {
-        updated.imagem = val;
-      }
+      if (val) updated.imagem = val;
     }
 
-    if (Object.keys(updated).length === 0) {
-      showToast("Nada para salvar"); // nada mudou
+    if (!Object.keys(updated).length) {
+      showToast("Nada para salvar");
       return;
     }
 
@@ -218,7 +220,6 @@ container.querySelectorAll(".btn-save-inline-grupo").forEach(btn => {
       const body = await res.json();
       if (res.ok) {
         showToast("Grupo salvo");
-        // força recarregar para refletir persistência
         await carregarGrupos();
         await carregarDashboard();
       } else {
@@ -230,7 +231,7 @@ container.querySelectorAll(".btn-save-inline-grupo").forEach(btn => {
       showToast("Erro de rede", false);
     }
   });
-});
+}
 
       container.querySelectorAll(".btn-edit").forEach(btn => {
         btn.addEventListener("click", async (e) => {

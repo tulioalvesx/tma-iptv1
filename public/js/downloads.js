@@ -1,5 +1,13 @@
+
 // downloads.js
 document.addEventListener("DOMContentLoaded", () => {
+  function normalizeUrl(raw) {
+    if (!raw) return '#';
+    raw = raw.trim();
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return 'https://' + raw.replace(/^\/+/, '');
+  }
+
   fetch("/api/downloads")
     .then(res => res.json())
     .then(data => {
@@ -18,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
             src = `/img/${src.replace(/^\/?img\/?/i, "")}`;
           }
           img.src = src;
-          img.alt = item.name;
+          img.alt = item.name || 'Download';
           img.style.width = "60px";
           img.style.height = "60px";
           img.style.objectFit = "contain";
@@ -27,9 +35,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const content = document.createElement("div");
         const a = document.createElement("a");
-        a.href = item.url || "#";
-        a.textContent = item.name;
+        a.href = normalizeUrl(item.url || item.link); // normaliza antes de atribuir
+        a.textContent = item.name || 'Download';
         a.target = "_blank";
+        a.rel = "noopener noreferrer";
         a.style.fontWeight = "600";
         const desc = document.createElement("p");
         desc.textContent = item.description || "";

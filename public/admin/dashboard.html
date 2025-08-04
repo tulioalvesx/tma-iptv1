@@ -117,6 +117,63 @@
     </section>
   </main>
 
+  <!-- Rule Modal -->
+  <div id="modal-rule" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg p-6 w-96">
+      <h2 class="text-lg font-semibold mb-4">Nova Regra</h2>
+      <form id="form-rule" class="space-y-4">
+        <div>
+          <label class="block text-sm">ID</label>
+          <input id="rule-id" type="text" required class="w-full border px-3 py-2 rounded"/>
+        </div>
+        <div>
+          <label class="block text-sm">Tipo</label>
+          <select id="rule-type" required class="w-full border px-3 py-2 rounded">
+            <option value="keyword">Palavra-chave</option>
+            <option value="message">Mensagem exata</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm">Pattern</label>
+          <input id="rule-pattern" type="text" required class="w-full border px-3 py-2 rounded"/>
+        </div>
+        <div>
+          <label class="block text-sm">Reply</label>
+          <input id="rule-reply" type="text" required class="w-full border px-3 py-2 rounded"/>
+        </div>
+        <div class="flex justify-end space-x-2">
+          <button type="button" id="cancel-rule" class="px-4 py-2">Cancelar</button>
+          <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Webhook Modal -->
+  <div id="modal-hook" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg p-6 w-96">
+      <h2 class="text-lg font-semibold mb-4">Novo Webhook</h2>
+      <form id="form-hook" class="space-y-4">
+        <div>
+          <label class="block text-sm">ID</label>
+          <input id="hook-id" type="text" required class="w-full border px-3 py-2 rounded"/>
+        </div>
+        <div>
+          <label class="block text-sm">URL</label>
+          <input id="hook-url" type="url" required class="w-full border px-3 py-2 rounded"/>
+        </div>
+        <div>
+          <label class="block text-sm">Headers (JSON)</label>
+          <textarea id="hook-headers" rows="3" class="w-full border px-3 py-2 rounded">{}</textarea>
+        </div>
+        <div class="flex justify-end space-x-2">
+          <button type="button" id="cancel-hook" class="px-4 py-2">Cancelar</button>
+          <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
   <div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow hidden"></div>
 </body>
 </html>

@@ -147,6 +147,59 @@ document.addEventListener("DOMContentLoaded", () => {
         container.appendChild(card);
       });
 
+  // Rule modal
+  const modalRule = document.getElementById('modal-rule');
+  const formRule = document.getElementById('form-rule');
+  document.getElementById('new-rule-btn').addEventListener('click', () => {
+    formRule.reset();
+    modalRule.classList.remove('hidden');
+  });
+  document.getElementById('cancel-rule').addEventListener('click', () => {
+    modalRule.classList.add('hidden');
+  });
+  formRule.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newRule = {
+      id: document.getElementById('rule-id').value,
+      type: document.getElementById('rule-type').value,
+      pattern: document.getElementById('rule-pattern').value,
+      reply: document.getElementById('rule-reply').value
+    };
+    await fetch('/api/admin/rules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newRule)
+    });
+    modalRule.classList.add('hidden');
+    loadRules();
+  });
+
+  // Hook modal
+  const modalHook = document.getElementById('modal-hook');
+  const formHook = document.getElementById('form-hook');
+  document.getElementById('new-hook-btn').addEventListener('click', () => {
+    formHook.reset();
+    modalHook.classList.remove('hidden');
+  });
+  document.getElementById('cancel-hook').addEventListener('click', () => {
+    modalHook.classList.add('hidden');
+  });
+  formHook.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newHook = {
+      id: document.getElementById('hook-id').value,
+      url: document.getElementById('hook-url').value,
+      headers: JSON.parse(document.getElementById('hook-headers').value)
+    };
+    await fetch('/api/admin/webhooks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newHook)
+    });
+    modalHook.classList.add('hidden');
+    loadHooks();
+  });
+  
       // handlers
       container.querySelectorAll("input[data-type='produto']").forEach(input => {
         input.addEventListener("change", async (e) => {

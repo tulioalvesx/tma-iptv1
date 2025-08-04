@@ -1,3 +1,4 @@
+
 document.addEventListener("DOMContentLoaded", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const groupId = urlParams.get("id");
@@ -31,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 function normalizeImageSrc(src) {
   if (!src) return "images/placeholder.jpg";
   if (src.startsWith("/")) return src;
-  return `/img/${src.replace(/^\/?img\?/i, "")}`;
+  return `/img/${src.replace(/^\/?img\/?/i, "")}`;
 }
 
 function renderProducts(products) {

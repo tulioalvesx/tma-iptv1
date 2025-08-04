@@ -615,6 +615,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  
   function abrirModalEdicaoGrupo(g) {
     const modalId = "modal-grupo";
     let existing = document.getElementById(modalId);
@@ -634,6 +635,10 @@ document.addEventListener("DOMContentLoaded", () => {
             <label class="block font-semibold">Descrição</label>
             <textarea id="edit-grupo-desc" class="w-full border px-2 py-1 rounded">${g.descricao || ""}</textarea>
           </div>
+          <div>
+            <label class="block font-semibold">Imagem (nome ou caminho)</label>
+            <input type="text" id="edit-grupo-imagem" value="${g.imagem || ""}" class="w-full border px-2 py-1 rounded" />
+          </div>
         </div>
         <div class="mt-6 flex justify-end gap-3">
           <button id="close-grupo-modal" class="px-4 py-2 border rounded">Cancelar</button>
@@ -648,7 +653,8 @@ document.addEventListener("DOMContentLoaded", () => {
     modal.querySelector("#save-grupo-modal").addEventListener("click", async () => {
       const updated = {
         nome: document.getElementById("edit-grupo-nome").value,
-        descricao: document.getElementById("edit-grupo-desc").value
+        descricao: document.getElementById("edit-grupo-desc").value,
+        imagem: document.getElementById("edit-grupo-imagem").value.trim()
       };
       const res = await fetch(`/api/groups/${g.id}`, {
         method: "PUT",
@@ -664,6 +670,8 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast("Erro ao salvar grupo", false);
       }
     });
+  }
+);
   }
 
   // criação rápida

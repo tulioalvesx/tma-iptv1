@@ -1,346 +1,176 @@
-// group.js
+document.addEventListener("DOMContentLoaded", async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const groupId = urlParams.get("id");
+  if (!groupId) return;
 
-// toast helper (compartilhado)
-function showToast(msg, success = true) {
-  let toastEl = document.getElementById("toast");
-  if (!toastEl) {
-    toastEl = document.createElement("div");
-    toastEl.id = "toast";
-    toastEl.className = "fixed bottom-4 right-4 text-white px-4 py-2 rounded shadow transition-opacity z-50";
-    document.body.appendChild(toastEl);
-  }
-  toastEl.textContent = msg;
-  toastEl.style.backgroundColor = success ? "#16a34a" : "#dc2626";
-  toastEl.style.opacity = "1";
-  setTimeout(() => {
-    toastEl.style.opacity = "0";
-  }, 2200);
-}
-
-// normalização de imagem (mesma lógica do dashboard)
-function normalizeImagem(im) {
-  if (!im) return "";
-  if (im.startsWith("http") || im.startsWith("/")) {
-    if (im.startsWith("/img/")) return im;
-    if (im.startsWith("/")) return im;
-    return "/" + im.replace(/^\/?img\/?/i, "");
-  }
-  return `/img/${im.replace(/^\/?img\/?/i, "")}`;
-}
-
-// ---------- ADMIN CARREGAMENTO (com edição inline + upload) ----------
-async function carregarGruposAdmin() {
   try {
-    const res = await fetch("/api/groups");
-    const grupos = await res.json();
-    const container = document.getElementById("grupos-lista");
-    if (!container) return;
-    container.innerHTML = "";
-    if (!Array.isArray(grupos)) return;
+    const [groupsRes, productsRes] = await Promise.all([
+      fetch("/api/groups"),
+      fetch("/api/products")
+    ]);
+    const groups = await groupsRes.json();
+    const produtos = await productsRes.json();
 
-    grupos.forEach(g => {
-      const div = document.createElement("div");
-      div.className = "group-card bg-white p-4 rounded shadow flex flex-col gap-3 mb-3";
-      div.innerHTML = `
-        <div class="flex justify-between items-start">
-          <div class="flex-1 flex gap-4">
-            <div class="flex-shrink-0">
-              <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-1">
-                ${g.imagem ? `<img src="${normalizeImagem(g.imagem)}" alt="${g.nome}" class="object-contain w-full h-full">` : "Sem imagem"}
-              </div>
-              <div class="text-xs mb-1">Upload imagem</div>
-              <input type="file" data-type="grupo" data-id="${g.id}" class="upload-image-input mb-2" accept="image/*" />
-              <div class="text-xs mb-1">Imagem (nome ou caminho)</div>
-              <input type="text" value="${g.imagem || ""}" data-field="imagem" data-id="${g.id}" class="inline-input border px-2 py-1 rounded w-full mb-1" />
-            </div>
-            <div class="flex-1">
-              <div class="grid grid-cols-1 gap-2">
-                <div>
-                  <label class="block font-semibold text-xs">Nome</label>
-                  <input type="text" value="${g.nome}" data-field="nome" data-id="${g.id}" class="border px-2 py-1 rounded w-full" />
-                </div>
-                <div>
-                  <label class="block font-semibold text-xs">Descrição</label>
-                  <textarea data-field="descricao" data-id="${g.id}" class="border px-2 py-1 rounded w-full">${g.descricao || ""}</textarea>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="flex flex-col gap-2 ml-4">
-            <button data-id="${g.id}" class="btn-save-inline-grupo bg-blue-500 text-white px-3 py-1 rounded text-sm">Salvar rápido</button>
-            <button data-id="${g.id}" class="btn-edit-grupo bg-yellow-400 text-white px-3 py-1 rounded text-sm">Editar completo</button>
-            <button data-id="${g.id}" class="btn-delete-grupo bg-red-500 text-white px-3 py-1 rounded text-sm">Excluir</button>
-          </div>
-        </div>
-      `;
-      container.appendChild(div);
-    });
+    const group = Array.isArray(groups) ? groups.find(g => g.id === groupId) : null;
+    if (!group) return;
 
-    // upload de imagem grupo
-    container.querySelectorAll("input[data-type='grupo']").forEach(input => {
-      input.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const id = e.target.dataset.id;
-        const form = new FormData();
-        form.append("image", file);
-        form.append("type", "grupo");
-        form.append("id", id);
-        try {
-          const up = await fetch("/api/upload-image", {
-            method: "POST",
-            body: form
-          });
-          const info = await up.json();
-          if (info.success) {
-            await fetch(`/api/groups/${id}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ imagem: info.filename })
-            });
-            showToast("Imagem do grupo atualizada");
-            await carregarGruposAdmin();
-            if (typeof carregarDashboard === "function") await carregarDashboard();
-          } else {
-            showToast("Erro upload grupo", false);
-          }
-        } catch (err) {
-          console.error(err);
-          showToast("Erro de rede", false);
-        }
-      });
-    });
+    const lang = localStorage.getItem("lang") || "pt";
+    const titleEl = document.getElementById("group-title");
+    const groupName = (lang === "en" && group.name_en) ? group.name_en : (group.nome || group.name || "");
+    if (titleEl) titleEl.textContent = groupName;
 
-    // salvar rápido (nome, descrição, imagem manual)
-    container.querySelectorAll(".btn-save-inline-grupo").forEach(btn => {
-      btn.addEventListener("click", async (e) => {
-        const id = e.currentTarget.dataset.id;
-        const nomeInput = document.querySelector(`input[data-field="nome"][data-id="${id}"]`);
-        const descInput = document.querySelector(`textarea[data-field="descricao"][data-id="${id}"]`);
-        const imgInput = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`);
-        const updated = {};
-        if (nomeInput) updated.nome = nomeInput.value.trim();
-        if (descInput) updated.descricao = descInput.value.trim();
-        if (imgInput) updated.imagem = imgInput.value.trim();
-        try {
-          const res = await fetch(`/api/groups/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updated)
-          });
-          if (res.ok) {
-            showToast("Grupo salvo");
-            await carregarGruposAdmin();
-            if (typeof carregarDashboard === "function") await carregarDashboard();
-          } else {
-            showToast("Erro ao salvar grupo", false);
-          }
-        } catch (err) {
-          console.error(err);
-          showToast("Erro rede grupo", false);
-        }
-      });
-    });
-
-    // editar completo grupo (modal)
-    container.querySelectorAll(".btn-edit-grupo").forEach(btn => {
-      btn.addEventListener("click", async (e) => {
-        const id = e.currentTarget.dataset.id;
-        const groups = await fetch("/api/groups").then(r => r.json());
-        const group = Array.isArray(groups) ? groups.find(g => g.id === id) : null;
-        if (!group) return showToast("Grupo não encontrado", false);
-        abrirModalEdicaoGrupo(group);
-      });
-    });
-
-    // excluir
-    container.querySelectorAll(".btn-delete-grupo").forEach(btn => {
-      btn.addEventListener("click", async (e) => {
-        const id = e.currentTarget.dataset.id;
-        if (!confirm("Excluir grupo?")) return;
-        await fetch(`/api/groups/${id}`, { method: "DELETE" });
-        showToast("Grupo excluído");
-        await carregarGruposAdmin();
-        if (typeof carregarDashboard === "function") await carregarDashboard();
-      });
-    });
+    const filtered = Array.isArray(produtos) ? produtos.filter(p => p.grupo === groupId) : [];
+    renderProducts(filtered);
   } catch (err) {
-    console.error("Erro carregar grupos admin:", err);
-    showToast("Falha ao carregar grupos", false);
-  }
-}
-
-function abrirModalEdicaoGrupo(g) {
-  const modalId = "modal-grupo";
-  let existing = document.getElementById(modalId);
-  if (existing) existing.remove();
-  const modal = document.createElement("div");
-  modal.id = modalId;
-  modal.className = "fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50";
-  modal.innerHTML = `
-    <div class="bg-white rounded shadow max-w-md w-full p-6 relative">
-      <h2 class="text-xl font-bold mb-4">Editar Grupo</h2>
-      <div class="space-y-3">
-        <div>
-          <label class="block font-semibold">Nome</label>
-          <input type="text" id="edit-grupo-nome" value="${g.nome}" class="w-full border px-2 py-1 rounded" />
-        </div>
-        <div>
-          <label class="block font-semibold">Descrição</label>
-          <textarea id="edit-grupo-desc" class="w-full border px-2 py-1 rounded">${g.descricao || ""}</textarea>
-        </div>
-        <div>
-          <label class="block font-semibold">Imagem (nome ou caminho)</label>
-          <input type="text" id="edit-grupo-imagem" value="${g.imagem || ""}" class="w-full border px-2 py-1 rounded" />
-        </div>
-      </div>
-      <div class="mt-6 flex justify-end gap-3">
-        <button id="close-grupo-modal" class="px-4 py-2 border rounded">Cancelar</button>
-        <button id="save-grupo-modal" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button>
-      </div>
-      <button id="x-close-grupo" class="absolute top-2 right-2 text-gray-500">&times;</button>
-    </div>
-  `;
-  document.body.appendChild(modal);
-  modal.querySelector("#close-grupo-modal").addEventListener("click", () => modal.remove());
-  modal.querySelector("#x-close-grupo").addEventListener("click", () => modal.remove());
-  modal.querySelector("#save-grupo-modal").addEventListener("click", async () => {
-    const updated = {
-      nome: document.getElementById("edit-grupo-nome").value,
-      descricao: document.getElementById("edit-grupo-desc").value,
-      imagem: document.getElementById("edit-grupo-imagem").value.trim()
-    };
-    const res = await fetch(`/api/groups/${g.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updated)
-    });
-    if (res.ok) {
-      showToast("Grupo salvo");
-      await carregarGruposAdmin();
-      if (typeof carregarDashboard === "function") await carregarDashboard();
-      modal.remove();
-    } else {
-      showToast("Erro ao salvar grupo", false);
-    }
-  });
-}
-
-// fallback simples (sem os campos estendidos)
-async function carregarGrupos() {
-  try {
-    const res = await fetch("/api/groups");
-    const grupos = await res.json();
-    const container = document.getElementById("grupos-lista");
-    if (!container) return;
-    container.innerHTML = "";
-    if (!Array.isArray(grupos)) return;
-
-    grupos.forEach(g => {
-      const div = document.createElement("div");
-      div.className = "bg-white p-4 rounded shadow flex justify-between items-center mb-3";
-      div.innerHTML = `
-        <div class="flex-1 flex gap-3 items-center">
-          <div class="flex-shrink-0">
-            <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-1">
-              ${g.imagem ? `<img src="${normalizeImagem(g.imagem)}" alt="${g.nome}" class="object-contain w-full h-full">` : "Sem imagem"}
-            </div>
-            <div class="text-xs mb-1">Upload imagem</div>
-            <input type="file" data-type="grupo" data-id="${g.id}" class="upload-image-input mb-2" accept="image/*" />
-          </div>
-          <div>
-            <div class="font-bold text-lg">${g.nome}</div>
-            <div class="text-sm text-gray-500">${g.descricao || ""}</div>
-          </div>
-        </div>
-        <div class="flex flex-col gap-2 ml-4">
-          <button data-id="${g.id}" class="btn-save-inline-grupo bg-blue-500 text-white px-3 py-1 rounded text-sm">Salvar rápido</button>
-          <button data-id="${g.id}" class="btn-edit-grupo bg-yellow-400 text-white px-3 py-1 rounded text-sm">Editar completo</button>
-          <button data-id="${g.id}" class="btn-delete-grupo bg-red-500 text-white px-3 py-1 rounded text-sm">Excluir</button>
-        </div>
-      `;
-      container.appendChild(div);
-    });
-
-    // upload de imagem grupo (fallback)
-    container.querySelectorAll("input[data-type='grupo']").forEach(input => {
-      input.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const id = e.target.dataset.id;
-        const form = new FormData();
-        form.append("image", file);
-        form.append("type", "grupo");
-        form.append("id", id);
-        try {
-          const up = await fetch("/api/upload-image", {
-            method: "POST",
-            body: form
-          });
-          const info = await up.json();
-          if (info.success) {
-            await fetch(`/api/groups/${id}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ imagem: info.filename })
-            });
-            showToast("Imagem do grupo atualizada");
-            await carregarGrupos();
-            if (typeof carregarDashboard === "function") await carregarDashboard();
-          } else {
-            showToast("Erro upload grupo", false);
-          }
-        } catch (err) {
-          console.error(err);
-          showToast("Erro de rede", false);
-        }
-      });
-    });
-
-    // ações básicas (editar/excluir) no fallback
-    container.querySelectorAll(".btn-edit-grupo").forEach(btn => {
-      btn.addEventListener("click", async (e) => {
-        const id = e.currentTarget.dataset.id;
-        const groups = await fetch("/api/groups").then(r => r.json());
-        const group = Array.isArray(groups) ? groups.find(g => g.id === id) : null;
-        if (!group) return showToast("Grupo não encontrado", false);
-        abrirModalEdicaoGrupo(group);
-      });
-    });
-
-    container.querySelectorAll(".btn-delete-grupo").forEach(btn => {
-      btn.addEventListener("click", async (e) => {
-        const id = e.currentTarget.dataset.id;
-        if (!confirm("Excluir grupo?")) return;
-        await fetch(`/api/groups/${id}`, { method: "DELETE" });
-        showToast("Grupo excluído");
-        await carregarGrupos();
-        if (typeof carregarDashboard === "function") await carregarDashboard();
-      });
-    });
-  } catch (err) {
-    console.error("Erro carregar grupos (fallback):", err);
-    showToast("Falha ao carregar grupos", false);
-  }
-}
-
-// criação rápida de grupo (caso botão exista)
-document.getElementById("add-grupo")?.addEventListener("click", async () => {
-  const novo = {
-    id: "grp-" + Date.now(),
-    nome: "Novo Grupo",
-    descricao: ""
-  };
-  const res = await fetch("/api/groups", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(novo)
-  });
-  if (res.ok) {
-    showToast("Grupo criado");
-    // prefer admin se disponível
-    if (typeof carregarGruposAdmin === "function") await carregarGruposAdmin();
-    else await carregarGrupos();
-    if (typeof carregarDashboard === "function") await carregarDashboard();
+    console.error("Erro ao carregar grupo/produtos:", err);
   }
 });
+
+function normalizeImageSrc(src) {
+  if (!src) return "images/placeholder.jpg";
+  if (src.startsWith("/")) return src;
+  // remove eventual prefix like "img/" ou "/img/"
+  return `/img/${src.replace(/^\/?img\/?/i, "")}`;
+}
+
+function renderProducts(products) {
+  const container = document.getElementById("products");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const lang = localStorage.getItem("lang") || "pt";
+
+  products.forEach(product => {
+    const card = document.createElement("div");
+    card.className = "product-card";
+
+    // Image
+    const img = document.createElement("img");
+    img.src = product.imagem ? normalizeImageSrc(product.imagem) : "images/placeholder.jpg";
+    img.alt = product.nome || product.name || "";
+    card.appendChild(img);
+
+    // Details
+    const details = document.createElement("div");
+    details.className = "product-details";
+
+    // Title
+    const title = document.createElement("h3");
+    const prodName = (lang === "en" && product.name_en)
+      ? product.name_en
+      : (product.nome || product.name || "");
+    title.textContent = prodName;
+    details.appendChild(title);
+
+    // Description
+    const desc = document.createElement("p");
+    const description = (lang === "en" && product.description_en)
+      ? product.description_en
+      : (product.descricao || product.description || "");
+    desc.textContent = description;
+    details.appendChild(desc);
+
+    // Price and discount
+    const priceLine = document.createElement("div");
+    priceLine.className = "price-line";
+
+    const precoNum = parseFloat(product.preco || 0) || 0;
+    const priceSpan = document.createElement("span");
+    priceSpan.className = "price font-semibold";
+    priceSpan.textContent = `R$ ${precoNum.toFixed(2)}`;
+    priceLine.appendChild(priceSpan);
+
+    if (product.desconto && product.desconto > 0 && precoNum > 0) {
+      const descontoAplicado = precoNum * (1 - (product.desconto / 100));
+      const original = document.createElement("span");
+      original.className = "original-price ml-2 line-through text-sm text-gray-500";
+      original.textContent = `R$ ${precoNum.toFixed(2)}`;
+      priceLine.appendChild(original);
+
+      const discounted = document.createElement("div");
+      discounted.className = "text-green-600 font-semibold";
+      discounted.textContent = `R$ ${descontoAplicado.toFixed(2)}`;
+      details.appendChild(discounted);
+    }
+
+    details.appendChild(priceLine);
+
+    // Stock / quantidade
+    let quantity = 1;
+    if (product.estoque === undefined || product.estoque > 0) {
+      const qtyControl = document.createElement("div");
+      qtyControl.className = "quantity-control flex items-center gap-1 mt-2";
+
+      const minusBtn = document.createElement("button");
+      minusBtn.textContent = "-";
+      minusBtn.setAttribute("aria-label", "Diminuir quantidade");
+      const qtyInput = document.createElement("input");
+      qtyInput.type = "number";
+      qtyInput.value = quantity;
+      qtyInput.min = 1;
+      qtyInput.className = "w-16 text-center border rounded";
+      const plusBtn = document.createElement("button");
+      plusBtn.textContent = "+";
+      plusBtn.setAttribute("aria-label", "Aumentar quantidade");
+
+      minusBtn.addEventListener("click", () => {
+        const val = parseInt(qtyInput.value, 10);
+        if (!isNaN(val) && val > 1) {
+          quantity = val - 1;
+          qtyInput.value = quantity;
+        }
+      });
+      plusBtn.addEventListener("click", () => {
+        const val = parseInt(qtyInput.value, 10);
+        quantity = isNaN(val) ? 1 : val + 1;
+        qtyInput.value = quantity;
+      });
+      qtyInput.addEventListener("change", () => {
+        const val = parseInt(qtyInput.value, 10);
+        if (!isNaN(val) && val > 0) {
+          quantity = val;
+        } else {
+          qtyInput.value = quantity;
+        }
+      });
+
+      qtyControl.appendChild(minusBtn);
+      qtyControl.appendChild(qtyInput);
+      qtyControl.appendChild(plusBtn);
+      details.appendChild(qtyControl);
+    } else {
+      const outOfStock = document.createElement("p");
+      outOfStock.style.color = "red";
+      outOfStock.style.fontWeight = "600";
+      outOfStock.textContent = (lang === "en") ? "Out of stock" : "Produto esgotado";
+      details.appendChild(outOfStock);
+    }
+
+    // Actions
+    const actions = document.createElement("div");
+    actions.className = "product-actions mt-3 flex gap-2";
+
+    const buyBtn = document.createElement("button");
+    buyBtn.className = "button bg-blue-600 text-white px-3 py-1 rounded";
+    buyBtn.textContent = (lang === "en") ? "Buy" : "Comprar";
+    buyBtn.disabled = product.estoque === 0;
+    buyBtn.addEventListener("click", () => {
+      const nameForAlert = product.nome || product.name || "";
+      alert(`Você selecionou ${quantity} unidade(s) de ${nameForAlert}.`);
+    });
+
+    const downloadBtn = document.createElement("button");
+    downloadBtn.className = "button border px-3 py-1 rounded";
+    downloadBtn.textContent = (lang === "en") ? "Download" : "Download";
+    downloadBtn.addEventListener("click", () => {
+      alert("Função de download a ser definida.");
+    });
+
+    actions.appendChild(buyBtn);
+    actions.appendChild(downloadBtn);
+    details.appendChild(actions);
+
+    card.appendChild(details);
+    container.appendChild(card);
+  });
+}

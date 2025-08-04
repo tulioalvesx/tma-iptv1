@@ -20,16 +20,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 2200);
   }
 
-  function normalizeImagem(im){
-    if(!im) return '';
-    im = im.trim();
-    if(im.startsWith('http')||im.startsWith('/')){
-      if(im.startsWith('/img/')) return im;
-      if(im.startsWith('/')) return im;
-      return '/'+im.replace(/^\/?img\/?/i,'');
+  function normalizeImagem(im) {
+    if (!im) return "";
+    if (im.startsWith("http") || im.startsWith("/")) {
+      if (im.startsWith("/img/")) return im;
+      if (im.startsWith("/")) return im;
+      return "/" + im.replace(/^\/?img\/?/i, "");
     }
-    return `/img/${im.replace(/^\/?img\/?/i,'')}`;
-  }
     return `/img/${im.replace(/^\/?img\/?/i, "")}`;
   }
 
@@ -534,18 +531,18 @@ document.addEventListener("DOMContentLoaded", () => {
         div.innerHTML = `
           <div class="flex-1 flex gap-3 items-center">
             <div class="flex-shrink-0">
-                  <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-1">
-                    ${g.imagem ? `<img src="${normalizeImagem(g.imagem)}" alt="${g.nome}" class="object-contain w-full h-full">` : "Sem imagem"}
-                  </div>
-                  <div class="text-xs mb-1">Upload imagem</div>
-                  <input type="file" data-type="grupo" data-id="${g.id}" class="upload-image-input mb-2" accept="image/*" />
-                  <div class="text-xs mb-1">Imagem (nome ou caminho)</div>
-                  <input type="text" value="${g.imagem || ""}" data-field="imagem" data-id="${g.id}" class="inline-input border px-2 py-1 rounded w-full" />
-                </div>
-                <div>
-                  <div class="font-bold text-lg">${g.nome}</div>
-                  <div class="text-sm text-gray-500">${g.descricao || ""}</div>
-                </div>
+              <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-1">
+                ${g.imagem ? `<img src="${normalizeImagem(g.imagem)}" alt="${g.nome}" class="object-contain w-full h-full">` : "Sem imagem"}
+              </div>
+              <div class="text-xs mb-1">Upload imagem</div>
+              <input type="file" data-type="grupo" data-id="${g.id}" class="upload-image-input mb-2" accept="image/*" />
+              <div class="text-xs mb-1">Imagem (nome ou caminho)</div>
+              <input type="text" value="${g.imagem || ""}" data-field="imagem" data-id="${g.id}" class="inline-input border px-2 py-1 rounded w-full" />
+            </div>
+            <div>
+              <div class="font-bold text-lg">${g.nome}</div>
+              <div class="text-sm text-gray-500">${g.descricao || ""}</div>
+            </div>
           </div>
           <div class="flex flex-col gap-2 ml-4">
             <button data-id="${g.id}" class="btn-save-inline-grupo bg-blue-500 text-white px-3 py-1 rounded text-sm">Salvar rápido</button>
@@ -618,7 +615,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  
   function abrirModalEdicaoGrupo(g) {
     const modalId = "modal-grupo";
     let existing = document.getElementById(modalId);
@@ -656,8 +652,7 @@ document.addEventListener("DOMContentLoaded", () => {
     modal.querySelector("#save-grupo-modal").addEventListener("click", async () => {
       const updated = {
         nome: document.getElementById("edit-grupo-nome").value,
-        descricao: document.getElementById("edit-grupo-desc").value,
-        imagem: document.getElementById("edit-grupo-imagem").value.trim()
+        descricao: document.getElementById("edit-grupo-desc").value
       };
       const res = await fetch(`/api/groups/${g.id}`, {
         method: "PUT",
@@ -673,8 +668,6 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast("Erro ao salvar grupo", false);
       }
     });
-  }
-);
   }
 
   // criação rápida

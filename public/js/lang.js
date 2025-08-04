@@ -55,3 +55,4 @@ function translateStaticTexts(lang) {
       }
     }
   });
+}

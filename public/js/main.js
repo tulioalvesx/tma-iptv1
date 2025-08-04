@@ -7,6 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchGroups();
 });
 
+function normalizeGroupImage(src) {
+  if (!src) return 'images/placeholder.jpg';
+  src = src.trim();
+  if (src.startsWith('/')) return src;
+  return `/img/${src.replace(/^\/?img\/?/i, '')}`;
+}
+
 function fetchGroups() {
   fetch('/api/groups')
     .then(res => res.json())
@@ -24,10 +31,9 @@ function fetchGroups() {
         // normaliza para o formato que o resto do código espera
         const group = {
           id: g.id,
-          name: g.nome || g.name || '',
+          name: g.name || g.nome || '',
           name_en: g.name_en || '',
-          image: g.imagem || g.image || 'images/placeholder.jpg',
-          // preserve outros campos se precisar
+          image: normalizeGroupImage(g.image || g.imagem || 'images/placeholder.jpg'),
           ...g
         };
         const card = createGroupCard(group);
@@ -43,7 +49,6 @@ function createGroupCard(group) {
   const card = document.createElement('div');
   card.className = 'card';
 
-  // Badge: show "ANUAL" if the group has only annual products; else empty
   const badge = document.createElement('div');
   badge.className = 'badge';
   badge.textContent = 'Grupo';
@@ -56,7 +61,6 @@ function createGroupCard(group) {
 
   const title = document.createElement('div');
   title.className = 'card-title';
-  // choose language
   const lang = localStorage.getItem('lang') || 'pt';
   const groupName = (lang === 'en' && group.name_en) ? group.name_en : group.name;
   title.textContent = groupName;
@@ -65,7 +69,6 @@ function createGroupCard(group) {
   const button = document.createElement('button');
   button.className = 'button';
   button.setAttribute('data-i18n', 'button-details');
-  // set initial button text based on current language
   button.textContent = (lang === 'en') ? 'See details' : 'Ver detalhes';
   button.addEventListener('click', () => {
     window.location.href = `/grupo.html?id=${encodeURIComponent(group.id)}`;

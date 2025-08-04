@@ -170,8 +170,24 @@ app.post("/api/login", (req, res) => {
 
 // --------- Grupos ---------
 app.get("/api/groups", (req, res) => {
-  const groups = loadJson("groups.json") || [];
-  res.json(groups);
+  const groupsRaw = loadJson("groups.json") || [];
+  function ensureGroupImageUrl(raw) {
+    if (!raw) return 'images/placeholder.jpg';
+    raw = raw.trim();
+    if (raw.startsWith('/')) return raw;
+    return `/img/${raw.replace(/^\/?img\/?/i, '')}`;
+  }
+  const normalized = (Array.isArray(groupsRaw) ? groupsRaw : []).map(g => {
+    return {
+      ...g,
+      id: g.id,
+      name: g.nome || g.name || "",
+      name_en: g.name_en || "",
+      image: ensureGroupImageUrl(g.imagem || g.image || ""),
+      imagem: g.imagem || "",
+    };
+  });
+  res.json(normalized);
 });
 
 app.post("/api/groups", (req, res) => {

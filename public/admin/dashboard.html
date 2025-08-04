@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Painel Administrativo - TMA IPTV</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <script src="/js/dashboard.js" defer></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
@@ -16,16 +16,15 @@
   </header>
 
   <main class="p-4">
-    <div class="mb-4">
-      <nav class="flex gap-2 flex-wrap">
-        <button class="tab-btn bg-blue-500 text-white px-4 py-2 rounded" data-tab="dashboard">Dashboard</button>
-        <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="produtos">Produtos</button>
-        <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="downloads">Downloads</button>
-        <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="grupos">Grupos</button>
-        <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="regras">Regras</button>
-        <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="webhooks">Webhooks</button>
-      </nav>
-    </div>
+    <!-- Navigation Tabs -->
+    <nav class="flex gap-2 flex-wrap mb-6">
+      <button class="tab-btn bg-blue-500 text-white px-4 py-2 rounded" data-tab="dashboard">Dashboard</button>
+      <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="produtos">Produtos</button>
+      <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="downloads">Downloads</button>
+      <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="grupos">Grupos</button>
+      <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="regras">Regras</button>
+      <button class="tab-btn bg-gray-300 px-4 py-2 rounded" data-tab="webhooks">Webhooks</button>
+    </nav>
 
     <!-- Dashboard Tab -->
     <section id="tab-dashboard" class="tab-section">
@@ -53,71 +52,53 @@
       </div>
     </section>
 
-	<!-- produtos -->
+    <!-- Produtos Tab -->
     <section id="tab-produtos" class="tab-section hidden">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Produtos</h2>
-        <button id="add-produto" class="bg-green-500 text-white px-4 py-2 rounded">+ Novo Produto</button>
+        <button id="new-produto-btn" disabled class="bg-green-500 opacity-50 text-white px-4 py-2 rounded">+ Novo Produto</button>
       </div>
       <div id="produtos-lista" class="space-y-4"></div>
     </section>
 
-	<!-- download -->
+    <!-- Downloads Tab -->
     <section id="tab-downloads" class="tab-section hidden">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Downloads</h2>
-        <button id="add-download" class="bg-green-500 text-white px-4 py-2 rounded">+ Novo App</button>
+        <button id="new-download-btn" disabled class="bg-green-500 opacity-50 text-white px-4 py-2 rounded">+ Novo App</button>
       </div>
       <div id="downloads-lista" class="space-y-4"></div>
     </section>
 
-	<!-- grupo -->
+    <!-- Grupos Tab -->
     <section id="tab-grupos" class="tab-section hidden">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Grupos</h2>
-        <button id="add-grupo" class="bg-green-500 text-white px-4 py-2 rounded">+ Novo Grupo</button>
+        <button id="new-grupo-btn" disabled class="bg-green-500 opacity-50 text-white px-4 py-2 rounded">+ Novo Grupo</button>
       </div>
       <div id="grupos-lista" class="space-y-4"></div>
     </section>
-  </main>
 
-    <!-- Regras -->
+    <!-- Regras Tab -->
     <section id="tab-regras" class="tab-section hidden">
-      <h2 class="text-xl font-semibold mb-4">Regras de Automação</h2>
-      <button id="new-rule-btn" class="bg-green-500 text-white px-4 py-2 rounded mb-4">+ Nova Regra</button>
-      <table class="min-w-full bg-white" id="rules-table">
-        <thead>
-          <tr>
-            <th class="px-4 py-2">ID</th>
-            <th class="px-4 py-2">Tipo</th>
-            <th class="px-4 py-2">Pattern</th>
-            <th class="px-4 py-2">Reply</th>
-            <th class="px-4 py-2">Ações</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Regras de Automação</h2>
+        <button id="new-rule-btn" class="bg-green-500 text-white px-4 py-2 rounded">+ Nova Regra</button>
+      </div>
+      <div id="rules-lista" class="space-y-2"></div>
     </section>
 
-    <!-- Webhooks -->
+    <!-- Webhooks Tab -->
     <section id="tab-webhooks" class="tab-section hidden">
-      <h2 class="text-xl font-semibold mb-4">Webhooks Externos</h2>
-      <button id="new-hook-btn" class="bg-green-500 text-white px-4 py-2 rounded mb-4">+ Novo Webhook</button>
-      <table class="min-w-full bg-white" id="webhooks-table">
-        <thead>
-          <tr>
-            <th class="px-4 py-2">ID</th>
-            <th class="px-4 py-2">URL</th>
-            <th class="px-4 py-2">Headers</th>
-            <th class="px-4 py-2">Ações</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Webhooks Externos</h2>
+        <button id="new-hook-btn" class="bg-green-500 text-white px-4 py-2 rounded">+ Novo Webhook</button>
+      </div>
+      <div id="hooks-lista" class="space-y-2"></div>
     </section>
   </main>
 
-  <!-- Rule Modal -->
+  <!-- Modal Regra -->
   <div id="modal-rule" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
     <div class="bg-white rounded-lg p-6 w-96">
       <h2 class="text-lg font-semibold mb-4">Nova Regra</h2>
@@ -134,46 +115,4 @@
           </select>
         </div>
         <div>
-          <label class="block text-sm">Pattern</label>
-          <input id="rule-pattern" type="text" required class="w-full border px-3 py-2 rounded"/>
-        </div>
-        <div>
-          <label class="block text-sm">Reply</label>
-          <input id="rule-reply" type="text" required class="w-full border px-3 py-2 rounded"/>
-        </div>
-        <div class="flex justify-end space-x-2">
-          <button type="button" id="cancel-rule" class="px-4 py-2">Cancelar</button>
-          <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Salvar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Webhook Modal -->
-  <div id="modal-hook" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-    <div class="bg-white rounded-lg p-6 w-96">
-      <h2 class="text-lg font-semibold mb-4">Novo Webhook</h2>
-      <form id="form-hook" class="space-y-4">
-        <div>
-          <label class="block text-sm">ID</label>
-          <input id="hook-id" type="text" required class="w-full border px-3 py-2 rounded"/>
-        </div>
-        <div>
-          <label class="block text-sm">URL</label>
-          <input id="hook-url" type="url" required class="w-full border px-3 py-2 rounded"/>
-        </div>
-        <div>
-          <label class="block text-sm">Headers (JSON)</label>
-          <textarea id="hook-headers" rows="3" class="w-full border px-3 py-2 rounded">{}</textarea>
-        </div>
-        <div class="flex justify-end space-x-2">
-          <button type="button" id="cancel-hook" class="px-4 py-2">Cancelar</button>
-          <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Salvar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-  
-  <div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow hidden"></div>
-</body>
-</html>
+          <label class="block text-sm">Pattern</n

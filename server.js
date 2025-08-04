@@ -28,17 +28,29 @@ app.use(express.static(PUBLIC_DIR));
 const loadJson = (filename) => {
   const filePath = path.join(DATA_DIR, filename);
   if (!fs.existsSync(filePath)) return null;
-  try {
-    return JSON.parse(fs.readFileSync(filePath, "utf-8"));
-  } catch (e) {
-    console.error(`Erro ao parsear ${filename}:`, e);
-    return null;
-  }
+  try { return JSON.parse(fs.readFileSync(filePath, "utf-8")); }
+  catch (e) { console.error(`Erro ao parsear ${filename}:`, e); return null; }
 };
 const saveJson = (filename, data) => {
   const filePath = path.join(DATA_DIR, filename);
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
 };
+
+// ——— Chatbot Rules Engine (global) ———
+const RULES_PATH = path.join(DATA_DIR, "rules.json");
+let rules = [];
+function loadRules() {
+  try {
+    rules = loadJson("rules.json") || [];
+    console.log(`Loaded ${rules.length} chatbot rules`);
+  } catch (e) {
+    console.error("Erro ao carregar regras:", e);
+    rules = [];
+  }
+}
+
+// Carrega na inicialização e sempre que criamos/atualizamos/excluímos regras
+loadRules();
 
 // Garante existence de access.json
 const accessFile = path.join(DATA_DIR, "access.json");
@@ -360,29 +372,35 @@ app.get("/api/analytics", (req, res) => {
 
 // ---------- Admin Rules CRUD ----------
 app.get('/api/admin/rules', (req, res) => {
-  const rules = loadJson('rules.json') || [];
-  res.json(rules);
+  const rulesList = loadJson('rules.json') || [];
+  res.json(rulesList);
 });
+
 app.post('/api/admin/rules', (req, res) => {
   const newRule = req.body;
-  const rules = loadJson('rules.json') || [];
-  rules.push(newRule);
-  saveJson('rules.json', rules);
+  const rulesList = loadJson('rules.json') || [];
+  rulesList.push(newRule);
+  saveJson('rules.json', rulesList);
+  loadRules();               // ← Recarrega as regras na memória
   res.status(201).json(newRule);
 });
+
 app.put('/api/admin/rules/:id', (req, res) => {
   const { id } = req.params;
-  const updated = req.body;
-  let rules = loadJson('rules.json') || [];
-  rules = rules.map(r => r.id === id ? updated : r);
-  saveJson('rules.json', rules);
-  res.json(updated);
+  const updatedRule = req.body;
+  let rulesList = loadJson('rules.json') || [];
+  rulesList = rulesList.map(r => r.id === id ? updatedRule : r);
+  saveJson('rules.json', rulesList);
+  loadRules();               // ← Atualiza as regras em memória
+  res.json(updatedRule);
 });
+
 app.delete('/api/admin/rules/:id', (req, res) => {
   const { id } = req.params;
-  let rules = loadJson('rules.json') || [];
-  rules = rules.filter(r => r.id !== id);
-  saveJson('rules.json', rules);
+  let rulesList = loadJson('rules.json') || [];
+  rulesList = rulesList.filter(r => r.id !== id);
+  saveJson('rules.json', rulesList);
+  loadRules();               // ← Recarrega após exclusão
   res.status(204).send();
 });
 
@@ -413,13 +431,6 @@ app.delete('/api/admin/webhooks/:id', (req, res) => {
   saveJson('webhooks.json', hooks);
   res.status(204).send();
 });
-
-
-// ---------- Chatbot Rules Engine ----------
-const rules = loadJson("rules.json") || [];
-console.log(`Loaded ${rules.length} chatbot rules`);
-
-
 
 // --------- Chatbot Endpoint ---------
 app.get("/api/chat", async (req, res) => {

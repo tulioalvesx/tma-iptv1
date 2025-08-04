@@ -848,6 +848,11 @@ if (gruposLista) {
   loadRules();
   loadHooks();
   
+  // ---------- Rule Modal Initialization ----------
+  const modalRule = document.getElementById('modal-rule');
+  const formRule  = document.getElementById('form-rule');
+  let isEditingRule = false, editingRuleId = null; 
+
   function openRuleModal(rule = null) {
     if (rule) {
       isEditingRule = true;

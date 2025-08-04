@@ -15,12 +15,6 @@ const DATA_DIR = path.join(__dirname, "data");
 const PUBLIC_DIR = path.join(__dirname, "public");
 
 app.use(express.json());
-
-// Health check endpoint para verificar se o servidor está vivo
-app.get('/health', (req, res) => {
-  res.send('OK');
-});
-
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(PUBLIC_DIR));
 

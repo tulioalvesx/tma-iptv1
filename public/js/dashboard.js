@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const tabs = document.querySelectorAll(".tab-btn");
   const sections = document.querySelectorAll(".tab-section");
   let chartInstance = null;
+  let isEditing = false;
+  let editingId = null;
 
   function showToast(msg, success = true) {
     let toastEl = document.getElementById("toast");
@@ -19,6 +21,73 @@ document.addEventListener("DOMContentLoaded", () => {
       toastEl.style.opacity = "0";
     }, 2200);
   }
+  
+function openRuleModal(rule = null) {
+  const modal = document.getElementById('modal-rule');
+  const form  = document.getElementById('form-rule');
+
+  if (rule) {
+    // Modo edição
+    isEditing = true;
+    editingId = rule.id;
+    document.getElementById('rule-id').value      = rule.id;
+    document.getElementById('rule-id').disabled   = true; // ID não pode mudar
+    document.getElementById('rule-type').value    = rule.type;
+    document.getElementById('rule-pattern').value = rule.pattern;
+    document.getElementById('rule-reply').value   = rule.reply;
+  } else {
+    // Modo criação
+    isEditing = false;
+    editingId = null;
+    form.reset();
+    document.getElementById('rule-id').disabled = false;
+  }
+
+  modal.classList.remove('hidden');
+}
+
+// Chama openRuleModal() sem parâmetro para nova regra
+document.getElementById('new-rule-btn').addEventListener('click', () => {
+  openRuleModal();
+});
+
+// Submissão do form
+document.getElementById('form-rule').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const payload = {
+    id:      document.getElementById('rule-id').value.trim(),
+    type:    document.getElementById('rule-type').value,
+    pattern: document.getElementById('rule-pattern').value.trim(),
+    reply:   document.getElementById('rule-reply').value.trim()
+  };
+
+  if (isEditing) {
+    // editar (PUT)
+    await fetch(`/api/admin/rules/${encodeURIComponent(editingId)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  } else {
+    // criar (POST)
+    await fetch('/api/admin/rules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  }
+
+  // Fechar modal e recarregar tabela
+  document.getElementById('modal-rule').classList.add('hidden');
+  loadRules();
+});
+
+// Função de edição disparada pelo botão na tabela
+function editRule(id) {
+  const rule = (window.rules || []).find(r => r.id === id);
+  if (!rule) return alert('Regra não encontrada');
+  openRuleModal(rule);
+}
 
   function normalizeImagem(im) {
     if (!im) return "";
@@ -42,6 +111,15 @@ document.addEventListener("DOMContentLoaded", () => {
       sections.forEach(sec => sec.classList.add("hidden"));
       const sel = document.getElementById("tab-" + target);
       if (sel) sel.classList.remove("hidden");
+// ––– Carregar conteúdo da aba –––
+      switch (target) {
+      case "dashboard":  carregarDashboard();  break;
+      case "produtos":   carregarProdutos();   break;
+      case "downloads":  carregarDownloads();  break;
+      case "grupos":     carregarGrupos();     break;
+      case "regras":     loadRules();          break;
+      case "webhooks":   loadHooks();          break;
+    }
     });
   });
 
@@ -146,59 +224,6 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
         container.appendChild(card);
       });
-
-  // Rule modal
-  const modalRule = document.getElementById('modal-rule');
-  const formRule = document.getElementById('form-rule');
-  document.getElementById('new-rule-btn').addEventListener('click', () => {
-    formRule.reset();
-    modalRule.classList.remove('hidden');
-  });
-  document.getElementById('cancel-rule').addEventListener('click', () => {
-    modalRule.classList.add('hidden');
-  });
-  formRule.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const newRule = {
-      id: document.getElementById('rule-id').value,
-      type: document.getElementById('rule-type').value,
-      pattern: document.getElementById('rule-pattern').value,
-      reply: document.getElementById('rule-reply').value
-    };
-    await fetch('/api/admin/rules', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newRule)
-    });
-    modalRule.classList.add('hidden');
-    loadRules();
-  });
-
-  // Hook modal
-  const modalHook = document.getElementById('modal-hook');
-  const formHook = document.getElementById('form-hook');
-  document.getElementById('new-hook-btn').addEventListener('click', () => {
-    formHook.reset();
-    modalHook.classList.remove('hidden');
-  });
-  document.getElementById('cancel-hook').addEventListener('click', () => {
-    modalHook.classList.add('hidden');
-  });
-  formHook.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const newHook = {
-      id: document.getElementById('hook-id').value,
-      url: document.getElementById('hook-url').value,
-      headers: JSON.parse(document.getElementById('hook-headers').value)
-    };
-    await fetch('/api/admin/webhooks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newHook)
-    });
-    modalHook.classList.add('hidden');
-    loadHooks();
-  });
   
       // handlers
       container.querySelectorAll("input[data-type='produto']").forEach(input => {
@@ -820,11 +845,99 @@ if (gruposLista) {
   carregarProdutos();
   carregarDownloads();
   carregarGrupos();
+  loadRules();
+  loadHooks();
+  
+  // ---------- Rule Modal Initialization ----------
+  const modalRule = document.getElementById('modal-rule');
+  const formRule  = document.getElementById('form-rule');
+  let isEditingRule = false, editingRuleId = null;
+  
+  // ---------- Hook Modal Initialization ----------
+  const modalHook = document.getElementById('modal-hook');
+  const formHook  = document.getElementById('form-hook');
+  let isEditingHook = false, editingHookId = null;
+  
+
+  function openRuleModal(rule = null) {
+    if (rule) {
+      isEditingRule = true;
+      editingRuleId = rule.id;
+      formRule['rule-id'].value      = rule.id;
+      formRule['rule-id'].disabled   = true;
+      formRule['rule-type'].value    = rule.type;
+      formRule['rule-pattern'].value = rule.pattern;
+      formRule['rule-reply'].value   = rule.reply;
+    } else {
+      isEditingRule = false;
+      editingRuleId = null;
+      formRule.reset();
+      formRule['rule-id'].disabled = false;
+    }
+    modalRule.classList.remove('hidden');
+  }
+
+  document.getElementById('cancel-rule').addEventListener('click', () => modalRule.classList.add('hidden'));
+
+  formRule.addEventListener('submit', async e => {
+    e.preventDefault();
+    const payload = {
+      id:      formRule['rule-id'].value.trim(),
+      type:    formRule['rule-type'].value,
+      pattern: formRule['rule-pattern'].value.trim(),
+      reply:   formRule['rule-reply'].value.trim()
+    };
+    const url = isEditingRule
+      ? `/api/admin/rules/${encodeURIComponent(editingRuleId)}`
+      : '/api/admin/rules';
+    const method = isEditingRule ? 'PUT' : 'POST';
+    await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    modalRule.classList.add('hidden');
+    loadRules();
+  });
+
+  function openHookModal(hook = null) {
+    if (hook) {
+      isEditingHook = true;
+      editingHookId = hook.id;
+      formHook['hook-id'].value      = hook.id;
+      formHook['hook-id'].disabled   = true;
+      formHook['hook-url'].value     = hook.url;
+      formHook['hook-headers'].value = JSON.stringify(hook.headers||{}, null, 2);
+    } else {
+      isEditingHook = false;
+      editingHookId = null;
+      formHook.reset();
+      formHook['hook-id'].disabled = false;
+      formHook['hook-headers'].value = '{}';
+    }
+    modalHook.classList.remove('hidden');
+  }
+
+  document.getElementById('new-hook-btn').addEventListener('click', () => openHookModal());
+  document.getElementById('cancel-hook').addEventListener('click', () => modalHook.classList.add('hidden'));
+
+  formHook.addEventListener('submit', async e => {
+    e.preventDefault();
+    const payload = {
+      id:      formHook['hook-id'].value.trim(),
+      url:     formHook['hook-url'].value.trim(),
+      headers: JSON.parse(formHook['hook-headers'].value)
+    };
+    const url = isEditingHook
+      ? `/api/admin/webhooks/${encodeURIComponent(editingHookId)}`
+      : '/api/admin/webhooks';
+    const method = isEditingHook ? 'PUT' : 'POST';
+    await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    modalHook.classList.add('hidden');
+    loadHooks();
+  });
 });
 
 // ---------- Admin Rules Functions ----------
 async function loadRules() {
   const rules = await fetch('/api/admin/rules').then(r => r.json());
+  window.rules = rules;   // ← expõe globalmente para o editRule
   const tbody = document.querySelector('#rules-table tbody');
   tbody.innerHTML = '';
   rules.forEach(r => {
@@ -851,13 +964,10 @@ function editRule(id) {
   alert('Implementar edição de regra: ' + id);
 }
 
-document.getElementById('new-rule-btn').addEventListener('click', () => {
-  alert('Implementar formulário de nova regra');
-});
-
 // ---------- Admin Webhooks Functions ----------
 async function loadHooks() {
   const hooks = await fetch('/api/admin/webhooks').then(r => r.json());
+  window.hooks = hooks;   // ← expõe globalmente para o editHook
   const tbody = document.querySelector('#webhooks-table tbody');
   tbody.innerHTML = '';
   hooks.forEach(h => {
@@ -880,9 +990,7 @@ async function deleteHook(id) {
 }
 
 function editHook(id) {
-  alert('Implementar edição de webhook: ' + id);
+  const hook = (window.hooks || []).find(h => h.id === id);
+  if (!hook) return alert('Webhook não encontrado');
+  openHookModal(hook);
 }
-
-document.getElementById('new-hook-btn').addEventListener('click', () => {
-  alert('Implementar formulário de novo webhook');
-});

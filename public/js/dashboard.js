@@ -1,6 +1,15 @@
 // dashboard.js
 
 document.addEventListener("DOMContentLoaded", () => {
+	// ─── Lazy-load flags ────────────────────────────────────────────────────────
+	const loaded = {
+     dashboard:	false,
+     produtos:  false,
+     downloads: false,
+     grupos:    false,
+     regras:    false,
+     webhooks:  false
+  };
   // Quick creation button activation
   ['produto','download','grupo','rule','hook'].forEach(type => {
     const btn = document.getElementById(`new-${type}-btn`);
@@ -283,7 +292,7 @@ function openGrupoModal(gr = null) {
     } else showToast(isEditingGrupo ? 'Erro ao atualizar grupo' : 'Erro ao criar grupo', false);
   });
 
-  // ─── Tab Switching ──────────────────────────────────────────────────────────────
+  // ─── Tab Switching com lazy-load ─────────────────────────────────────────────
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.replace('bg-blue-500','bg-gray-300') && b.classList.remove('text-white'));
@@ -292,36 +301,50 @@ function openGrupoModal(gr = null) {
       const target = btn.dataset.tab;
       document.getElementById('tab-'+target).classList.remove('hidden');
       switch(target) {
-        carregarDashboard();
-         break;
-         if (!loaded.produtos) {
-           carregarProdutos();
-           loaded.produtos = true;
+		case 'dashboard':
+			if (!loaded.dashboard) {
+			 carregarDashboard();
+			 loaded.dashboard = true;
+			}
+			break;
+		case 'produtos':
+			if (!loaded.produtos) {
+             carregarProdutos();
+             loaded.produtos = true;
+			}
+			break;
+		case 'downloads':
+			if (!loaded.downloads) {
+             carregarDownloads();
+             loaded.downloads = true;
+			}
+			break;
+		case 'grupos':
+			if (!loaded.grupos) {
+			 carregarGrupos();
+			 loaded.grupos = true;
+			}
+			break;
+		case 'regras':
+			if (!loaded.regras) {
+			 carregarRegras();
+			 loaded.regras = true;
          }
-         break;
-         if (!loaded.downloads) {
-           carregarDownloads();
-           loaded.downloads = true;
-         }
-         break;
-         if (!loaded.grupos) {
-           carregarGrupos();
-           loaded.grupos = true;
-         }
-         break;
-         if (!loaded.regras) {
-           carregarRegras();
-           loaded.regras = true;
-         }
-         break;
-         if (!loaded.webhooks) {
-           carregarWebhooks();
-           loaded.webhooks = true;
-         }
-         break;
+			break;
+		case 'webhooks':
+			if (!loaded.webhooks) {
+			 carregarWebhooks();
+			 loaded.webhooks = true;
+			}
+			break;
       }
     });
   });
+
+	// ─── (Opcional) Se quiser pré-carregar dashboard:
+			carregarDashboard();
+			loaded.dashboard = true;
+});
 
   // ─── Dashboard ─────────────────────────────────────────────────────────────────
   async function carregarDashboard() {

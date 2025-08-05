@@ -66,16 +66,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ─── Modal Open Functions ─────────────────────────────────────────────────────
-  const modalRule    = document.getElementById('modal-rule');
-  const formRule     = document.getElementById('form-rule');
-  const modalHook    = document.getElementById('modal-hook');
-  const formHook     = document.getElementById('form-hook');
-  const modalProduto = document.getElementById('modal-produto');
-  const formProduto  = document.getElementById('form-produto');
-  const modalDownload= document.getElementById('modal-download');
-  const formDownload = document.getElementById('form-download');
-  const modalGrupo   = document.getElementById('modal-grupo');
-  const formGrupo    = document.getElementById('form-grupo');
 
   function openRuleModal(rule = null) {
     isEditingRule = !!rule;

@@ -1,4 +1,3 @@
-
 // dashboard.js
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -40,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (im.startsWith("/img/")) return im;
       return im;
     }
-    return `/img/${im.replace(/^\/?img\/?/i, "")} `;
+    return `/img/${im.replace(/^\/?img\/?/i, "")}`;
   }
 
   function gerarGrafico(dados) {
@@ -152,11 +151,47 @@ document.addEventListener("DOMContentLoaded", () => {
     carregarWebhooks();
   });
 
+function openProdutoModal(prod = null) {
+  isEditingProduto = !!prod;
+  editingProdutoId = prod?.id || null;
+  if (prod) {
+    formProduto['produto-nome'].value      = prod.nome;
+    formProduto['produto-descricao'].value = prod.descricao;
+    formProduto['produto-preco'].value     = prod.preco;
+  } else {
+    formProduto.reset();
+  }
+  modalProduto.classList.remove('hidden');
+}
+
+function openDownloadModal(dl = null) {
+  isEditingDownload = !!dl;
+  editingDownloadId = dl?.id || null;
+  if (dl) {
+    formDownload['download-nome'].value = dl.name;
+    formDownload['download-url'].value  = dl.url;
+  } else {
+    formDownload.reset();
+  }
+  modalDownload.classList.remove('hidden');
+}
+
+function openGrupoModal(gr = null) {
+  isEditingGrupo = !!gr;
+  editingGrupoId = gr?.id || null;
+  if (gr) {
+    formGrupo['grupo-nome'].value = gr.nome;
+  } else {
+    formGrupo.reset();
+  }
+  modalGrupo.classList.remove('hidden');
+}
+
   // Products
   const modalProduto = document.getElementById('modal-produto');
   const formProduto  = document.getElementById('form-produto');
-  document.getElementById('new-produto-btn')?.addEventListener('click', () => modalProduto.classList.remove('hidden'));
-  document.getElementById('cancel-produto')?.addEventListener('click', () => modalProduto.classList.add('hidden'));
+  document.getElementById('new-grupo-btn')?.addEventListener('click', () => openProdutoModal());
+  document.getElementById('new-grupo-btn')?.addEventListener('click', () => modalProduto.classList.add('hidden'));
   formProduto.addEventListener('submit', async e => {
     e.preventDefault();
     const payload = {
@@ -164,8 +199,12 @@ document.addEventListener("DOMContentLoaded", () => {
       descricao: formProduto['produto-descricao'].value.trim(),
       preco: parseFloat(formProduto['produto-preco'].value)
     };
-    const res = await fetch('/api/products', {
-      method: 'POST',
+	const url    = isEditingProduto
+                ? `/api/products/${editingProdutoId}`
+                : '/api/products';
+	const method = isEditingProduto ? 'PUT' : 'POST';
+	const res = await fetch(url, {
+		method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
@@ -180,7 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Downloads
   const modalDownload = document.getElementById('modal-download');
   const formDownload  = document.getElementById('form-download');
-  document.getElementById('new-download-btn')?.addEventListener('click', () => modalDownload.classList.remove('hidden'));
+  document.getElementById('new-download-btn')?.addEventListener('click', () => openProdutoModal());
   document.getElementById('cancel-download')?.addEventListener('click', () => modalDownload.classList.add('hidden'));
   formDownload.addEventListener('submit', async e => {
     e.preventDefault();
@@ -188,8 +227,12 @@ document.addEventListener("DOMContentLoaded", () => {
       nome: formDownload['download-nome'].value.trim(),
       url: formDownload['download-url'].value.trim()
     };
-    const res = await fetch('/api/downloads', {
-      method: 'POST',
+	const url    = isEditingDownload
+                ? `/api/products/${editingDownloadId}`
+                : '/api/products';
+	const method = isEditingDownload ? 'PUT' : 'POST';
+	const res = await fetch(url, {
+		method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
@@ -204,13 +247,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // Groups
   const modalGrupo = document.getElementById('modal-grupo');
   const formGrupo  = document.getElementById('form-grupo');
-  document.getElementById('new-grupo-btn')?.addEventListener('click', () => modalGrupo.classList.remove('hidden'));
+  document.getElementById('new-grupo-btn')?.addEventListener('click', () => openProdutoModal());
   document.getElementById('cancel-grupo')?.addEventListener('click', () => modalGrupo.classList.add('hidden'));
   formGrupo.addEventListener('submit', async e => {
     e.preventDefault();
     const payload = { nome: formGrupo['grupo-nome'].value.trim() };
-    const res = await fetch('/api/groups', {
-      method: 'POST',
+	const url    = isEditingGrupo
+                ? `/api/groups/${editingGrupoId}`
+                : '/api/groups';
+	const method = isEditingGrupo ? 'PUT' : 'POST';
+	const res = await fetch(url, {
+		method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
@@ -358,6 +405,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const cont = document.getElementById('downloads-lista');
       cont.innerHTML = '';
       const files = data.files||[];
+	window.downloads = files;
 
       files.forEach(d => {
         const card = document.createElement('div');
@@ -383,10 +431,30 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
           </div>`;
         cont.appendChild(card);
-      });
-
-      window.downloads = files;
-
+	});
+	
+// -- Edit
+	  cont.querySelectorAll('.btn-edit-download').forEach(btn => {
+		btn.addEventListener('click', () => {
+		const dl = window.downloads.find(x => x.id === btn.dataset.id);
+		if (dl) openDownloadModal(dl);
+	  });
+	});
+	
+// -- Delete
+	  cont.querySelectorAll('.btn-delete-download').forEach(btn => {
+		btn.addEventListener('click', async () => {
+		if (!confirm('Excluir download?')) return;
+		await fetch(`/api/downloads/${btn.dataset.id}`, { method: 'DELETE' });
+		showToast('Download excluído');
+		carregarDownloads();
+		carregarDashboard();
+	  });
+	});
+	
+	  catch {
+	  showToast('Falha ao carregar downloads', false);
+	}
       // Upload
       cont.querySelectorAll('input[type=file][data-type=download]').forEach(inp => {
         inp.addEventListener('change', async e => {
@@ -454,7 +522,8 @@ async function carregarGrupos() {
     const grupos = await res.json();
     const cont = document.getElementById('grupos-lista');
     cont.innerHTML = '';
-
+    window.grupos = grupos;
+	
     grupos.forEach(g => {
       const card = document.createElement('div');
       card.className = 'bg-white p-4 rounded shadow mb-3';
@@ -482,7 +551,27 @@ async function carregarGrupos() {
       cont.appendChild(card);
     });
 
-    window.grupos = grupos;
+// -- Edit
+	  cont.querySelectorAll('.btn-edit-grupo').forEach(btn => {
+	  btn.addEventListener('click', () => {
+      const gr = window.grupos.find(x => x.id === btn.dataset.id);
+      if (gr) openGrupoModal(gr);
+  });
+});
+
+// -- Delete
+	  cont.querySelectorAll('.btn-delete-grupo').forEach(btn => {
+	  btn.addEventListener('click', async () => {
+      if (!confirm('Excluir grupo?')) return;
+      await fetch(`/api/groups/${btn.dataset.id}`, { method: 'DELETE' });
+      showToast('Grupo excluído');
+      carregarGrupos();
+      carregarDashboard();
+  });
+});
+    catch {
+    showToast('Falha ao carregar grupos', false);
+  }
 
       // Upload imagem
       cont.querySelectorAll('input[type=file][data-type=grupo]').forEach(inp => {
@@ -539,7 +628,7 @@ async function carregarGrupos() {
     } catch {
       showToast('Falha grupos', false);
     }
-  }
+}
 
   // ─── Regras ─────────────────────────────────────────────────────────────────────
  async function carregarRegras() {

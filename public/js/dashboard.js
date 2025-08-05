@@ -225,7 +225,7 @@ function openGrupoModal(gr = null) {
       modalProduto.classList.add('hidden');
       carregarProdutos();
       carregarDashboard();
-    } else showToast('Erro ao criar produto', false);
+	} else showToast(isEditingProduto ? 'Erro ao atualizar produto' : 'Erro ao criar produto', false);
   });
 
   // Downloads
@@ -235,10 +235,10 @@ function openGrupoModal(gr = null) {
   document.getElementById('cancel-download')?.addEventListener('click', () => modalDownload.classList.add('hidden'));
   formDownload.addEventListener('submit', async e => {
     e.preventDefault();
-    const payload = {
-      nome: formDownload['download-nome'].value.trim(),
-      url: formDownload['download-url'].value.trim()
-    };
+  const payload = {
+    name: formDownload['download-nome'].value.trim(),
+    url:  formDownload['download-url'].value.trim()
+  };
 	const url    = isEditingDownload
                 ? `/api/downloads/${encodeURIComponent(editingDownloadId)}`
                 : '/api/downloads';
@@ -253,9 +253,7 @@ function openGrupoModal(gr = null) {
       modalDownload.classList.add('hidden');
       carregarDownloads();
       carregarDashboard();
-    } else {
-      showToast('Erro ao criar aplicativo', false);
-      return;
+    } else showToast(isEditingProduto ? 'Erro ao atualizar produto' : 'Erro ao criar produto', false);
     }
   });
 
@@ -281,7 +279,7 @@ function openGrupoModal(gr = null) {
       modalGrupo.classList.add('hidden');
       carregarGrupos();
       carregarDashboard();
-    } else showToast('Erro ao criar grupo', false);
+    } else showToast(isEditingGrupo ? 'Erro ao atualizar grupo' : 'Erro ao criar grupo', false);
   });
 
   // ─── Tab Switching ──────────────────────────────────────────────────────────────

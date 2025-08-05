@@ -585,26 +585,33 @@ async function carregarGrupos() {
     }
   }
 
-  // ─── Webhooks ──────────────────────────────────────────────────────────────────
-  async function carregarWebhooks() {
-    try {
-      const res = await fetch('/api/admin/webhooks');
-      const hooks = await res.json();
-      const cont = document.getElementById('hooks-lista');
-      cont.innerHTML = '';
-      hooks.forEach(h => {
-        const div = document.createElement('div');
-        div.className = 'flex items-center justify-between p-2 border-b';
-        div.dataset.id = h.id;
-        div.innerHTML = `
-          <div><strong>${h.id}</strong> → ${h.url} <small>${JSON.stringify(h.headers)}</small></div>
-          <div class="flex gap-2">
-            <button class="btn-edit-hook px-2 py-1 border rounded text-sm">Editar</button>
-            <button class="btn-delete-hook px-2 py-1 border rounded text-sm">Excluir</button>
-          </div>`;
-        cont.appendChild(div);
-      });
-      window.hooks = hooks;
+// ─── Webhooks ──────────────────────────────────────────────────────────────────
+async function carregarWebhooks() {
+  try {
+    const res = await fetch('/api/admin/webhooks');
+    const hooks = await res.json();
+    const cont = document.getElementById('hooks-lista');
+    cont.innerHTML = '';
+
+    hooks.forEach(h => {
+      const card = document.createElement('div');
+      card.className = 'bg-white p-4 rounded shadow mb-3';
+      card.innerHTML = `
+        <div class="flex items-start gap-4">
+          <div class="flex-1">
+            <strong class="block text-lg mb-1">${h.id}</strong>
+            <p class="text-sm text-gray-500 mb-2">${h.url}</p>
+            <p class="text-xs text-gray-400"><code>${JSON.stringify(h.headers)}</code></p>
+          </div>
+          <div class="flex flex-col gap-2">
+            <button data-id="${h.id}" class="btn-edit-hook px-3 py-1 bg-yellow-400 text-white rounded text-sm">Editar</button>
+            <button data-id="${h.id}" class="btn-delete-hook px-3 py-1 bg-red-500 text-white rounded text-sm">Excluir</button>
+          </div>
+        </div>`;
+      cont.appendChild(card);
+    });
+
+    window.hooks = hooks;
       cont.querySelectorAll('.btn-edit-hook').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.closest('[data-id]').dataset.id;

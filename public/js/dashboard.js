@@ -539,25 +539,31 @@ async function carregarGrupos() {
   }
 
   // ─── Regras ─────────────────────────────────────────────────────────────────────
-  async function carregarRegras() {
-    try {
-      const res = await fetch('/api/admin/rules');
-      const regras = await res.json();
-      const cont = document.getElementById('rules-lista');
-      cont.innerHTML = '';
-      regras.forEach(r => {
-        const div = document.createElement('div');
-        div.className = 'flex items-center justify-between p-2 border-b';
-        div.dataset.id = r.id;
-        div.innerHTML = `
-          <div><strong>${r.id}</strong> — ${r.type} <code>${r.pattern}</code> → "${r.reply}"</div>
-          <div class="flex gap-2">
-            <button class="btn-edit-regra px-2 py-1 border rounded text-sm">Editar</button>
-            <button class="btn-delete-regra px-2 py-1 border rounded text-sm">Excluir</button>
-          </div>`;
-        cont.appendChild(div);
-      });
-      window.rules = regras;
+ async function carregarRegras() {
+  try {
+    const res = await fetch('/api/admin/rules');
+    const regras = await res.json();
+    const cont = document.getElementById('rules-lista');
+    cont.innerHTML = '';
+
+    regras.forEach(r => {
+      const card = document.createElement('div');
+      card.className = 'bg-white p-4 rounded shadow mb-3';
+      card.innerHTML = `
+        <div class="flex items-start gap-4">
+          <div class="flex-1">
+            <strong class="block text-lg mb-1">${r.id}</strong>
+            <p class="text-sm text-gray-500 mb-2">${r.type} <code>${r.pattern}</code> → "${r.reply}"</p>
+          </div>
+          <div class="flex flex-col gap-2">
+            <button data-id="${r.id}" class="btn-edit-regra px-3 py-1 bg-yellow-400 text-white rounded text-sm">Editar</button>
+            <button data-id="${r.id}" class="btn-delete-regra px-3 py-1 bg-red-500 text-white rounded text-sm">Excluir</button>
+          </div>
+        </div>`;
+      cont.appendChild(card);
+    });
+
+    window.rules = regras;
       cont.querySelectorAll('.btn-edit-regra').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.closest('[data-id]').dataset.id;

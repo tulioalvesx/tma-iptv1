@@ -56,73 +56,109 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ─── Modal Setup ────────────────────────────────────────────────────────────────
+// ─── Modal Setup ────────────────────────────────────────────────────────────────
+  // Regra
   const modalRule = document.getElementById('modal-rule');
   const formRule  = document.getElementById('form-rule');
-  document.getElementById('new-rule-btn').addEventListener('click', () => openRuleModal());
-  document.getElementById('cancel-rule').addEventListener('click', () => modalRule.classList.add('hidden'));
-  formRule.addEventListener('submit', async e => {
-    e.preventDefault();
-    const payload = {
-      id: formRule['rule-id'].value.trim(),
-      type: formRule['rule-type'].value,
-      pattern: formRule['rule-pattern'].value.trim(),
-      reply: formRule['rule-reply'].value.trim()
-    };
-    const url = isEditingRule
-      ? `/api/admin/rules/${encodeURIComponent(editingRuleId)}`
-      : '/api/admin/rules';
-    await fetch(url, { method: isEditingRule ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    modalRule.classList.add('hidden');
-    carregarRegras();
-  });
+  document.getElementById('new-rule-btn')
+    .addEventListener('click', () => openRuleModal());
+  document.getElementById('cancel-rule')
+    .addEventListener('click', () => modalRule.classList.add('hidden'));
+  formRule.addEventListener('submit', async e => { /* ... */ });
 
-  function openRuleModal(rule = null) {
-    if (rule) {
-      isEditingRule = true; editingRuleId = rule.id;
-      formRule['rule-id'].value = rule.id; formRule['rule-id'].disabled = true;
-      formRule['rule-type'].value = rule.type;
-      formRule['rule-pattern'].value = rule.pattern;
-      formRule['rule-reply'].value = rule.reply;
-    } else {
-      isEditingRule = false; editingRuleId = null;
-      formRule.reset(); formRule['rule-id'].disabled = false;
-    }
-    modalRule.classList.remove('hidden');
-  }
-
+  // Webhook
   const modalHook = document.getElementById('modal-hook');
   const formHook  = document.getElementById('form-hook');
-  document.getElementById('new-hook-btn').addEventListener('click', () => openHookModal());
-  document.getElementById('cancel-hook').addEventListener('click', () => modalHook.classList.add('hidden'));
-  formHook.addEventListener('submit', async e => {
+  document.getElementById('new-hook-btn')
+    .addEventListener('click', () => openHookModal());
+  document.getElementById('cancel-hook')
+    .addEventListener('click', () => modalHook.classList.add('hidden'));
+  formHook.addEventListener('submit', async e => { /* ... */ });
+
+  // Produto
+  const modalProduto = document.getElementById('modal-produto');
+  const formProduto  = document.getElementById('form-produto');
+  document.getElementById('new-produto-btn')
+    .addEventListener('click', () => modalProduto.classList.remove('hidden'));
+  document.getElementById('cancel-produto')
+    .addEventListener('click', () => modalProduto.classList.add('hidden'));
+  formProduto.addEventListener('submit', async e => {
     e.preventDefault();
     const payload = {
-      id: formHook['hook-id'].value.trim(),
-      url: formHook['hook-url'].value.trim(),
-      headers: JSON.parse(formHook['hook-headers'].value)
+      nome: formProduto['produto-nome'].value.trim(),
+      descricao: formProduto['produto-descricao'].value.trim(),
+      preco: parseFloat(formProduto['produto-preco'].value)
     };
-    const url = isEditingHook
-      ? `/api/admin/webhooks/${encodeURIComponent(editingHookId)}`
-      : '/api/admin/webhooks';
-    await fetch(url, { method: isEditingHook ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    modalHook.classList.add('hidden');
-    carregarWebhooks();
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        showToast('Produto criado');
+        modalProduto.classList.add('hidden');
+        carregarProdutos(); carregarDashboard();
+      } else showToast('Erro ao criar produto', false);
+    } catch {
+      showToast('Erro de rede', false);
+    }
   });
 
-  function openHookModal(hook = null) {
-    if (hook) {
-      isEditingHook = true; editingHookId = hook.id;
-      formHook['hook-id'].value = hook.id; formHook['hook-id'].disabled = true;
-      formHook['hook-url'].value = hook.url;
-      formHook['hook-headers'].value = JSON.stringify(hook.headers||{}, null, 2);
-    } else {
-      isEditingHook = false; editingHookId = null;
-      formHook.reset(); formHook['hook-id'].disabled = false;
-      formHook['hook-headers'].value = '{}';
+  // Download
+  const modalDownload = document.getElementById('modal-download');
+  const formDownload  = document.getElementById('form-download');
+  document.getElementById('new-download-btn')
+    .addEventListener('click', () => modalDownload.classList.remove('hidden'));
+  document.getElementById('cancel-download')
+    .addEventListener('click', () => modalDownload.classList.add('hidden'));
+  formDownload.addEventListener('submit', async e => {
+    e.preventDefault();
+    const payload = {
+      nome: formDownload['download-nome'].value.trim(),
+      url: formDownload['download-url'].value.trim()
+    };
+    try {
+      const res = await fetch('/api/downloads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        showToast('App criado');
+        modalDownload.classList.add('hidden');
+        carregarDownloads(); carregarDashboard();
+      } else showToast('Erro ao criar app', false);
+    } catch {
+      showToast('Erro de rede', false);
     }
-    modalHook.classList.remove('hidden');
-  }
+  });
+
+  // Grupo
+  const modalGrupo = document.getElementById('modal-grupo');
+  const formGrupo  = document.getElementById('form-grupo');
+  document.getElementById('new-grupo-btn')
+    .addEventListener('click', () => modalGrupo.classList.remove('hidden'));
+  document.getElementById('cancel-grupo')
+    .addEventListener('click', () => modalGrupo.classList.add('hidden'));
+  formGrupo.addEventListener('submit', async e => {
+    e.preventDefault();
+    const payload = { nome: formGrupo['grupo-nome'].value.trim() };
+    try {
+      const res = await fetch('/api/groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        showToast('Grupo criado');
+        modalGrupo.classList.add('hidden');
+        carregarGrupos(); carregarDashboard();
+      } else showToast('Erro ao criar grupo', false);
+    } catch {
+      showToast('Erro de rede', false);
+    }
+  });
 
   // ─── Tab Switching ──────────────────────────────────────────────────────────────
   document.querySelectorAll('.tab-btn').forEach(btn => {

@@ -345,11 +345,6 @@ function openGrupoModal(gr = null) {
     });
   });
 
-	// ─── (Opcional) Se quiser pré-carregar dashboard:
-			carregarDashboard();
-			loaded.dashboard = true;
-});
-
   // ─── Dashboard ─────────────────────────────────────────────────────────────────
   async function carregarDashboard() {
     try {

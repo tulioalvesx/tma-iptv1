@@ -444,39 +444,42 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ─── Grupos ───────────────────────────────────────────────────────────────────
-  async function carregarGrupos() {
-    try {
-      const res = await fetch('/api/groups');
-      const grupos = await res.json();
-      const cont = document.getElementById('grupos-lista');
-      cont.innerHTML = '';
-      grupos.forEach(g => {
-        const div = document.createElement('div');
-        div.className = 'flex items-center justify-between p-2 border-b';
-        div.dataset.id = g.id;
-        div.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-24 h-24 bg-gray-100 flex items-center justify-center">
-              ${g.imagem?`<img src="${normalizeImagem(g.imagem)}" alt="${g.nome}" class="object-contain w-full h-full">`:'Sem imagem'}
-            </div>
-            <div>
-              <h3 class="font-bold">${g.nome}</h3>
-              <p class="text-sm text-gray-500">${g.descricao||''}</p>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <input type="file" data-type="grupo" data-id="${g.id}" class="inline-file border px-2 py-1 rounded" />
-                <input type="text" value="${g.imagem||''}" data-field="imagem" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Imagem">
-              </div>
+// ─── Grupos ────────────────────────────────────────────────────────────────
+async function carregarGrupos() {
+  try {
+    const res = await fetch('/api/groups');
+    const grupos = await res.json();
+    const cont = document.getElementById('grupos-lista');
+    cont.innerHTML = '';
+
+    grupos.forEach(g => {
+      const card = document.createElement('div');
+      card.className = 'bg-white p-4 rounded shadow mb-3';
+      card.innerHTML = `
+        <div class="flex items-start gap-4">
+          <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-2">
+            ${g.imagem
+              ? `<img src="${normalizeImagem(g.imagem)}" alt="${g.nome}" class="object-contain w-full h-full rounded">`
+              : 'Sem imagem'}
+          </div>
+          <div class="flex-1">
+            <h3 class="font-bold text-lg mb-1">${g.nome}</h3>
+            <p class="text-sm text-gray-500 mb-1">${g.descricao||''}</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+              <input type="file" data-type="grupo" data-id="${g.id}" class="inline-file border px-2 py-1 rounded" />
+              <input type="text" data-field="imagem" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Imagem" value="${g.imagem||''}">
             </div>
           </div>
-          <div class="flex gap-2">
-            <button class="btn-save-grupo px-2 py-1 border rounded text-sm">Salvar</button>
-            <button class="btn-edit-grupo px-2 py-1 border rounded text-sm">Editar</button>
-            <button class="btn-delete-grupo px-2 py-1 border rounded text-sm">Excluir</button>
-          </div>`;
-        cont.appendChild(div);
-      });
-      window.grupos = grupos;
+          <div class="flex flex-col gap-2">
+            <button data-id="${g.id}" class="btn-save-grupo px-3 py-1 bg-blue-500 text-white rounded text-sm">Salvar</button>
+            <button data-id="${g.id}" class="btn-edit-grupo px-3 py-1 bg-yellow-400 text-white rounded text-sm">Editar</button>
+            <button data-id="${g.id}" class="btn-delete-grupo px-3 py-1 bg-red-500 text-white rounded text-sm">Excluir</button>
+          </div>
+        </div>`;
+      cont.appendChild(card);
+    });
+
+    window.grupos = grupos;
 
       // Upload imagem
       cont.querySelectorAll('input[type=file][data-type=grupo]').forEach(inp => {

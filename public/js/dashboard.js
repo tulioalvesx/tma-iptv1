@@ -2,7 +2,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   // Quick creation button activation
-  ['produto','download','grupo'].forEach(type => {
+  ['produto','download','grupo','rule','hook'].forEach(type => {
     const btn = document.getElementById(`new-${type}-btn`);
     if (btn) {
       btn.disabled = false;
@@ -241,8 +241,10 @@ function openGrupoModal(gr = null) {
       modalDownload.classList.add('hidden');
       carregarDownloads();
       carregarDashboard();
-    } else showToast('Erro ao criar aplicativo', false);
-	  return;
+    } else {
+      showToast('Erro ao criar aplicativo', false);
+      return;
+    }
   });
 
   // Groups

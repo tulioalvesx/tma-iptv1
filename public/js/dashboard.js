@@ -13,8 +13,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ─── Variables ───────────────────────────────────────────────────────────────
   let chartInstance = null;
-  let isEditingRule = false, editingRuleId = null;
-  let isEditingHook = false, editingHookId = null;
+  let isEditingRule = false,   editingRuleId = null;
+  let isEditingHook = false,   editingHookId = null;
+  let isEditingProduto = false, editingProdutoId = null;
+  let isEditingDownload = false, editingDownloadId = null;
+  let isEditingGrupo = false,   editingGrupoId = null;
 
   // ─── Helper Functions ──────────────────────────────────────────────────────────
   function showToast(msg, success = true) {
@@ -63,44 +66,77 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ─── Modal Open Functions ─────────────────────────────────────────────────────
-  const modalRule = document.getElementById('modal-rule');
-  const formRule  = document.getElementById('form-rule');
+  const modalRule    = document.getElementById('modal-rule');
+  const formRule     = document.getElementById('form-rule');
+  const modalHook    = document.getElementById('modal-hook');
+  const formHook     = document.getElementById('form-hook');
+  const modalProduto = document.getElementById('modal-produto');
+  const formProduto  = document.getElementById('form-produto');
+  const modalDownload= document.getElementById('modal-download');
+  const formDownload = document.getElementById('form-download');
+  const modalGrupo   = document.getElementById('modal-grupo');
+  const formGrupo    = document.getElementById('form-grupo');
+
   function openRuleModal(rule = null) {
+    isEditingRule = !!rule;
+    editingRuleId = rule?.id || null;
     if (rule) {
-      isEditingRule = true;
-      editingRuleId = rule.id;
       formRule['rule-id'].value    = rule.id;
-      formRule['rule-id'].disabled = true;
       formRule['rule-type'].value  = rule.type;
       formRule['rule-pattern'].value = rule.pattern;
       formRule['rule-reply'].value   = rule.reply;
+      formRule['rule-id'].disabled   = true;
     } else {
-      isEditingRule = false;
-      editingRuleId = null;
       formRule.reset();
       formRule['rule-id'].disabled = false;
     }
     modalRule.classList.remove('hidden');
   }
 
-  const modalHook = document.getElementById('modal-hook');
-  const formHook  = document.getElementById('form-hook');
   function openHookModal(hook = null) {
+    isEditingHook = !!hook;
+    editingHookId = hook?.id || null;
     if (hook) {
-      isEditingHook = true;
-      editingHookId = hook.id;
-      formHook['hook-id'].value    = hook.id;
-      formHook['hook-id'].disabled = true;
-      formHook['hook-url'].value   = hook.url;
+      formHook['hook-id'].value      = hook.id;
+      formHook['hook-url'].value     = hook.url;
       formHook['hook-headers'].value = JSON.stringify(hook.headers || {}, null, 2);
+      formHook['hook-id'].disabled    = true;
     } else {
-      isEditingHook = false;
-      editingHookId = null;
       formHook.reset();
-      formHook['hook-id'].disabled = false;
       formHook['hook-headers'].value = '{}';
+      formHook['hook-id'].disabled   = false;
     }
     modalHook.classList.remove('hidden');
+  }
+
+  function openProdutoModal(prod = null) {
+    isEditingProduto = !!prod;
+    editingProdutoId = prod?.id || null;
+    if (prod) {
+      formProduto['produto-nome'].value      = prod.nome;
+      formProduto['produto-descricao'].value = prod.descricao;
+      formProduto['produto-preco'].value     = prod.preco;
+    } else formProduto.reset();
+    modalProduto.classList.remove('hidden');
+  }
+
+  function openDownloadModal(dl = null) {
+    isEditingDownload = !!dl;
+    editingDownloadId = dl?.id || null;
+    if (dl) {
+      formDownload['download-nome'].value = dl.name;
+      formDownload['download-url'].value  = dl.url;
+    } else formDownload.reset();
+    modalDownload.classList.remove('hidden');
+  }
+
+  function openGrupoModal(gr = null) {
+    isEditingGrupo = !!gr;
+    editingGrupoId = gr?.id || null;
+    if (gr) {
+      formGrupo['grupo-nome'].value = gr.nome;
+    } else formGrupo.reset();
+    modalGrupo.classList.remove('hidden');
   }
 
   // ─── Modal Setup ────────────────────────────────────────────────────────────────

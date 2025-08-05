@@ -235,7 +235,7 @@ function openGrupoModal(gr = null) {
   document.getElementById('cancel-download')?.addEventListener('click', () => modalDownload.classList.add('hidden'));
   formDownload.addEventListener('submit', async e => {
     e.preventDefault();
-  const payload = {
+	const payload = {
     name: formDownload['download-nome'].value.trim(),
     url:  formDownload['download-url'].value.trim()
   };
@@ -253,8 +253,9 @@ function openGrupoModal(gr = null) {
       modalDownload.classList.add('hidden');
       carregarDownloads();
       carregarDashboard();
-    } showToast(isEditingDownload ? 'Erro ao atualizar aplicativo' : 'Erro ao criar aplicativo', false);
-    }
+    } else { showToast(isEditingDownload ? 'Erro ao atualizar aplicativo' : 'Erro ao criar aplicativo', false);
+	return;
+	}
   });
 
   // Groups

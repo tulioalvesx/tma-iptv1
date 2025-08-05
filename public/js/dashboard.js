@@ -190,8 +190,8 @@ function openGrupoModal(gr = null) {
   // Products
   const modalProduto = document.getElementById('modal-produto');
   const formProduto  = document.getElementById('form-produto');
-  document.getElementById('new-grupo-btn')?.addEventListener('click', () => openProdutoModal());
-  document.getElementById('new-grupo-btn')?.addEventListener('click', () => modalProduto.classList.add('hidden'));
+  document.getElementById('new-produto-btn')?.addEventListener('click', () => openProdutoModal());
+  document.getElementById('cancel-produto')?.addEventListener('click', () => modalProduto.classList.add('hidden'));
   formProduto.addEventListener('submit', async e => {
     e.preventDefault();
     const payload = {
@@ -219,7 +219,7 @@ function openGrupoModal(gr = null) {
   // Downloads
   const modalDownload = document.getElementById('modal-download');
   const formDownload  = document.getElementById('form-download');
-  document.getElementById('new-download-btn')?.addEventListener('click', () => openProdutoModal());
+  document.getElementById('new-download-btn')?.addEventListener('click', () => openDownloadModal());
   document.getElementById('cancel-download')?.addEventListener('click', () => modalDownload.classList.add('hidden'));
   formDownload.addEventListener('submit', async e => {
     e.preventDefault();
@@ -228,8 +228,8 @@ function openGrupoModal(gr = null) {
       url: formDownload['download-url'].value.trim()
     };
 	const url    = isEditingDownload
-                ? `/api/products/${editingDownloadId}`
-                : '/api/products';
+                ? `/api/downloads/${encodeURIComponent(editingDownloadId)}`
+                : '/api/downloads';
 	const method = isEditingDownload ? 'PUT' : 'POST';
 	const res = await fetch(url, {
 		method,
@@ -247,7 +247,7 @@ function openGrupoModal(gr = null) {
   // Groups
   const modalGrupo = document.getElementById('modal-grupo');
   const formGrupo  = document.getElementById('form-grupo');
-  document.getElementById('new-grupo-btn')?.addEventListener('click', () => openProdutoModal());
+  document.getElementById('new-grupo-btn')?.addEventListener('click', () => openGrupoModal());
   document.getElementById('cancel-grupo')?.addEventListener('click', () => modalGrupo.classList.add('hidden'));
   formGrupo.addEventListener('submit', async e => {
     e.preventDefault();

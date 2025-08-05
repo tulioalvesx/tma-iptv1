@@ -292,12 +292,33 @@ function openGrupoModal(gr = null) {
       const target = btn.dataset.tab;
       document.getElementById('tab-'+target).classList.remove('hidden');
       switch(target) {
-        case 'dashboard': carregarDashboard(); break;
-        case 'produtos': carregarProdutos(); break;
-        case 'downloads': carregarDownloads(); break;
-        case 'grupos': carregarGrupos(); break;
-        case 'regras': carregarRegras(); break;
-        case 'webhooks': carregarWebhooks(); break;
+        carregarDashboard();
+         break;
+         if (!loaded.produtos) {
+           carregarProdutos();
+           loaded.produtos = true;
+         }
+         break;
+         if (!loaded.downloads) {
+           carregarDownloads();
+           loaded.downloads = true;
+         }
+         break;
+         if (!loaded.grupos) {
+           carregarGrupos();
+           loaded.grupos = true;
+         }
+         break;
+         if (!loaded.regras) {
+           carregarRegras();
+           loaded.regras = true;
+         }
+         break;
+         if (!loaded.webhooks) {
+           carregarWebhooks();
+           loaded.webhooks = true;
+         }
+         break;
       }
     });
   });
@@ -431,7 +452,7 @@ function openGrupoModal(gr = null) {
             </div>
             <div class="flex-1">
               <h3 class="font-bold text-lg mb-1">${d.name}</h3>
-              <p class="text-sm text-gray-500 mb-1">${d.description||''}</p>
+//            <p class="text-sm text-gray-500 mb-1">${d.description||''}</p>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <input type="file" data-type="download" data-id="${d.id}" class="inline-file border px-2 py-1 rounded" />
                 <input type="text" data-field="url" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" placeholder="URL" value="${d.url||''}">
@@ -450,7 +471,7 @@ function openGrupoModal(gr = null) {
 // -- Edit
 	  cont.querySelectorAll('.btn-edit-download').forEach(btn => {
 		btn.addEventListener('click', () => {
-		const dl = window.downloads.find(x => x.id === btn.dataset.id);
+		const dl = window.downloads.find(x => String(x.id) === btn.dataset.id);
 		if (dl) openDownloadModal(dl);
 	  });
 	});
@@ -547,7 +568,6 @@ async function carregarGrupos() {
           </div>
           <div class="flex-1">
             <h3 class="font-bold text-lg mb-1">${g.nome}</h3>
-            <p class="text-sm text-gray-500 mb-1">${g.descricao||''}</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
               <input type="file" data-type="grupo" data-id="${g.id}" class="inline-file border px-2 py-1 rounded" />
               <input type="text" data-field="imagem" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Imagem" value="${g.imagem||''}">
@@ -734,11 +754,8 @@ async function carregarWebhooks() {
     }
   }
 
-  // Initialization
+ // Initialization: só Dashboard, demais serão “lazy-loaded”
   carregarDashboard();
-  carregarProdutos();
-  carregarDownloads();
-  carregarGrupos();
-  carregarRegras();
-  carregarWebhooks();
+  loaded.dashboard = true; // opcional se quiser flag pro dashboard
+
 });

@@ -262,7 +262,7 @@ function openGrupoModal(gr = null) {
       body: JSON.stringify(payload)
     });
     if (res.ok) {
-      showToast('Grupo criado');
+      showToast(isEditingGrupo ? 'Grupo atualizado' : 'Grupo criado');
       modalGrupo.classList.add('hidden');
       carregarGrupos();
       carregarDashboard();
@@ -586,7 +586,7 @@ async function carregarGrupos() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ imagem: info.filename })
               });
-              showToast('Imagem atualizado');
+              showToast('Imagem atualizada');
               carregarGrupos();
               carregarDashboard();
             } else showToast('Erro upload', false);
@@ -599,8 +599,7 @@ async function carregarGrupos() {
       // Inline Save
       cont.querySelectorAll('.btn-save-grupo').forEach(btn => {
         btn.addEventListener('click', async () => {
-          const id = btn.closest('[data-id]').dataset.id;
-          const g = grupos.find(x => x.id === id);
+          const id = btn.dataset.id;
           const img = document
 			.querySelector(`input[data-field="imagem"][data-id="${id}"]`)
 			.value.trim();
@@ -654,14 +653,14 @@ async function carregarGrupos() {
     window.rules = regras;
       cont.querySelectorAll('.btn-edit-regra').forEach(btn => {
         btn.addEventListener('click', () => {
-          const id = btn.closest('[data-id]').dataset.id;
+          const id = btn.dataset.id;
           const r = regras.find(x => x.id === id);
           if (r) openRuleModal(r);
         });
       });
       cont.querySelectorAll('.btn-delete-regra').forEach(btn => {
         btn.addEventListener('click', async () => {
-          const id = btn.closest('[data-id]').dataset.id;
+          const id = btn.dataset.id;
           if (!confirm(`Excluir regra "${id}"?`)) return;
           await fetch(`/api/admin/rules/${id}`, { method: 'DELETE' });
           carregarRegras();
@@ -702,14 +701,14 @@ async function carregarWebhooks() {
     window.hooks = hooks;
       cont.querySelectorAll('.btn-edit-hook').forEach(btn => {
         btn.addEventListener('click', () => {
-          const id = btn.closest('[data-id]').dataset.id;
+          const id = btn.dataset.id;
           const h = hooks.find(x => x.id === id);
           if (h) openHookModal(h);
         });
       });
       cont.querySelectorAll('.btn-delete-hook').forEach(btn => {
         btn.addEventListener('click', async () => {
-          const id = btn.closest('[data-id]').dataset.id;
+          const id = btn.dataset.id;
           if (!confirm(`Excluir webhook "${id}"?`)) return;
           await fetch(`/api/admin/webhooks/${id}`, { method: 'DELETE' });
           carregarWebhooks();

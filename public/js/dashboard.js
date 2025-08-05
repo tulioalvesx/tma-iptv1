@@ -234,7 +234,9 @@ function openGrupoModal(gr = null) {
       modalProduto.classList.add('hidden');
       carregarProdutos();
       carregarDashboard();
-	} else showToast(isEditingProduto ? 'Erro ao atualizar produto' : 'Erro ao criar produto', false);
+	} else { showToast(isEditingProduto ? 'Erro ao atualizar produto' : 'Erro ao criar produto', false);
+	  return;
+	}
   });
 
   // Downloads
@@ -289,7 +291,9 @@ function openGrupoModal(gr = null) {
       modalGrupo.classList.add('hidden');
       carregarGrupos();
       carregarDashboard();
-    } else showToast(isEditingGrupo ? 'Erro ao atualizar grupo' : 'Erro ao criar grupo', false);
+    } else { showToast(isEditingGrupo ? 'Erro ao atualizar grupo' : 'Erro ao criar grupo', false);
+	  return;
+	}
   });
 
   // ─── Tab Switching com lazy-load ─────────────────────────────────────────────
@@ -608,7 +612,7 @@ async function carregarGrupos() {
 // -- Edit
 	  cont.querySelectorAll('.btn-edit-grupo').forEach(btn => {
 	  btn.addEventListener('click', () => {
-      const gr = window.grupos.find(x => x.id === btn.dataset.id);
+      const gr = window.grupos.find(x => String(x.id) === btn.dataset.id);
       if (gr) openGrupoModal(gr);
   });
 });
@@ -687,7 +691,7 @@ async function carregarGrupos() {
   try {
     const res = await fetch('/api/admin/rules');
     const regras = await res.json();
-    const cont = document.getElementById('rules-lista');
+    const cont = document.getElementById('regras-lista');
     cont.innerHTML = '';
 
     regras.forEach(r => {
@@ -711,7 +715,7 @@ async function carregarGrupos() {
       cont.querySelectorAll('.btn-edit-regra').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.dataset.id;
-          const r = regras.find(x => x.id === id);
+          const r = regras.find(x => String(x.id) === id);
           if (r) openRuleModal(r);
         });
       });
@@ -734,7 +738,7 @@ async function carregarWebhooks() {
   try {
     const res = await fetch('/api/admin/webhooks');
     const hooks = await res.json();
-    const cont = document.getElementById('hooks-lista');
+    const cont = document.getElementById('webhooks-lista');
     cont.innerHTML = '';
 
     hooks.forEach(h => {
@@ -759,7 +763,7 @@ async function carregarWebhooks() {
       cont.querySelectorAll('.btn-edit-hook').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.dataset.id;
-          const h = hooks.find(x => x.id === id);
+          const h = hooks.find(x => String(x.id) === id);
           if (h) openHookModal(h);
         });
       });
@@ -776,9 +780,7 @@ async function carregarWebhooks() {
       showToast('Falha ao carregar webhooks', false);
     }
   }
-
  // Initialization: só Dashboard, demais serão “lazy-loaded”
   carregarDashboard();
   loaded.dashboard = true; // opcional se quiser flag pro dashboard
-
 });

@@ -209,7 +209,7 @@ function openGrupoModal(gr = null) {
       body: JSON.stringify(payload)
     });
     if (res.ok) {
-      showToast('Produto criado');
+      showToast(isEditingGrupo ? 'Produto atualizado' : 'Produto criado');
       modalProduto.classList.add('hidden');
       carregarProdutos();
       carregarDashboard();
@@ -237,11 +237,12 @@ function openGrupoModal(gr = null) {
       body: JSON.stringify(payload)
     });
     if (res.ok) {
-      showToast('App criado');
+      showToast(isEditingGrupo ? 'Aplicativo atualizado' : 'Aplicativo criado');
       modalDownload.classList.add('hidden');
       carregarDownloads();
       carregarDashboard();
-    } else showToast('Erro ao criar app', false);
+    } else showToast('Erro ao criar aplicativo', false);
+	  return;
   });
 
   // Groups
@@ -446,7 +447,7 @@ function openGrupoModal(gr = null) {
 		btn.addEventListener('click', async () => {
 		if (!confirm('Excluir download?')) return;
 		await fetch(`/api/downloads/${btn.dataset.id}`, { method: 'DELETE' });
-		showToast('Download excluído');
+		showToast('Aplicativo excluído');
 		carregarDownloads();
 		carregarDashboard();
 	  });
@@ -497,7 +498,7 @@ function openGrupoModal(gr = null) {
               body: JSON.stringify(upd)
             });
             if (res.ok) {
-              showToast('Download salvo');
+              showToast('Aplicativo salvo');
               carregarDownloads();
               carregarDashboard();
             } else showToast('Erro salvar', false);

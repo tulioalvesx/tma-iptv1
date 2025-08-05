@@ -451,10 +451,7 @@ function openGrupoModal(gr = null) {
 		carregarDashboard();
 	  });
 	});
-	
-	  catch {
-	  showToast('Falha ao carregar downloads', false);
-	}
+
       // Upload
       cont.querySelectorAll('input[type=file][data-type=download]').forEach(inp => {
         inp.addEventListener('change', async e => {
@@ -569,9 +566,6 @@ async function carregarGrupos() {
       carregarDashboard();
   });
 });
-    catch {
-    showToast('Falha ao carregar grupos', false);
-  }
 
       // Upload imagem
       cont.querySelectorAll('input[type=file][data-type=grupo]').forEach(inp => {

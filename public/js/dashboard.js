@@ -253,7 +253,7 @@ function openGrupoModal(gr = null) {
       modalDownload.classList.add('hidden');
       carregarDownloads();
       carregarDashboard();
-    } else showToast(isEditingProduto ? 'Erro ao atualizar produto' : 'Erro ao criar produto', false);
+    } else showToast(isEditingDownload ? 'Erro ao atualizar produto' : 'Erro ao criar produto', false);
     }
   });
 

@@ -187,12 +187,19 @@ function openProdutoModal(prod = null) {
 
 function openDownloadModal(dl = null) {
   isEditingDownload = !!dl;
-  editingDownloadId = dl?.id || null;
+   // Resetar o form para criar ou manter valores antigos ao editar
+  formDownload.reset();
+  // Se for edição, usa o id existente; senão, gera um novo UUID
   if (dl) {
+    editingDownloadId = dl.id;
+  } else {
+    editingDownloadId = crypto.randomUUID();
+  }
+  // Povoar o campo hidden do form
+  formDownload['download-id'].value = editingDownloadId;
+  if (dl) {  
     formDownload['download-nome'].value = dl.name;
     formDownload['download-url'].value  = dl.url;
-  } else {
-    formDownload.reset();
   }
   modalDownload.classList.remove('hidden');
 }

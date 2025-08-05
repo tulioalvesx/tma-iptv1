@@ -15,7 +15,7 @@
     <div class="bg-white rounded-lg p-6 w-96">
       <h2 class="text-lg font-semibold mb-4">Nova Regra</h2>
       <form id="form-rule" class="space-y-4">
-        <div><label class="block text-sm">ID</label><input id="rule-id" name="rule-id" type="text" required class="w-full border px-3 py-2 rounded" /></div>
+        <div><label class="block text-sm">ID</label><input id="rule-id" name="rule-id" type="hidden" required class="w-full border px-3 py-2 rounded" /></div>
         <div><label class="block text-sm">Tipo</label><select id="rule-type" name="rule-type" required class="w-full border px-3 py-2 rounded"><option value="keyword">Palavra-chave</option><option value="message">Mensagem exata</option></select></div>
         <div><label class="block text-sm">Padrão</label><input id="rule-pattern" name="rule-pattern" type="text" required class="w-full border px-3 py-2 rounded" /></div>
         <div><label class="block text-sm">Resposta</label><input id="rule-reply" name="rule-reply" type="text" required class="w-full border px-3 py-2 rounded" /></div>
@@ -29,7 +29,7 @@
     <div class="bg-white rounded-lg p-6 w-96">
       <h2 class="text-lg font-semibold mb-4">Novo Webhook</h2>
       <form id="form-hook" class="space-y-4">
-        <div><label class="block text-sm">ID</label><input id="hook-id" name="hook-id" type="text" required class="w-full border px-3 py-2 rounded" /></div>
+        <div><label class="block text-sm">ID</label><input id="hook-id" name="hook-id" type="hidden" required class="w-full border px-3 py-2 rounded" /></div>
         <div><label class="block text-sm">URL</label><input id="hook-url" name="hook-url" type="url" required class="w-full border px-3 py-2 rounded" /></div>
         <div><label class="block text-sm">Headers (JSON)</label><textarea id="hook-headers" name="hook-headers" rows="3" class="w-full border px-3 py-2 rounded">{}</textarea></div>
         <div class="flex justify-end gap-2"><button id="cancel-hook" type="button" class="px-4 py-2 border rounded">Cancelar</button><button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Salvar</button></div>
@@ -42,7 +42,8 @@
     <div class="bg-white rounded-lg p-6 w-96">
       <h2 class="text-lg font-semibold mb-4">Novo Produto</h2>
       <form id="form-produto" class="space-y-4">
-        <div><label class="block text-sm">Nome</label><input name="produto-nome" type="text" required class="w-full border px-2 py-1 rounded" /></div>
+		<div><label class="block text-sm">Nome</label><input name="produto-id" type="hidden" required class="w-full border px-2 py-1 rounded" /></div>
+		<div><label class="block text-sm">Nome</label><input name="produto-nome" type="text" required class="w-full border px-2 py-1 rounded" /></div>
         <div><label class="block text-sm">Descrição</label><textarea name="produto-descricao" required class="w-full border px-2 py-1 rounded"></textarea></div>
         <div><label class="block text-sm">Preço</label><input name="produto-preco" type="number" step="0.01" required class="w-full border px-2 py-1 rounded" /></div>
         <div class="flex justify-end gap-2"><button id="cancel-produto" type="button" class="px-4 py-2 border rounded">Cancelar</button><button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Salvar</button></div>
@@ -55,6 +56,7 @@
     <div class="bg-white rounded-lg p-6 w-96">
       <h2 class="text-lg font-semibold mb-4">Novo App</h2>
       <form id="form-download" class="space-y-4">
+		<div><label class="block text-sm">Nome</label><input name="download-id" type="hidden" required class="w-full border px-2 py-1 rounded" /></div>
         <div><label class="block text-sm">Nome</label><input name="download-nome" type="text" required class="w-full border px-2 py-1 rounded" /></div>
         <div><label class="block text-sm">URL</label><input name="download-url" type="url" required class="w-full border px-2 py-1 rounded" /></div>
         <div class="flex justify-end gap-2"><button id="cancel-download" type="button" class="px-4 py-2 border rounded">Cancelar</button><button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Salvar</button></div>
@@ -67,6 +69,7 @@
     <div class="bg-white rounded-lg p-6 w-96">
       <h2 class="text-lg font-semibold mb-4">Novo Grupo</h2>
       <form id="form-grupo" class="space-y-4">
+		<div><label class="block text-sm">Nome</label><input name="grupo-id" type="hidden" required class="w-full border px-2 py-1 rounded" /></div>
         <div><label class="block text-sm">Nome</label><input name="grupo-nome" type="text" required class="w-full border px-2 py-1 rounded" /></div>
         <div class="flex justify-end gap-2"><button id="cancel-grupo" type="button" class="px-4 py-2 border rounded">Cancelar</button><button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Salvar</button></div>
       </form>

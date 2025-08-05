@@ -253,7 +253,7 @@ function openGrupoModal(gr = null) {
       modalDownload.classList.add('hidden');
       carregarDownloads();
       carregarDashboard();
-    } else showToast(isEditingDownload ? 'Erro ao atualizar produto' : 'Erro ao criar produto', false);
+    } showToast(isEditingDownload ? 'Erro ao atualizar aplicativo' : 'Erro ao criar aplicativo', false);
     }
   });
 
@@ -406,7 +406,7 @@ function openGrupoModal(gr = null) {
       });
 
     } catch {
-      showToast('Falha produtos', false);
+      showToast('Falha ao carregar produtos', false);
     }
   }
 
@@ -521,7 +521,7 @@ function openGrupoModal(gr = null) {
       });
 
     } catch {
-      showToast('Falha downloads', false);
+      showToast('Falha ao carregar aplicativos', false);
     }
   }
 
@@ -681,7 +681,7 @@ async function carregarGrupos() {
         });
       });
     } catch {
-      showToast('Falha regras', false);
+      showToast('Falha ao carregar regras', false);
     }
   }
 
@@ -729,7 +729,7 @@ async function carregarWebhooks() {
         });
       });
     } catch {
-      showToast('Falha webhooks', false);
+      showToast('Falha ao carregar webhooks', false);
     }
   }
 

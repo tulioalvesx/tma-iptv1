@@ -120,13 +120,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const url = isEditingRule
       ? `/api/admin/rules/${encodeURIComponent(editingRuleId)}`
       : '/api/admin/rules';
-    await fetch(url, {
-      method: isEditingRule ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    modalRule.classList.add('hidden');
-    carregarRegras();
+    try {
+      const res = await fetch(url, {
+        method: isEditingRule ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error();
+      modalRule.classList.add('hidden');
+      showToast(isEditingRule ? 'Regra atualizada' : 'Regra criada');
+      carregarRegras();
+    } catch {
+      showToast('Falha ao salvar regra', false);
+   }
   });
 
   // Webhooks
@@ -142,13 +148,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const url = isEditingHook
       ? `/api/admin/webhooks/${encodeURIComponent(editingHookId)}`
       : '/api/admin/webhooks';
-    await fetch(url, {
-      method: isEditingHook ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    modalHook.classList.add('hidden');
-    carregarWebhooks();
+    try {
+      const res = await fetch(url, {
+        method: isEditingHook ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error();
+      modalHook.classList.add('hidden');
+      showToast(isEditingHook ? 'Webhook atualizado' : 'Webhook criado');
+      carregarWebhooks();
+    } catch {
+      showToast('Falha ao salvar webhook', false);
+    }
   });
 
 function openProdutoModal(prod = null) {

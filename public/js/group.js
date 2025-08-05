@@ -1,90 +1,178 @@
-// group.js
 
-// normalizeImageSrc: mantém lógica existente
-function normalizeImageSrc(src) {
-  if (!src) return '/images/placeholder.jpg';
-  if (src.startsWith('/')) return src;
-  return `/img/${src.replace(/^\/?img\/?/i, '')}`;
-}
+document.addEventListener("DOMContentLoaded", async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const groupId = urlParams.get("id");
+  if (!groupId) return;
 
-// Funções auxiliares de CRUD (mantêm lógica existente)
-async function saveGrupo(id) {
-  // ... função salva grupo existente ...
-}
-async function editGrupo(id) {
-  // ... função edita grupo existente ...
-}
-async function deleteGrupo(id) {
-  // ... função exclui grupo existente ...
-}
-
-// carregarGrupos: renderiza grupos no padrão de cards de Produtos/Downloads
-async function carregarGrupos() {
   try {
-    const res = await fetch('/api/groups');
-    const grupos = await res.json();
-    const lista = document.getElementById('grupos-lista');
-    if (!lista) return;
-    lista.innerHTML = '';
+    const [groupsRes, productsRes] = await Promise.all([
+      fetch("/api/groups"),
+      fetch("/api/products")
+    ]);
+    const groups = await groupsRes.json();
+    const produtos = await productsRes.json();
 
-    grupos.forEach(g => {
-      // Card de grupo
-      const card = document.createElement('div');
-      card.className = 'bg-white p-4 shadow rounded mb-4 flex items-center gap-4';
+    const group = Array.isArray(groups) ? groups.find(g => g.id === groupId) : null;
+    if (!group) return;
 
-      // Imagem
-      const imgWrapper = document.createElement('div');
-      imgWrapper.className = 'w-24 h-24 bg-gray-100 flex items-center justify-center flex-shrink-0';
-      if (g.imagem) {
-        const img = document.createElement('img');
-        img.src = normalizeImageSrc(g.imagem);
-        img.alt = g.nome || '';
-        img.className = 'object-cover w-full h-full rounded';
-        imgWrapper.appendChild(img);
-      } else {
-        imgWrapper.textContent = 'Sem imagem';
-      }
-      card.appendChild(imgWrapper);
+    const lang = localStorage.getItem("lang") || "pt";
+    const titleEl = document.getElementById("group-title");
+    const groupName = (lang === "en" && group.name_en)
+      ? group.name_en
+      : (group.name || group.nome || "");
+    if (titleEl) titleEl.textContent = groupName;
 
-      // Detalhes
-      const info = document.createElement('div');
-      info.className = 'flex-1 space-y-1';
-      info.innerHTML = `
-        <h3 class="font-medium text-lg">${g.nome || ''}</h3>
-        <p class="text-sm text-gray-600">${g.descricao || ''}</p>
-        <p class="text-sm">Estoque: <span class="font-semibold">${g.estoque ?? 0}</span></p>
-        <p class="text-sm">Preço de Compra: <span class="font-semibold">R$ ${parseFloat(g.compra || 0).toFixed(2)}</span></p>
-        <p class="text-sm">Desconto: <span class="font-semibold">${g.desconto ?? 0}%</span></p>
-      `;
-      card.appendChild(info);
+    const filtered = Array.isArray(produtos) ? produtos.filter(p => p.grupo === groupId) : [];
+    renderProducts(filtered);
+  } catch (err) {
+    console.error("Erro ao carregar grupo/produtos:", err);
+  }
+});
 
-      // Ações
-      const actions = document.createElement('div');
-      actions.className = 'flex gap-2';
+function normalizeImageSrc(src) {
+  if (!src) return "images/placeholder.jpg";
+  if (src.startsWith("/")) return src;
+  return `/img/${src.replace(/^\/?img\/?/i, "")}`;
+}
 
-      const btnSalvar = document.createElement('button');
-      btnSalvar.className = 'px-4 py-2 bg-blue-500 text-white rounded';
-      btnSalvar.textContent = 'Salvar';
-      btnSalvar.addEventListener('click', () => saveGrupo(g.id));
+function renderProducts(products) {
+  const container = document.getElementById("products");
+  if (!container) return;
+  container.innerHTML = "";
 
-      const btnEditar = document.createElement('button');
-      btnEditar.className = 'px-4 py-2 bg-yellow-400 text-white rounded';
-      btnEditar.textContent = 'Editar';
-      btnEditar.addEventListener('click', () => editGrupo(g.id));
+  const lang = localStorage.getItem("lang") || "pt";
 
-      const btnExcluir = document.createElement('button');
-      btnExcluir.className = 'px-4 py-2 bg-red-500 text-white rounded';
-      btnExcluir.textContent = 'Excluir';
-      btnExcluir.addEventListener('click', () => deleteGrupo(g.id));
+  products.forEach(product => {
+    const card = document.createElement("div");
+    card.className = "product-card";
 
-      actions.append(btnSalvar, btnEditar, btnExcluir);
-      card.appendChild(actions);
+    // Image
+    const img = document.createElement("img");
+    img.src = product.imagem ? normalizeImageSrc(product.imagem) : "images/placeholder.jpg";
+    img.alt = product.nome || product.name || "";
+    card.appendChild(img);
 
-      lista.appendChild(card);
+    // Details
+    const details = document.createElement("div");
+    details.className = "product-details";
+
+    // Title
+    const title = document.createElement("h3");
+    const prodName = (lang === "en" && product.name_en)
+      ? product.name_en
+      : (product.nome || product.name || "");
+    title.textContent = prodName;
+    details.appendChild(title);
+
+    // Description
+    const desc = document.createElement("p");
+    const description = (lang === "en" && product.description_en)
+      ? product.description_en
+      : (product.descricao || product.description || "");
+    desc.textContent = description;
+    details.appendChild(desc);
+
+    // Price and discount
+    const priceLine = document.createElement("div");
+    priceLine.className = "price-line";
+
+    const precoNum = parseFloat(product.preco || 0) || 0;
+    const priceSpan = document.createElement("span");
+    priceSpan.className = "price font-semibold";
+    priceSpan.textContent = `R$ ${precoNum.toFixed(2)}`;
+    priceLine.appendChild(priceSpan);
+
+    if (product.desconto && product.desconto > 0 && precoNum > 0) {
+      const descontoAplicado = precoNum * (1 - (product.desconto / 100));
+      const original = document.createElement("span");
+      original.className = "original-price ml-2 line-through text-sm text-gray-500";
+      original.textContent = `R$ ${precoNum.toFixed(2)}`;
+      priceLine.appendChild(original);
+
+      const discounted = document.createElement("div");
+      discounted.className = "text-green-600 font-semibold";
+      discounted.textContent = `R$ ${descontoAplicado.toFixed(2)}`;
+      details.appendChild(discounted);
+    }
+
+    details.appendChild(priceLine);
+
+    // Stock / quantidade
+    let quantity = 1;
+    if (product.estoque === undefined || product.estoque > 0) {
+      const qtyControl = document.createElement("div");
+      qtyControl.className = "quantity-control flex items-center gap-1 mt-2";
+
+      const minusBtn = document.createElement("button");
+      minusBtn.textContent = "-";
+      minusBtn.setAttribute("aria-label", "Diminuir quantidade");
+      const qtyInput = document.createElement("input");
+      qtyInput.type = "number";
+      qtyInput.value = quantity;
+      qtyInput.min = 1;
+      qtyInput.className = "w-16 text-center border rounded";
+      const plusBtn = document.createElement("button");
+      plusBtn.textContent = "+";
+      plusBtn.setAttribute("aria-label", "Aumentar quantidade");
+
+      minusBtn.addEventListener("click", () => {
+        const val = parseInt(qtyInput.value, 10);
+        if (!isNaN(val) && val > 1) {
+          quantity = val - 1;
+          qtyInput.value = quantity;
+        }
+      });
+      plusBtn.addEventListener("click", () => {
+        const val = parseInt(qtyInput.value, 10);
+        quantity = isNaN(val) ? 1 : val + 1;
+        qtyInput.value = quantity;
+      });
+      qtyInput.addEventListener("change", () => {
+        const val = parseInt(qtyInput.value, 10);
+        if (!isNaN(val) && val > 0) {
+          quantity = val;
+        } else {
+          qtyInput.value = quantity;
+        }
+      });
+
+      qtyControl.appendChild(minusBtn);
+      qtyControl.appendChild(qtyInput);
+      qtyControl.appendChild(plusBtn);
+      details.appendChild(qtyControl);
+    } else {
+      const outOfStock = document.createElement("p");
+      outOfStock.style.color = "red";
+      outOfStock.style.fontWeight = "600";
+      outOfStock.textContent = (lang === "en") ? "Out of stock" : "Produto esgotado";
+      details.appendChild(outOfStock);
+    }
+
+    // Actions
+    const actions = document.createElement("div");
+    actions.className = "product-actions mt-3 flex gap-2";
+
+    const buyBtn = document.createElement("button");
+    buyBtn.className = "button bg-blue-600 text-white px-3 py-1 rounded";
+    buyBtn.textContent = (lang === "en") ? "Buy" : "Comprar";
+    buyBtn.disabled = product.estoque === 0;
+    buyBtn.addEventListener("click", () => {
+      const nameForAlert = product.nome || product.name || "";
+      alert(`Você selecionou ${quantity} unidade(s) de ${nameForAlert}.`);
     });
 
-  } catch (err) {
-    console.error(err);
-    showToast('Falha ao carregar grupos', false);
-  }
+    const downloadBtn = document.createElement("button");
+    downloadBtn.className = "button border px-3 py-1 rounded";
+    downloadBtn.textContent = (lang === "en") ? "Download" : "Download";
+    downloadBtn.addEventListener("click", () => {
+      alert("Função de download a ser definida.");
+    });
+
+    actions.appendChild(buyBtn);
+    actions.appendChild(downloadBtn);
+    details.appendChild(actions);
+
+    card.appendChild(details);
+    container.appendChild(card);
+  });
 }

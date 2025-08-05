@@ -601,7 +601,9 @@ async function carregarGrupos() {
         btn.addEventListener('click', async () => {
           const id = btn.closest('[data-id]').dataset.id;
           const g = grupos.find(x => x.id === id);
-          const img = g.imagem;
+          const img = document
+			.querySelector(`input[data-field="imagem"][data-id="${id}"]`)
+			.value.trim();
           try {
             const res = await fetch(`/api/groups/${id}`, {
               method: 'PUT',
@@ -620,7 +622,7 @@ async function carregarGrupos() {
       });
 
     } catch {
-      showToast('Falha grupos', false);
+      showToast('Falha ao carregar grupos', false);
     }
 }
 

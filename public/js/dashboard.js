@@ -209,7 +209,7 @@ function openGrupoModal(gr = null) {
       body: JSON.stringify(payload)
     });
     if (res.ok) {
-      showToast(isEditingGrupo ? 'Produto atualizado' : 'Produto criado');
+      showToast(isEditingProduto ? 'Produto atualizado' : 'Produto criado');
       modalProduto.classList.add('hidden');
       carregarProdutos();
       carregarDashboard();
@@ -237,7 +237,7 @@ function openGrupoModal(gr = null) {
       body: JSON.stringify(payload)
     });
     if (res.ok) {
-      showToast(isEditingGrupo ? 'Aplicativo atualizado' : 'Aplicativo criado');
+      showToast(isEditingDownload ? 'Aplicativo atualizado' : 'Aplicativo criado');
       modalDownload.classList.add('hidden');
       carregarDownloads();
       carregarDashboard();

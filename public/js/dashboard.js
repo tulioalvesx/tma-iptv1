@@ -139,6 +139,15 @@ function openProdutoModal(prod = null) {
     editingProdutoId = crypto.randomUUID();
   }
   formProduto['produto-id'].value = editingProdutoId;
+   const sel = formProduto['produto-group'];
+   sel.querySelectorAll('option[value]:not([value=""])').forEach(o => o.remove());
+   window.grupos.forEach(g => {
+     const opt = document.createElement('option');
+     opt.value = g.id;
+     opt.textContent = g.name;
+     sel.appendChild(opt);
+   });
+   sel.value = prod?.groupId || '';
   if (prod) {
     formProduto['produto-nome'].value      = prod.nome;
     formProduto['produto-descricao'].value = prod.descricao;
@@ -251,6 +260,7 @@ function openGrupoModal(gr = null) {
 	  id: formProduto['produto-id'].value.trim(),
       nome: formProduto['produto-nome'].value.trim(),
       descricao: formProduto['produto-descricao'].value.trim(),
+	  groupId:   formProduto['produto-group'].value || null,
       preco: parseFloat(formProduto['produto-preco'].value)
     };
 	const url    = isEditingProduto
@@ -505,7 +515,12 @@ async function carregarWebhooks() {
               ${p.imagem?`<img src="${normalizeImagem(p.imagem)}" alt="${p.nome}" class="object-contain w-full h-full">`:'Sem imagem'}
             </div>
             <div class="flex-1">
-              <h3 class="font-bold text-lg mb-1">${p.nome}</h3>
+			<h3 class="font-bold text-lg mb-1">
+				${p.nome}
+				<span class="text-sm text-gray-500">
+					(${p.group?.name || 'Sem grupo'})
+				</span>
+			</h3>
               <p class="text-sm text-gray-500 mb-1">${p.descricao||''}</p>
               <p class="text-green-600 font-semibold mb-2">R$ ${p.preco||'0,00'}</p>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-2">

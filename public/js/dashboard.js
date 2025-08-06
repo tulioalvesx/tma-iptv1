@@ -181,6 +181,7 @@ function openDownloadModal(dl = null) {
   if (dl) {  
     formDownload['download-nome'].value = dl.name;
     formDownload['download-url'].value  = dl.url;
+	formDownload['download-descricao'].value = dl.description || '';
   }
   modalDownload.classList.remove('hidden');
 }
@@ -197,6 +198,7 @@ function openGrupoModal(gr = null) {
   formGrupo['grupo-id'].value = editingGrupoId;
   if (gr) {
     formGrupo['grupo-nome'].value = gr.nome;
+	formGrupo['grupo-descricao'].value = gr.descricao || '';
   }
   modalGrupo.classList.remove('hidden');
 }
@@ -305,7 +307,8 @@ function openGrupoModal(gr = null) {
    const payload = {
      id:   formDownload['download-id'].value.trim(),
      name: formDownload['download-nome'].value.trim(),
-     url:  formDownload['download-url'].value.trim()
+     url:  formDownload['download-url'].value.trim(),
+	 description: formDownload['download-descricao'].value.trim()
    };
 	const url    = isEditingDownload
                 ? `/api/downloads/${encodeURIComponent(editingDownloadId)}`
@@ -335,7 +338,9 @@ function openGrupoModal(gr = null) {
     e.preventDefault();
     const payload = { 
 	id:   formGrupo['grupo-id'].value.trim(),
-	nome: formGrupo['grupo-nome'].value.trim() };
+	nome: formGrupo['grupo-nome'].value.trim(),
+	descricao: formGrupo['grupo-descricao'].value.trim()	
+	};
 	const url    = isEditingGrupo
                 ? `/api/groups/${editingGrupoId}`
                 : '/api/groups';
@@ -663,6 +668,7 @@ async function carregarWebhooks() {
                 <input type="file" data-type="download" data-id="${d.id}" class="inline-file border px-2 py-1 rounded" />
                 <input type="text" data-field="url" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" placeholder="URL" value="${d.url||''}">
                 <input type="text" data-field="imagem" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" placeholder="Imagem" value="${d.imagem||''}">
+				<input type="text" data-field="description" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" placeholder="Descrição" value="${d.description||''}">
               </div>
             </div>
             <div class="flex flex-col gap-2">
@@ -733,9 +739,11 @@ async function carregarWebhooks() {
         const id  = btn.dataset.id;
         const url = document.querySelector(`input[data-field=url][data-id="${id}"]`).value.trim();
         const img = document.querySelector(`input[data-field=imagem][data-id="${id}"]`).value.trim();
-        const upd = {};
-        if (url) upd.url = url;
-        if (img) upd.imagem = img;
+		const desc= document.querySelector(`input[data-field=description][data-id="${id}"]`).value.trim();
+		const upd = {};
+		if (url) upd.url = url;
+		if (img) upd.imagem = img;
+		if (desc) upd.description = desc;
         try {
           const resUpd = await fetch(`/api/downloads/${id}`, {
             method: 'PUT',
@@ -781,6 +789,7 @@ async function carregarGrupos() {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
               <input type="file" data-type="grupo" data-id="${g.id}" class="inline-file border px-2 py-1 rounded" />
               <input type="text" data-field="imagem" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Imagem" value="${g.imagem||''}">
+			  <input type="text" data-field="description" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Descrição" value="${g.descricao||''}">
             </div>
           </div>
           <div class="flex flex-col gap-2">
@@ -844,9 +853,11 @@ async function carregarGrupos() {
       cont.querySelectorAll('.btn-save-grupo').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
-          const img = document
-			.querySelector(`input[data-field="imagem"][data-id="${id}"]`)
-			.value.trim();
+          const img = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`).value.trim();
+		  const desc= document.querySelector(`input[data-field="description"][data-id="${id}"]`).value.trim();
+		  const body = {};
+		  if (img) body.imagem = img;
+		  if (desc) body.descricao = desc;
           try {
             const res = await fetch(`/api/groups/${id}`, {
               method: 'PUT',

@@ -523,6 +523,25 @@ async function carregarWebhooks() {
         cont.appendChild(card);
       });
       window.produtos = produtos;
+	  
+ // ─── Editar Produto ─────────────────────────────────────────────────
+   cont.querySelectorAll('.btn-edit-produto').forEach(btn => {
+     btn.addEventListener('click', () => {
+       const prod = window.produtos.find(x => String(x.id) === btn.dataset.id);
+       if (prod) openProdutoModal(prod);
+     });
+   });
+ 
+   // ─── Excluir Produto ────────────────────────────────────────────────
+   cont.querySelectorAll('.btn-delete-produto').forEach(btn => {
+     btn.addEventListener('click', async () => {
+       if (!confirm('Excluir produto?')) return;
+       await fetch(`/api/products/${btn.dataset.id}`, { method: 'DELETE' });
+       showToast('Produto excluído');
+       carregarProdutos();
+       carregarDashboard();
+     });
+   });
 
       // Upload actions
       cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {

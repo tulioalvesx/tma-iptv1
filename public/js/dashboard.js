@@ -94,7 +94,8 @@ document.addEventListener("DOMContentLoaded", () => {
      formRule['rule-pattern'].value = rule.pattern;
      formRule['rule-reply'].value   = rule.reply;
    }
-
+  }
+  
   // ─── Webhook ─────────────────────────────────────────────────────
   const modalHook = document.getElementById('modal-hook');
   const formHook  = document.getElementById('form-hook');

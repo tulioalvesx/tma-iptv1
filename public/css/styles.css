@@ -1,4 +1,13 @@
 /* Global styles */
+
+#modal-produto,
+#modal-download,
+#modal-grupo,
+#modal-rule,
+#modal-hook {
+  z-index: 9999; /* maior que qualquer outro elemento */
+}
+
 * {
   box-sizing: border-box;
 }

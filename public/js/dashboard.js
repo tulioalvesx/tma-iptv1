@@ -200,10 +200,7 @@ function openGrupoModal(gr = null) {
   }
   modalGrupo.classList.remove('hidden');
 }
-   // ─── z-index alto ───────────────────────────────────────────────────
-[modalProduto, modalDownload, modalGrupo, modalRule, modalHook].forEach(m => {
-  if (m) m.style.zIndex = '9999';
-});
+
   // ─── Modal Setup ───────────────────────────────────────────────────
   // Rule buttons
   document.getElementById('new-rule-btn')?.addEventListener('click', () => openRuleModal());
@@ -534,7 +531,8 @@ async function carregarWebhooks() {
         card.innerHTML = `
           <div class="flex items-start gap-4">
             <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-2">
-              ${p.imagem?`<img src="${normalizeImagem(p.imagem)}" alt="${p.nome}" class="object-contain w-full h-full">`:'Sem imagem'}
+   //           ${p.imagem?`<img src="${normalizeImagem(p.imagem)}" alt="${p.nome}" class="object-contain w-full h-full">`:'Sem imagem'}
+			  ${p.imagem?`<img src="${normalizeImagem(p.imagem)}" alt="${p.nome}" class="object-contain max-w-full max-h-full">`:'Sem imagem'}
             </div>
             <div class="flex-1">
 			<h3 class="font-bold text-lg mb-1">

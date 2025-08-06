@@ -513,6 +513,8 @@ async function carregarWebhooks() {
       const cont = document.getElementById('produtos-lista');
       cont.innerHTML = '';
       produtos.forEach(p => {
+		const grp = window.grupos?.find(g => String(g.id) === String(p.groupId));
+		const groupName = grp ? grp.name || grp.nome : 'Sem grupo';
         const card = document.createElement('div');
         card.className = 'product-card bg-white p-4 rounded shadow mb-3';
         card.innerHTML = `
@@ -524,7 +526,7 @@ async function carregarWebhooks() {
 			<h3 class="font-bold text-lg mb-1">
 				${p.nome}
 				<span class="text-sm text-gray-500">
-					(${p.group?.name || 'Sem grupo'})
+					(${groupName})
 				</span>
 			</h3>
               <p class="text-sm text-gray-500 mb-1 clamp-2">${p.descricao||''}</p>

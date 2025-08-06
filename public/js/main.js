@@ -42,7 +42,7 @@ async function fetchGroups() {
         const card = createGroupCard(group);
         groupsContainer.appendChild(card);
       });
-    })
+    }
     .catch(err => {
       console.error('Erro ao buscar grupos:', err);
     });

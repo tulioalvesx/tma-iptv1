@@ -530,8 +530,7 @@ async function carregarWebhooks() {
         card.className = 'product-card bg-white p-4 rounded shadow mb-3';
         card.innerHTML = `
           <div class="flex items-start gap-4">
-            <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-2">
-   //           ${p.imagem?`<img src="${normalizeImagem(p.imagem)}" alt="${p.nome}" class="object-contain w-full h-full">`:'Sem imagem'}
+            <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-2 overflow-hidden">
 			  ${p.imagem?`<img src="${normalizeImagem(p.imagem)}" alt="${p.nome}" class="object-contain max-w-full max-h-full">`:'Sem imagem'}
             </div>
             <div class="flex-1">

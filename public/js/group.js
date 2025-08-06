@@ -22,7 +22,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       : (group.name || group.nome || "");
     if (titleEl) titleEl.textContent = groupName;
 
-    const filtered = Array.isArray(produtos) ? produtos.filter(p => p.grupoId === groupId) : [];
+    const filtered = Array.isArray(produtos)
+      ? produtos.filter(p => p.groupId === groupId)
+      : [];
     renderProducts(filtered);
   } catch (err) {
     console.error("Erro ao carregar grupo/produtos:", err);

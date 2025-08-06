@@ -14,10 +14,12 @@ function normalizeGroupImage(src) {
   return `/img/${src.replace(/^\/?img\/?/i, '')}`;
 }
 
-function fetchGroups() {
-  fetch('/api/groups')
-    .then(res => res.json())
-    .then(rawGroups => {
+async function fetchGroups() {
+   // Busca grupos e produtos em paralelo
+	  const [rawGroups, rawProducts] = await Promise.all([
+      fetch('/api/groups').then(r => r.json()),
+      fetch('/api/products').then(r => r.json())
+   ]);
       const groupsContainer = document.getElementById('groups');
       if (!groupsContainer) return;
       groupsContainer.innerHTML = '';
@@ -26,7 +28,7 @@ function fetchGroups() {
         console.error('Grupos retornados não são array:', rawGroups);
         return;
       }
-
+	  const produtos = Array.isArray(rawProducts) ? rawProducts : [];
       rawGroups.forEach(g => {
         // normaliza para o formato que o resto do código espera
         const group = {
@@ -36,6 +38,7 @@ function fetchGroups() {
           image: normalizeGroupImage(g.image || g.imagem || 'images/placeholder.jpg'),
           ...g
         };
+		group.products = produtos.filter(p => p.groupId === g.id);
         const card = createGroupCard(group);
         groupsContainer.appendChild(card);
       });
@@ -74,6 +77,20 @@ function createGroupCard(group) {
     window.location.href = `/grupo.html?id=${encodeURIComponent(group.id)}`;
   });
   card.appendChild(button);
-
+  // ─── Lista de produtos vinculados ───────────────────────────────
+  const ul = document.createElement('ul');
+  ul.className = 'mt-2 list-disc list-inside text-sm';
+  if (group.products.length) {
+    group.products.forEach(p => {
+      const li = document.createElement('li');
+      li.textContent = p.name || p.nome || '';
+      ul.appendChild(li);
+    });
+  } else {
+    const li = document.createElement('li');
+    li.textContent = 'Nenhum produto neste grupo';
+    ul.appendChild(li);
+  }
+   card.appendChild(ul);
   return card;
 }

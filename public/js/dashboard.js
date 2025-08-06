@@ -358,11 +358,15 @@ function openGrupoModal(gr = null) {
 			}
 			break;
 		case 'produtos':
+			if (!loaded.grupos) {
+             await carregarGrupos();
+             loaded.grupos = true;
+          	}
 			if (!loaded.produtos) {
              carregarProdutos();
              loaded.produtos = true;
 			}
-			break;
+		    break;
 		case 'downloads':
 			if (!loaded.downloads) {
              carregarDownloads();

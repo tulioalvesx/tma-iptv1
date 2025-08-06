@@ -250,6 +250,7 @@ function openGrupoModal(gr = null) {
   formProduto.addEventListener('submit', async e => {
     e.preventDefault();
     const payload = {
+	  id: formProduto['produto-id'].value.trim(),
       nome: formProduto['produto-nome'].value.trim(),
       descricao: formProduto['produto-descricao'].value.trim(),
       preco: parseFloat(formProduto['produto-preco'].value)

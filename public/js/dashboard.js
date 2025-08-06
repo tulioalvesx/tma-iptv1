@@ -90,6 +90,11 @@ document.addEventListener("DOMContentLoaded", () => {
    formRule['rule-id'].value    = editingRuleId;
    formRule['rule-id'].disabled = true;
    if (rule) {
+     formRule['rule-nome'].value = rule.name;
+   } else {
+     formRule['rule-nome'].value = '';
+   }
+   if (rule) {
      formRule['rule-type'].value    = rule.type;
      formRule['rule-pattern'].value = rule.pattern;
      formRule['rule-reply'].value   = rule.reply;
@@ -110,6 +115,11 @@ document.addEventListener("DOMContentLoaded", () => {
    }
    formHook['hook-id'].value    = editingHookId;
    formHook['hook-id'].disabled = true;
+   if (hook) {
+     formHook['hook-nome'].value = hook.name;     // novo campo
+   } else {
+     formHook['hook-nome'].value = '';
+   }
    if (hook) {
      formHook['hook-url'].value     = hook.url;
      formHook['hook-headers'].value = JSON.stringify(hook.headers || {}, null, 2);
@@ -180,6 +190,7 @@ function openGrupoModal(gr = null) {
     e.preventDefault();
     const payload = {
       id: formRule['rule-id'].value.trim(),
+	  name:	formRule['rule-nome'].value.trim(),
       type: formRule['rule-type'].value,
       pattern: formRule['rule-pattern'].value.trim(),
       reply: formRule['rule-reply'].value.trim()
@@ -209,8 +220,9 @@ function openGrupoModal(gr = null) {
     e.preventDefault();
     const payload = {
       id: formHook['hook-id'].value.trim(),
-      url: formHook['hook-url'].value.trim(),
-      headers: JSON.parse(formHook['hook-headers'].value)
+	  name:	formHook['hook-nome'].value.trim(),
+	  url: formHook['hook-url'].value.trim(),
+	  headers: JSON.parse(formHook['hook-headers'].value)
     };
     const url = isEditingHook
       ? `/api/admin/webhooks/${encodeURIComponent(editingHookId)}`

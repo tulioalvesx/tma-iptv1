@@ -47,5 +47,34 @@
   <script src="/js/chat.js"></script>
   <script src="/js/lang.js"></script>
   <script src="/js/group.js"></script>
+  <script>
+  async function renderGrupoDetalhes() {
+    // supondo que o id do grupo venha na query string ?id=XYZ
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    if (!id) return;
+
+    const [resG, resP] = await Promise.all([
+      fetch(`/api/groups/${encodeURIComponent(id)}`),
+      fetch('/api/products')
+    ]);
+    const grupo    = await resG.json();
+    const produtos = await resP.json().then(arr => arr.filter(p => p.groupId === id));
+
+    document.getElementById('group-title').textContent = grupo.name;
+    const cont = document.getElementById('products');
+    cont.innerHTML = '';
+    produtos.forEach(p => {
+      const li = document.createElement('li');
+      li.textContent = p.name;
+      cont.appendChild(li);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', renderGrupoDetalhes);
+  window.addEventListener('storage', e => {
+    if (e.key === 'refreshMain') renderGrupoDetalhes();
+  });
+</script>
 </body>
 </html>

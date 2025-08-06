@@ -48,5 +48,37 @@
   <script src="/js/chat.js"></script>
   <script src="/js/lang.js"></script>
   <script src="/js/main.js"></script>
+  <script>
+  async function renderGruposComProdutos() {
+    const [resGrupos, resProdutos] = await Promise.all([
+      fetch('/api/groups'),
+      fetch('/api/products')
+    ]);
+    const grupos   = await resGrupos.json();
+    const produtos = await resProdutos.json();
+    const container = document.getElementById('groups');
+    container.innerHTML = '';
+    grupos.forEach(g => {
+      // filtra produtos deste grupo
+      const meus = produtos.filter(p => p.groupId === g.id);
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <h3>${g.name}</h3>
+        <ul>
+          ${meus.length
+            ? meus.map(p => `<li>${p.name}</li>`).join('')
+            : '<li>Nenhum produto neste grupo</li>'}
+        </ul>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', renderGruposComProdutos);
+  window.addEventListener('storage', e => {
+    if (e.key === 'refreshMain') renderGruposComProdutos();
+  });
+</script>
 </body>
 </html>

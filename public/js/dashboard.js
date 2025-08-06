@@ -200,8 +200,11 @@ function openGrupoModal(gr = null) {
   }
   modalGrupo.classList.remove('hidden');
 }
-
-  // ─── Modal Setup ────────────────────────────────────────────────────────────────
+   // ─── z-index alto ───────────────────────────────────────────────────
+[modalProduto, modalDownload, modalGrupo, modalRule, modalHook].forEach(m => {
+  if (m) m.style.zIndex = '9999';
+});
+  // ─── Modal Setup ───────────────────────────────────────────────────
   // Rule buttons
   document.getElementById('new-rule-btn')?.addEventListener('click', () => openRuleModal());
   document.getElementById('cancel-rule')?.addEventListener('click', () => modalRule.classList.add('hidden'));

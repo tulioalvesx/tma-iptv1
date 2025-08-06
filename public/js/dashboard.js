@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
      produtos:  false,
      downloads: false,
      grupos:    false,
+	 gruposSelect: false,
      regras:    false,
      webhooks:  false
   };
@@ -344,7 +345,7 @@ function openGrupoModal(gr = null) {
 
   // ─── Tab Switching com lazy-load ─────────────────────────────────────────────
   document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.replace('bg-blue-500','bg-gray-300') && b.classList.remove('text-white'));
       btn.classList.replace('bg-gray-300','bg-blue-500'); btn.classList.add('text-white');
       document.querySelectorAll('.tab-section').forEach(sec => sec.classList.add('hidden'));
@@ -358,9 +359,9 @@ function openGrupoModal(gr = null) {
 			}
 			break;
 		case 'produtos':
-			if (!loaded.grupos) {
+			if (!loaded.gruposSelect) {
              await carregarGrupos();
-             loaded.grupos = true;
+             loaded.gruposSelect = true;
           	}
 			if (!loaded.produtos) {
              carregarProdutos();

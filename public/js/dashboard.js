@@ -262,10 +262,11 @@ function openGrupoModal(gr = null) {
       nome: formProduto['produto-nome'].value.trim(),
       descricao: formProduto['produto-descricao'].value.trim(),
 	  groupId:   formProduto['produto-group'].value || null,
-      preco: parseFloat(formProduto['produto-preco'].value)
+      preco: parseFloat(formProduto['produto-preco'].value),
+	  groupId:   formProduto['produto-group'].value || null
     };
 	const url    = isEditingProduto
-                ? `/api/products/${editingProdutoId}`
+                ? `/api/products/${encodeURIComponent(editingProdutoId)}`
                 : '/api/products';
 	const method = isEditingProduto ? 'PUT' : 'POST';
 	const res = await fetch(url, {
@@ -526,7 +527,7 @@ async function carregarWebhooks() {
 					(${p.group?.name || 'Sem grupo'})
 				</span>
 			</h3>
-              <p class="text-sm text-gray-500 mb-1">${p.descricao||''}</p>
+              <p class="text-sm text-gray-500 mb-1 clamp-2">${p.descricao||''}</p>
               <p class="text-green-600 font-semibold mb-2">R$ ${p.preco||'0,00'}</p>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <input type="file" data-type="produto" data-id="${p.id}" class="inline-file border px-2 py-1 rounded" />
@@ -644,7 +645,7 @@ async function carregarWebhooks() {
             </div>
             <div class="flex-1">
               <h3 class="font-bold text-lg mb-1">${d.name}</h3>
-//            <p class="text-sm text-gray-500 mb-1">${d.description||''}</p>
+//            <p class="text-sm text-gray-500 mb-1 clamp-2">${d.description||''}</p>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <input type="file" data-type="download" data-id="${d.id}" class="inline-file border px-2 py-1 rounded" />
                 <input type="text" data-field="url" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" placeholder="URL" value="${d.url||''}">

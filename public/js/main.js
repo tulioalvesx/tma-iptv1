@@ -15,38 +15,39 @@ function normalizeGroupImage(src) {
 }
 
 async function fetchGroups() {
-   // Busca grupos e produtos em paralelo
-	  const [rawGroups, rawProducts] = await Promise.all([
-      fetch('/api/groups').then(r => r.json()),
-      fetch('/api/products').then(r => r.json())
-   ]);
-      const groupsContainer = document.getElementById('groups');
-      if (!groupsContainer) return;
-      groupsContainer.innerHTML = '';
+   try {
+     // Busca grupos e produtos em paralelo
+     const [rawGroups, rawProducts] = await Promise.all([
+       fetch('/api/groups').then(r => r.json()),
+       fetch('/api/products').then(r => r.json())
+     ]);
 
-      if (!Array.isArray(rawGroups)) {
-        console.error('Grupos retornados não são array:', rawGroups);
-        return;
-      }
-	  const produtos = Array.isArray(rawProducts) ? rawProducts : [];
-      rawGroups.forEach(g => {
-        // normaliza para o formato que o resto do código espera
-        const group = {
-          id: g.id,
-          name: g.name || g.nome || '',
-          name_en: g.name_en || '',
-          image: normalizeGroupImage(g.image || g.imagem || 'images/placeholder.jpg'),
-          ...g
-        };
-		group.products = produtos.filter(p => p.groupId === g.id);
-        const card = createGroupCard(group);
-        groupsContainer.appendChild(card);
-      });
-    }
-    .catch(err => {
-      console.error('Erro ao buscar grupos:', err);
-    });
-}
+     const groupsContainer = document.getElementById('groups');
+     if (!groupsContainer) return;
+     groupsContainer.innerHTML = '';
+
+     if (!Array.isArray(rawGroups)) {
+       console.error('Grupos retornados não são array:', rawGroups);
+       return;
+     }
+     const produtos = Array.isArray(rawProducts) ? rawProducts : [];
+
+     rawGroups.forEach(g => {
+       const group = {
+         id:       g.id,
+         name:     g.name || g.nome || '',
+         name_en:  g.name_en || '',
+         image:    normalizeGroupImage(g.image || g.imagem),
+         ...g
+       };
+       group.products = produtos.filter(p => p.groupId === g.id);
+       const card = createGroupCard(group);
+       groupsContainer.appendChild(card);
+     });
+   } catch (err) {
+     console.error('Erro ao buscar grupos:', err);
+   }
+ }
 
 function createGroupCard(group) {
   const card = document.createElement('div');

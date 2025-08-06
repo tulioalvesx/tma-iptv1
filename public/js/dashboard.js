@@ -73,11 +73,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ─── Modal Open Functions ─────────────────────────────────────────────────────
+	// ─── Modal Open Functions ─────────────────────────────────────────────────────
+	// ─── Regras ─────────────────────────────────────────────────────
   const modalRule = document.getElementById('modal-rule');
   const formRule  = document.getElementById('form-rule');
-
-  // ─── Regras ─────────────────────────────────────────────────────
   function openRuleModal(rule = null) {
   formRule.reset();
    if (rule) {
@@ -99,6 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
      formRule['rule-pattern'].value = rule.pattern;
      formRule['rule-reply'].value   = rule.reply;
    }
+   modalRule.classList.remove('hidden');
   }
   
   // ─── Webhook ─────────────────────────────────────────────────────

@@ -407,7 +407,7 @@ function openGrupoModal(gr = null) {
       card.innerHTML = `
         <div class="flex items-start gap-4">
           <div class="flex-1">
-            <strong class="block text-lg mb-1">${r.id}</strong>
+            <strong class="block text-lg mb-1">${r.name}</strong>
             <p class="text-sm text-gray-500 mb-2">${r.type} <code>${r.pattern}</code> → "${r.reply}"</p>
           </div>
           <div class="flex flex-col gap-2">
@@ -454,7 +454,7 @@ async function carregarWebhooks() {
       card.innerHTML = `
         <div class="flex items-start gap-4">
           <div class="flex-1">
-            <strong class="block text-lg mb-1">${h.id}</strong>
+            <strong class="block text-lg mb-1">${h.name}</strong>
             <p class="text-sm text-gray-500 mb-2">${h.url}</p>
             <p class="text-xs text-gray-400"><code>${JSON.stringify(h.headers)}</code></p>
           </div>

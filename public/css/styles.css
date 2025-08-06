@@ -258,6 +258,10 @@ a {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+  /* permite quebrar palavras longas */
+  word-break: break-word;
+  /* às vezes é necessário também */
+  white-space: normal;
 }
 
 /* Floating chat & WhatsApp */

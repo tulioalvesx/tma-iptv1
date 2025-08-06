@@ -254,17 +254,17 @@ a {
 }
 
 .clamp-2 {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: -webkit-box;             /* ativa o clamp multilinha */
+  -webkit-box-orient: vertical;     /* orienta na vertical */
+  -webkit-line-clamp: 2;            /* limita a 2 linhas */
+  overflow: hidden;                 /* esconde o resto */
 
-  /* garantem que até sequências contínuas quebrem e respeitem o clamp */
-  overflow-wrap: anywhere;       /* faz quebrar em qualquer ponto */
-  word-break: break-word;        /* alternativa para navegadores mais antigos */
+  /* força quebra em palavras muito longas */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-all;
 
-  /* ajuste de altura para 2 linhas (seu line-height for 1.25rem) */
+  /* mantém altura exata de 2 linhas (ajuste se seu line-height for outro) */
   line-height: 1.25rem;
   max-height: calc(1.25rem * 2);
 }

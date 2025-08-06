@@ -254,14 +254,19 @@ a {
 }
 
 .clamp-2 {
-  display: -webkit-box;             /* ativa o flexbox de linha única */
-  -webkit-box-orient: vertical;     /* orienta em “caixas” verticais */
-  -webkit-line-clamp: 2;            /* limita a 2 linhas */
-  overflow: hidden;                 /* esconde o que passar */
-  text-overflow: ellipsis;          /* reticências ao final da última linha */
-  white-space: normal;              /* permite quebrar linhas */
-  line-height: 1.25rem;             /* ajuste para combinar com seu design */
-  max-height: calc(1.25rem * 2);    /* 2 linhas de altura */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  /* garantem que até sequências contínuas quebrem e respeitem o clamp */
+  overflow-wrap: anywhere;       /* faz quebrar em qualquer ponto */
+  word-break: break-word;        /* alternativa para navegadores mais antigos */
+
+  /* ajuste de altura para 2 linhas (seu line-height for 1.25rem) */
+  line-height: 1.25rem;
+  max-height: calc(1.25rem * 2);
 }
 
 /* Floating chat & WhatsApp */

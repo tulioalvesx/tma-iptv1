@@ -311,7 +311,9 @@ function openGrupoModal(gr = null) {
   document.getElementById('cancel-grupo')?.addEventListener('click', () => modalGrupo.classList.add('hidden'));
   formGrupo.addEventListener('submit', async e => {
     e.preventDefault();
-    const payload = { nome: formGrupo['grupo-nome'].value.trim() };
+    const payload = { 
+	id:   formGrupo['grupo-id'].value.trim(),
+	nome: formGrupo['grupo-nome'].value.trim() };
 	const url    = isEditingGrupo
                 ? `/api/groups/${editingGrupoId}`
                 : '/api/groups';

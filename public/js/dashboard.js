@@ -131,8 +131,8 @@ document.addEventListener("DOMContentLoaded", () => {
  
   // ─── Products ─────────────────────────────────────────────────────
 function openProdutoModal(prod = null) {
-  isEditingProduto = !!prod;
-  formProduto.reset();
+   isEditingProduto = !!prod;
+   formProduto.reset();
   if (prod) {
     editingProdutoId = prod.id;
   } else {
@@ -143,8 +143,6 @@ function openProdutoModal(prod = null) {
     formProduto['produto-nome'].value      = prod.nome;
     formProduto['produto-descricao'].value = prod.descricao;
     formProduto['produto-preco'].value     = prod.preco;
-  } else {
-    formProduto.reset();
   }
   modalProduto.classList.remove('hidden');
 }
@@ -632,75 +630,79 @@ async function carregarWebhooks() {
 	});
 	
 // -- Delete
-	  cont.querySelectorAll('.btn-delete-download').forEach(btn => {
-		btn.addEventListener('click', async () => {
-		if (!confirm('Excluir download?')) return;
-		await fetch(`/api/downloads/${btn.dataset.id}`, { method: 'DELETE' });
-		showToast('Aplicativo excluído');
-		carregarDownloads();
-		carregarDashboard();
-	  });
-	});
+    cont.querySelectorAll('.btn-delete-download').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Excluir aplicativo?')) return;
+        try {
+          const resDel = await fetch(`/api/downloads/${btn.dataset.id}`, { method: 'DELETE' });
+          if (!resDel.ok) throw new Error();
+          showToast('Aplicativo excluído');
+          carregarDownloads();
+          carregarDashboard();
+        } catch {
+          showToast('Falha ao excluir aplicativo', false);
+        }
+      });
+    });
 
       // Upload
-      cont.querySelectorAll('input[type=file][data-type=download]').forEach(inp => {
-        inp.addEventListener('change', async e => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const id = e.target.dataset.id;
-          const form = new FormData();
-          form.append('image', file);
-          form.append('type', 'download');
-          form.append('id', id);
-          try {
-            const up = await fetch('/api/upload-image', { method: 'POST', body: form });
-            const info = await up.json();
-            if (info.success) {
-              await fetch(`/api/downloads/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ imagem: info.filename })
-              });
-              showToast('Imagem atualizada');
-              carregarDownloads();
-              carregarDashboard();
-            } else showToast(info.error||'Erro upload', false);
-          } catch {
-            showToast('Erro rede', false);
-          }
-        });
+    cont.querySelectorAll('input[type=file][data-type=download]').forEach(inp => {
+      inp.addEventListener('change', async e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const id = e.target.dataset.id;
+        const form = new FormData();
+        form.append('image', file);
+        form.append('type', 'download');
+        form.append('id', id);
+        try {
+          const up = await fetch('/api/upload-image', { method: 'POST', body: form });
+          const info = await up.json();
+          if (!info.success) throw new Error(info.error || 'Erro upload');
+          const resImg = await fetch(`/api/downloads/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imagem: info.filename })
+          });
+          if (!resImg.ok) throw new Error();
+          showToast('Imagem atualizada');
+          carregarDownloads();
+          carregarDashboard();
+        } catch {
+          showToast('Erro de rede ao atualizar imagem', false);
+        }
       });
+    });
 
       // Inline Save
-      cont.querySelectorAll('.btn-save-download').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const id = btn.dataset.id;
-          const url = document.querySelector(`input[data-field=url][data-id="${id}"]`).value.trim();
-          const img = document.querySelector(`input[data-field=imagem][data-id="${id}"]`).value.trim();
-          const upd = {};
-          if (url) upd.url = url;
-          if (img) upd.imagem = img;
-          try {
-            const res = await fetch(`/api/downloads/${id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(upd)
-            });
-            if (res.ok) {
-              showToast('Aplicativo salvo');
-              carregarDownloads();
-              carregarDashboard();
-            } else showToast('Erro salvar', false);
-          } catch {
-            showToast('Erro rede', false);
-          }
-        });
+    cont.querySelectorAll('.btn-save-download').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id  = btn.dataset.id;
+        const url = document.querySelector(`input[data-field=url][data-id="${id}"]`).value.trim();
+        const img = document.querySelector(`input[data-field=imagem][data-id="${id}"]`).value.trim();
+        const upd = {};
+        if (url) upd.url = url;
+        if (img) upd.imagem = img;
+        try {
+          const resUpd = await fetch(`/api/downloads/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(upd)
+          });
+          if (!resUpd.ok) throw new Error();
+          showToast('Aplicativo salvo');
+          carregarDownloads();
+          carregarDashboard();
+        } catch {
+          showToast('Erro ao salvar aplicativo', false);
+        }
       });
+    });
 
-    } catch {
-      showToast('Falha ao carregar aplicativos', false);
-    }
+  } catch {
+    showToast('Falha ao carregar aplicativos', false);
   }
+}
 
 // ─── Grupos ────────────────────────────────────────────────────────────────
 async function carregarGrupos() {

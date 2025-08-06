@@ -76,43 +76,98 @@ document.addEventListener("DOMContentLoaded", () => {
   // ─── Modal Open Functions ─────────────────────────────────────────────────────
   const modalRule = document.getElementById('modal-rule');
   const formRule  = document.getElementById('form-rule');
-  function openRuleModal(rule = null) {
-    if (rule) {
-      isEditingRule = true;
-      editingRuleId = rule.id;
-      formRule['rule-id'].value    = rule.id;
-      formRule['rule-id'].disabled = true;
-      formRule['rule-type'].value  = rule.type;
-      formRule['rule-pattern'].value = rule.pattern;
-      formRule['rule-reply'].value   = rule.reply;
-    } else {
-      isEditingRule = false;
-      editingRuleId = null;
-      formRule.reset();
-      formRule['rule-id'].disabled = false;
-    }
-    modalRule.classList.remove('hidden');
-  }
 
+  // ─── Regras ─────────────────────────────────────────────────────
+  function openRuleModal(rule = null) {
+  formRule.reset();
+   if (rule) {
+     isEditingRule   = true;
+     editingRuleId   = rule.id;
+   } else {
+     isEditingRule   = false;
+     editingRuleId   = crypto.randomUUID();
+   }
+   formRule['rule-id'].value    = editingRuleId;
+   formRule['rule-id'].disabled = true;
+   if (rule) {
+     formRule['rule-type'].value    = rule.type;
+     formRule['rule-pattern'].value = rule.pattern;
+     formRule['rule-reply'].value   = rule.reply;
+   }
+
+  // ─── Webhook ─────────────────────────────────────────────────────
   const modalHook = document.getElementById('modal-hook');
   const formHook  = document.getElementById('form-hook');
   function openHookModal(hook = null) {
-    if (hook) {
-      isEditingHook = true;
-      editingHookId = hook.id;
-      formHook['hook-id'].value    = hook.id;
-      formHook['hook-id'].disabled = true;
-      formHook['hook-url'].value   = hook.url;
-      formHook['hook-headers'].value = JSON.stringify(hook.headers || {}, null, 2);
-    } else {
-      isEditingHook = false;
-      editingHookId = null;
-      formHook.reset();
-      formHook['hook-id'].disabled = false;
-      formHook['hook-headers'].value = '{}';
-    }
-    modalHook.classList.remove('hidden');
+   formHook.reset();
+   if (hook) {
+     isEditingHook   = true;
+     editingHookId   = hook.id;
+   } else {
+     isEditingHook   = false;
+     editingHookId   = crypto.randomUUID();
+   }
+   formHook['hook-id'].value    = editingHookId;
+   formHook['hook-id'].disabled = true;
+   if (hook) {
+     formHook['hook-url'].value     = hook.url;
+     formHook['hook-headers'].value = JSON.stringify(hook.headers || {}, null, 2);
+   } else {
+     formHook['hook-headers'].value = '{}';
+   }
+
+  // ─── Products ─────────────────────────────────────────────────────
+function openProdutoModal(prod = null) {
+  isEditingProduto = !!prod;
+  formProduto.reset();
+  if (prod) {
+    editingProdutoId = prod.id;
+  } else {
+    editingProdutoId = crypto.randomUUID();
   }
+  formProduto['produto-id'].value = editingProdutoId;
+  if (prod) {
+    formProduto['produto-nome'].value      = prod.nome;
+    formProduto['produto-descricao'].value = prod.descricao;
+    formProduto['produto-preco'].value     = prod.preco;
+  } else {
+    formProduto.reset();
+  }
+  modalProduto.classList.remove('hidden');
+}
+
+  // ─── Downloads ─────────────────────────────────────────────────────
+function openDownloadModal(dl = null) {
+  isEditingDownload = !!dl;
+  formDownload.reset();
+  if (dl) {
+    editingDownloadId = dl.id;
+  } else {
+    editingDownloadId = crypto.randomUUID();
+  }
+  formDownload['download-id'].value = editingDownloadId;
+  if (dl) {  
+    formDownload['download-nome'].value = dl.name;
+    formDownload['download-url'].value  = dl.url;
+  }
+  modalDownload.classList.remove('hidden');
+}
+
+  // ─── Groups ─────────────────────────────────────────────────────
+function openGrupoModal(gr = null) {
+  isEditingGrupo = !!gr;
+  formGrupo.reset();
+  if (gr) {
+    editingGrupoId = gr.id;
+  } else {
+    editingGrupoId = crypto.randomUUID();
+  }
+  formGrupo['grupo-id'].value = editingGrupoId;
+  if (gr) {
+    formGrupo['grupo-nome'].value = gr.nome;
+  }
+  modalGrupo.classList.remove('hidden');
+}
 
   // ─── Modal Setup ────────────────────────────────────────────────────────────────
   // Rule buttons
@@ -171,49 +226,6 @@ document.addEventListener("DOMContentLoaded", () => {
       showToast('Falha ao salvar webhook', false);
     }
   });
-
-function openProdutoModal(prod = null) {
-  isEditingProduto = !!prod;
-  editingProdutoId = prod?.id || null;
-  if (prod) {
-    formProduto['produto-nome'].value      = prod.nome;
-    formProduto['produto-descricao'].value = prod.descricao;
-    formProduto['produto-preco'].value     = prod.preco;
-  } else {
-    formProduto.reset();
-  }
-  modalProduto.classList.remove('hidden');
-}
-
-function openDownloadModal(dl = null) {
-  isEditingDownload = !!dl;
-   // Resetar o form para criar ou manter valores antigos ao editar
-  formDownload.reset();
-  // Se for edição, usa o id existente; senão, gera um novo UUID
-  if (dl) {
-    editingDownloadId = dl.id;
-  } else {
-    editingDownloadId = crypto.randomUUID();
-  }
-  // Povoar o campo hidden do form
-  formDownload['download-id'].value = editingDownloadId;
-  if (dl) {  
-    formDownload['download-nome'].value = dl.name;
-    formDownload['download-url'].value  = dl.url;
-  }
-  modalDownload.classList.remove('hidden');
-}
-
-function openGrupoModal(gr = null) {
-  isEditingGrupo = !!gr;
-  editingGrupoId = gr?.id || null;
-  if (gr) {
-    formGrupo['grupo-nome'].value = gr.nome;
-  } else {
-    formGrupo.reset();
-  }
-  modalGrupo.classList.remove('hidden');
-}
 
   // Products
   const modalProduto = document.getElementById('modal-produto');
@@ -366,6 +378,101 @@ function openGrupoModal(gr = null) {
     } catch (e) { console.error(e); showToast('Falha ao carregar dashboard',false); }
   }
 
+  // ─── Regras ─────────────────────────────────────────────────────────────────────
+ async function carregarRegras() {
+  try {
+    const res = await fetch('/api/admin/rules');
+    const regras = await res.json();
+    const cont = document.getElementById('regras-lista');
+    cont.innerHTML = '';
+
+    regras.forEach(r => {
+      const card = document.createElement('div');
+      card.className = 'bg-white p-4 rounded shadow mb-3';
+      card.innerHTML = `
+        <div class="flex items-start gap-4">
+          <div class="flex-1">
+            <strong class="block text-lg mb-1">${r.id}</strong>
+            <p class="text-sm text-gray-500 mb-2">${r.type} <code>${r.pattern}</code> → "${r.reply}"</p>
+          </div>
+          <div class="flex flex-col gap-2">
+            <button data-id="${r.id}" class="btn-edit-regra px-3 py-1 bg-yellow-400 text-white rounded text-sm">Editar</button>
+            <button data-id="${r.id}" class="btn-delete-regra px-3 py-1 bg-red-500 text-white rounded text-sm">Excluir</button>
+          </div>
+        </div>`;
+      cont.appendChild(card);
+    });
+
+    window.rules = regras;
+      cont.querySelectorAll('.btn-edit-regra').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          const r = regras.find(x => String(x.id) === id);
+          if (r) openRuleModal(r);
+        });
+      });
+      cont.querySelectorAll('.btn-delete-regra').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          if (!confirm(`Excluir regra "${id}"?`)) return;
+          await fetch(`/api/admin/rules/${id}`, { method: 'DELETE' });
+          carregarRegras();
+          showToast('Regra excluída');
+        });
+      });
+    } catch {
+      showToast('Falha ao carregar regras', false);
+    }
+  }
+
+// ─── Webhooks ──────────────────────────────────────────────────────────────────
+async function carregarWebhooks() {
+  try {
+    const res = await fetch('/api/admin/webhooks');
+    const hooks = await res.json();
+    const cont = document.getElementById('webhooks-lista');
+    cont.innerHTML = '';
+
+    hooks.forEach(h => {
+      const card = document.createElement('div');
+      card.className = 'bg-white p-4 rounded shadow mb-3';
+      card.innerHTML = `
+        <div class="flex items-start gap-4">
+          <div class="flex-1">
+            <strong class="block text-lg mb-1">${h.id}</strong>
+            <p class="text-sm text-gray-500 mb-2">${h.url}</p>
+            <p class="text-xs text-gray-400"><code>${JSON.stringify(h.headers)}</code></p>
+          </div>
+          <div class="flex flex-col gap-2">
+            <button data-id="${h.id}" class="btn-edit-hook px-3 py-1 bg-yellow-400 text-white rounded text-sm">Editar</button>
+            <button data-id="${h.id}" class="btn-delete-hook px-3 py-1 bg-red-500 text-white rounded text-sm">Excluir</button>
+          </div>
+        </div>`;
+      cont.appendChild(card);
+    });
+
+    window.hooks = hooks;
+      cont.querySelectorAll('.btn-edit-hook').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          const h = hooks.find(x => String(x.id) === id);
+          if (h) openHookModal(h);
+        });
+      });
+      cont.querySelectorAll('.btn-delete-hook').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          if (!confirm(`Excluir webhook "${id}"?`)) return;
+          await fetch(`/api/admin/webhooks/${id}`, { method: 'DELETE' });
+          carregarWebhooks();
+          showToast('Webhook excluído');
+        });
+      });
+    } catch {
+      showToast('Falha ao carregar webhooks', false);
+    }
+  }
+  
   // ─── Produtos ─────────────────────────────────────────────────────────────────
   async function carregarProdutos() {
     try {
@@ -689,100 +796,6 @@ async function carregarGrupos() {
     }
 }
 
-  // ─── Regras ─────────────────────────────────────────────────────────────────────
- async function carregarRegras() {
-  try {
-    const res = await fetch('/api/admin/rules');
-    const regras = await res.json();
-    const cont = document.getElementById('regras-lista');
-    cont.innerHTML = '';
-
-    regras.forEach(r => {
-      const card = document.createElement('div');
-      card.className = 'bg-white p-4 rounded shadow mb-3';
-      card.innerHTML = `
-        <div class="flex items-start gap-4">
-          <div class="flex-1">
-            <strong class="block text-lg mb-1">${r.id}</strong>
-            <p class="text-sm text-gray-500 mb-2">${r.type} <code>${r.pattern}</code> → "${r.reply}"</p>
-          </div>
-          <div class="flex flex-col gap-2">
-            <button data-id="${r.id}" class="btn-edit-regra px-3 py-1 bg-yellow-400 text-white rounded text-sm">Editar</button>
-            <button data-id="${r.id}" class="btn-delete-regra px-3 py-1 bg-red-500 text-white rounded text-sm">Excluir</button>
-          </div>
-        </div>`;
-      cont.appendChild(card);
-    });
-
-    window.rules = regras;
-      cont.querySelectorAll('.btn-edit-regra').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.id;
-          const r = regras.find(x => String(x.id) === id);
-          if (r) openRuleModal(r);
-        });
-      });
-      cont.querySelectorAll('.btn-delete-regra').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const id = btn.dataset.id;
-          if (!confirm(`Excluir regra "${id}"?`)) return;
-          await fetch(`/api/admin/rules/${id}`, { method: 'DELETE' });
-          carregarRegras();
-          showToast('Regra excluída');
-        });
-      });
-    } catch {
-      showToast('Falha ao carregar regras', false);
-    }
-  }
-
-// ─── Webhooks ──────────────────────────────────────────────────────────────────
-async function carregarWebhooks() {
-  try {
-    const res = await fetch('/api/admin/webhooks');
-    const hooks = await res.json();
-    const cont = document.getElementById('webhooks-lista');
-    cont.innerHTML = '';
-
-    hooks.forEach(h => {
-      const card = document.createElement('div');
-      card.className = 'bg-white p-4 rounded shadow mb-3';
-      card.innerHTML = `
-        <div class="flex items-start gap-4">
-          <div class="flex-1">
-            <strong class="block text-lg mb-1">${h.id}</strong>
-            <p class="text-sm text-gray-500 mb-2">${h.url}</p>
-            <p class="text-xs text-gray-400"><code>${JSON.stringify(h.headers)}</code></p>
-          </div>
-          <div class="flex flex-col gap-2">
-            <button data-id="${h.id}" class="btn-edit-hook px-3 py-1 bg-yellow-400 text-white rounded text-sm">Editar</button>
-            <button data-id="${h.id}" class="btn-delete-hook px-3 py-1 bg-red-500 text-white rounded text-sm">Excluir</button>
-          </div>
-        </div>`;
-      cont.appendChild(card);
-    });
-
-    window.hooks = hooks;
-      cont.querySelectorAll('.btn-edit-hook').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.id;
-          const h = hooks.find(x => String(x.id) === id);
-          if (h) openHookModal(h);
-        });
-      });
-      cont.querySelectorAll('.btn-delete-hook').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const id = btn.dataset.id;
-          if (!confirm(`Excluir webhook "${id}"?`)) return;
-          await fetch(`/api/admin/webhooks/${id}`, { method: 'DELETE' });
-          carregarWebhooks();
-          showToast('Webhook excluído');
-        });
-      });
-    } catch {
-      showToast('Falha ao carregar webhooks', false);
-    }
-  }
  // Initialization: só Dashboard, demais serão “lazy-loaded”
   carregarDashboard();
   loaded.dashboard = true; // opcional se quiser flag pro dashboard

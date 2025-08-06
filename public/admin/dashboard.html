@@ -48,6 +48,7 @@
 		<div><label class="block text-sm">Nome</label><input name="produto-nome" type="text" required class="w-full border px-2 py-1 rounded" /></div>
         <div><label class="block text-sm">Descrição</label><textarea name="produto-descricao" required class="w-full border px-2 py-1 rounded"></textarea></div>
         <div><label class="block text-sm">Preço</label><input name="produto-preco" type="number" step="0.01" required class="w-full border px-2 py-1 rounded" /></div>
+		<div><label class="block text-sm">Grupo</label><select name="produto-group" id="produto-group" class="w-full border px-2 py-1 rounded"><option value="">– Selecione –</option><!-- Opções serão inseridas pelo JS --></select>
         <div class="flex justify-end gap-2"><button id="cancel-produto" type="button" class="px-4 py-2 border rounded">Cancelar</button><button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Salvar</button></div>
       </form>
     </div>

@@ -195,11 +195,11 @@ function openDownloadModal(dl = null) {
   } else {
     editingDownloadId = crypto.randomUUID();
   }
+  // Povoar o campo hidden do form
+  formDownload['download-id'].value = editingDownloadId;
   if (dl) {  
     formDownload['download-nome'].value = dl.name;
     formDownload['download-url'].value  = dl.url;
-	  // Povoar o campo hidden do form
-    formDownload['download-id'].value = editingDownloadId;
   }
   modalDownload.classList.remove('hidden');
 }

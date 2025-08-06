@@ -115,7 +115,9 @@ document.addEventListener("DOMContentLoaded", () => {
    } else {
      formHook['hook-headers'].value = '{}';
    }
-
+   modalHook.classList.remove('hidden');
+ }
+ 
   // ─── Products ─────────────────────────────────────────────────────
 function openProdutoModal(prod = null) {
   isEditingProduto = !!prod;

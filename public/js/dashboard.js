@@ -1,6 +1,17 @@
 // dashboard.js
 
 document.addEventListener("DOMContentLoaded", () => {
+	// ─── Injeta o styles.css global na página ────────────────────────────────
+   ;(function(){
+     const href = '/css/styles.css';  // ajuste para o caminho real
+     if (!document.querySelector(`link[href="${href}"]`)) {
+       const link = document.createElement('link');
+       link.rel  = 'stylesheet';
+       link.href = href;
+       document.head.appendChild(link);
+     }
+   })();
+ 
 	// ─── Lazy-load flags ────────────────────────────────────────────────────────
 	const loaded = {
      dashboard:	false,

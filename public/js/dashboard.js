@@ -668,7 +668,6 @@ async function carregarWebhooks() {
                 <input type="file" data-type="download" data-id="${d.id}" class="inline-file border px-2 py-1 rounded" />
                 <input type="text" data-field="url" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" placeholder="URL" value="${d.url||''}">
                 <input type="text" data-field="imagem" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" placeholder="Imagem" value="${d.imagem||''}">
-//				<input type="text" data-field="description" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" placeholder="Descrição" value="${d.description||''}">
               </div>
             </div>
             <div class="flex flex-col gap-2">
@@ -739,7 +738,6 @@ async function carregarWebhooks() {
         const id  = btn.dataset.id;
         const url = document.querySelector(`input[data-field=url][data-id="${id}"]`).value.trim();
         const img = document.querySelector(`input[data-field=imagem][data-id="${id}"]`).value.trim();
-		const desc= document.querySelector(`input[data-field=description][data-id="${id}"]`).value.trim();
 		const upd = {};
 		if (url) upd.url = url;
 		if (img) upd.imagem = img;
@@ -790,7 +788,6 @@ async function carregarGrupos() {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
               <input type="file" data-type="grupo" data-id="${g.id}" class="inline-file border px-2 py-1 rounded" />
               <input type="text" data-field="imagem" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Imagem" value="${g.imagem||''}">
-//			  <input type="text"  data-field="description" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Descrição" value="${g.descricao||''}">
             </div>
           </div>
           <div class="flex flex-col gap-2">
@@ -855,7 +852,6 @@ async function carregarGrupos() {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
           const img = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`).value.trim();
-		  const desc= document.querySelector(`input[data-field="description"][data-id="${id}"]`).value.trim();
 		  const body = {};
 		  if (img) body.imagem = img;
 		  if (desc) body.descricao = desc;

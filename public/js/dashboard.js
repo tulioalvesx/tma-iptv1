@@ -33,6 +33,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ─── Variables ───────────────────────────────────────────────────────────────
   let chartInstance = null;
+  const timeRanges = {
+  dia:    { days: 30,  unit: 'day',   label: 'Últimos 30 dias'   },
+  semana: { days: 7,   unit: 'day',   label: 'Últimos 7 dias'    },
+  mes:    { months: 12,unit: 'month', label: 'Últimos 12 meses' },
+  ano:    { years: 12, unit: 'year',  label: 'Últimos 12 anos'  }
+};
   let isEditingRule = false,   editingRuleId = null;
   let isEditingHook = false,   editingHookId = null;
   let isEditingProduto = false, editingProdutoId = null;
@@ -422,8 +428,26 @@ function openGrupoModal(gr = null) {
       document.getElementById('total-downloads').textContent = (downloads.files||[]).length;
       document.getElementById('total-grupos').textContent = grupos.length||0;
       document.getElementById('acessos-hoje').textContent = analytics.hoje||0;
-      gerarGrafico(analytics.dias||[]);
-    } catch (e) { console.error(e); showToast('Falha ao carregar dashboard',false); }
+      gerarGrafico(analytics.dias||[]);// padrão: últimos 30 dias
+	  let currentRange = 'dia';
+function updateChartFor(rangeKey, rawData) {
+	  const cfg = timeRanges[rangeKey];
+	  const now = new Date();
+	  let points = rawData.map(d => ({
+		date: new Date(d.dia),
+		total: d.total
+  }));
+	  const cutoff = new Date(now);
+	  if (cfg.days)   cutoff.setDate(now.getDate() - cfg.days);
+	  if (cfg.months)cutoff.setMonth(now.getMonth() - cfg.months);
+	  if (cfg.years) cutoff.setFullYear(now.getFullYear() - cfg.years);
+	  points = points
+		.filter(p => p.date >= cutoff)
+		.sort((a,b) => a.date - b.date);
+	  const labels = points.map(p => p.date.toLocaleDateString());
+	  const values = points.map(p => p.total);
+	  gerarGrafico({ labels, values });
+	} catch (e) { console.error(e); showToast('Falha ao carregar dashboard',false); }
   }
 
   // ─── Regras ─────────────────────────────────────────────────────────────────────
@@ -878,4 +902,19 @@ async function carregarGrupos() {
  // Initialization: só Dashboard, demais serão “lazy-loaded”
   carregarDashboard();
   loaded.dashboard = true; // opcional se quiser flag pro dashboard
+  document.querySelectorAll('.btn-filter').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    // visual ativo
+    document.querySelectorAll('.btn-filter').forEach(b => {
+      b.classList.replace('bg-blue-500','bg-gray-300');
+      b.classList.replace('text-white','text-gray-700');
+    });
+    btn.classList.replace('bg-gray-300','bg-blue-500');
+    btn.classList.replace('text-gray-700','text-white');
+    const rangeKey = btn.id.replace('filter-',''); // dia | semana | mes | ano
+    // recarrega todos os dados (ou use um cache de analytics.dias)
+    const res = await fetch('/api/analytics?full=true');
+    const { dias } = await res.json();
+    updateChartFor(rangeKey, dias);
+  });
 });

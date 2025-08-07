@@ -119,10 +119,16 @@
           <p id="acessos-hoje" class="text-2xl font-bold">0</p>
         </div>
       </div>
-      <div class="bg-white p-4 shadow rounded">
-        <h2 class="text-gray-700 mb-2">Gráfico de Acessos</h2>
-        <canvas id="grafico-acessos" height="100"></canvas>
-      </div>
+	  <div class="bg-white p-4 shadow rounded mb-4">
+	  <h2 class="text-gray-700 mb-2">Gráfico de Acessos</h2>
+	  <div class="flex gap-2 mb-3">
+		<button id="filter-dia"   class="btn-filter bg-blue-500 text-white px-3 py-1 rounded">Últimos 30 dias</button>
+		<button id="filter-semana" class="btn-filter bg-gray-300 text-gray-700 px-3 py-1 rounded">Últimos 7 dias</button>
+		<button id="filter-mes"    class="btn-filter bg-gray-300 text-gray-700 px-3 py-1 rounded">Últimos 12 meses</button>
+		<button id="filter-ano"    class="btn-filter bg-gray-300 text-gray-700 px-3 py-1 rounded">Últimos 12 anos</button>
+	  </div>
+		<canvas id="grafico-acessos" height="200"></canvas>
+	  </div>
     </section>
 
     <!-- Produtos Tab -->

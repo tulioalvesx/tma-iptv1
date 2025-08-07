@@ -72,61 +72,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Send message to server and handle response
-   function sendMessage() {
-     const message = inputEl.value.trim();
-     if (!message) return;
-     appendMessage(message, 'user');
-     inputEl.value = '';
-
-     fetch(`/api/chat?message=${encodeURIComponent(message)}`)
-       .then(res => res.json())
-       .then(data => {
-         // data.reply é a resposta padrão
-         appendMessage(data.reply, 'bot');
-
-         // data.options: lista de objetos (ex: produtos) para ações de integração
-         if (Array.isArray(data.options)) {
-           // verifica integrationAction para determinar o tipo de integração
-           if (data.integrationAction === 'products') {
-             // data.options deve conter produtos com { id, nome }
-             data.options.forEach(prod => {
-               const btn = document.createElement('button');
-               btn.textContent = prod.nome;
-               btn.className = 'chat-option';
-               btn.addEventListener('click', () => {
-                 // adiciona produto ao carrinho via comando interno
-                 appendMessage(`/add ${prod.id} 1`, 'user');
-                 sendMessage();
-               });
-               messagesEl.appendChild(btn);
-             });
-           } else {
-             // integração genérica: exibe opção com texto genérico
-             data.options.forEach(opt => {
-               const btn = document.createElement('button');
-               btn.textContent = opt.nome || opt.id || 'Opção';
-               btn.className = 'chat-option';
-               btn.addEventListener('click', () => {
-                 appendMessage(opt.trigger || `/action ${opt.id}`, 'user');
-                 sendMessage();
-               });
-               messagesEl.appendChild(btn);
-             });
-           }
-         }
-         ;
-             messagesEl.appendChild(btn);
-           });
-         }
-
-         // data.externalData: se o servidor enviar dados extra
-         if (data.externalData) {
-           appendMessage(JSON.stringify(data.externalData), 'bot');
-         }
-
-       .catch(err => {
-         console.error(err);
-         appendMessage('Desculpe, erro no chat.', 'bot');
-       });
+  function sendMessage() {
+    const message = inputEl.value.trim();
+    if (!message) return;
+    appendMessage(message, 'user');
+    inputEl.value = '';
+    fetch(`/api/chat?message=${encodeURIComponent(message)}`)
+      .then(res => res.json())
+      .then(data => {
+        appendMessage(data.reply, 'bot');
+      })
+      .catch(err => {
+        console.error(err);
+        appendMessage('Erro ao obter resposta do servidor.', 'bot');
+      });
+  }
 });
-

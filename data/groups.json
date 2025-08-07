@@ -1,8 +1,37 @@
 [
   {
-    "id": "d1ae016c-688d-4ee5-9144-7036a960c84c",
-    "nome": "Eppi Cinema TESTE",
-    "descricao": "cc",
-    "imagem": "uploads/1754599065473-125135209.jpg"
+    "id": "eppi-cinema",
+    "nome": "Eppi Cinema",
+    "descricao": "Filmes e séries. Para uso exclusivo no Brasil."
+  },
+  {
+    "id": "unitv",
+    "nome": "UniTV",
+    "descricao": "Conteúdo premium nacional e internacional."
+  },
+  {
+    "id": "combo-tv-express-eppi",
+    "nome": "Combo TV Express + Eppi",
+    "descricao": "Pacote especial com TV Express + Eppi Cinema."
+  },
+  {
+    "id": "tv-express",
+    "nome": "TV Express",
+    "descricao": "Canais ao vivo, filmes e séries para o Brasil."
+  },
+  {
+    "id": "hot-app",
+    "nome": "HOT App",
+    "descricao": "Aplicativo com conteúdo adulto 24 horas."
+  },
+  {
+    "id": "imperio-tv",
+    "nome": "Império TV",
+    "descricao": "Canais e conteúdo premium nacional e internacional."
+  },
+  {
+    "id": "blue-tv",
+    "nome": "Blue TV",
+    "descricao": "Streaming completo com estabilidade e qualidade."
   }
 ]

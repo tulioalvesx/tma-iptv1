@@ -1,9 +1,11 @@
 [
   {
-    "id": "181a5886-a041-4491-a369-07ba6af56ee2",
-    "name": "Teste chatbot",
+    "id": "example_keyword_rule",
     "type": "keyword",
-    "pattern": "pingc",
-    "reply": "pong!"
+    "pattern": "(.*)preço(.*)",
+    "reply": "Você gostaria de consultar o preço de algum produto específico? Digite 'ver produtos'.",
+    "activeHours": null,
+    "externalWebhook": null,
+    "integrationAction": null
   }
 ]

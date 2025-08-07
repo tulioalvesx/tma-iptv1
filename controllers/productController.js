@@ -1,9 +1,9 @@
 const service = require('../services/productService');
 
 exports.getAll = async (req, res) => {
-  const items = await service.fetchAll();
-  res.json(items);
+  res.json(await service.fetchAll());
 };
+
 
 exports.getById = async (req, res) => {
   const item = await service.fetchById(req.params.id);

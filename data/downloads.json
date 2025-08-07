@@ -4,13 +4,21 @@
       "id": "app-android",
       "name": "Aplicativo Android",
       "url": "#",
-      "description": "Download do aplicativo para Android."
+      "description": "Download do aplicativo para Android.",
+      "imagem": "uploads/1754599046956-511518429.jpg"
     },
     {
       "id": "app-ios",
       "name": "Aplicativo iOS",
       "url": "#",
-      "description": "Download do aplicativo para iOS."
+      "description": "Download do aplicativo para iOS.",
+      "imagem": "uploads/1754599054019-580583141.jpg"
+    },
+    {
+      "id": "be14cb47-4863-4d33-97f9-c05e42ae624b",
+      "name": "c",
+      "url": "http://ffffff.ff.fff",
+      "description": "c"
     }
   ]
 }

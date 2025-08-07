@@ -1,8 +1,8 @@
 const service = require('../services/downloadService');
 
 exports.getAll = async (req, res) => {
-  const items = await service.fetchAll();
-  res.json(items);
+  const arr = await service.fetchAll();
+  res.json({ files: arr }); // <<— importante pro front
 };
 
 exports.getById = async (req, res) => {

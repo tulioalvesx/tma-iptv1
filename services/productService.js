@@ -1,43 +1,42 @@
-const fs   = require('fs').promises;
+const fs = require('fs').promises;
 const path = require('path');
 const file = path.join(__dirname, '../data/products.json');
 
-async function read() {
-     const arr = JSON.parse(await fs.readFile(file, 'utf-8'));
-     return { products: Array.isArray(arr) ? arr : [] };
-   }
-async function write(data) {
-  await fs.writeFile(file, JSON.stringify(data, null, 2));
+async function readAll() {
+  try {
+    const raw = await fs.readFile(file, 'utf-8');
+    const parsed = JSON.parse(raw);
+    // O dashboard espera ARRAY
+    if (Array.isArray(parsed)) return parsed;
+    // compat: se alguém salvou como {products:[...]}
+    if (parsed && Array.isArray(parsed.products)) return parsed.products;
+    return [];
+  } catch {
+    return [];
+  }
 }
+async function writeAll(arr){ await fs.writeFile(file, JSON.stringify(arr, null, 2)); }
 
-exports.fetchAll = async () => {
-  const json = await read();
-  return json.products;
+exports.fetchAll = readAll;
+exports.create   = async (entry) => {
+  const list = await readAll();
+  if (!entry.id) entry.id = String(Date.now());
+  list.push(entry);
+  await writeAll(list);
+  return entry;
 };
-
-exports.fetchById = async (id) => {
-  const items = await exports.fetchAll();
-  return items.find(p => String(p.id) === String(id));
+exports.update = async (id, patch) => {
+  const list = await readAll();
+  const i = list.findIndex(x => String(x.id) === String(id));
+  if (i === -1) return null;
+  list[i] = { ...list[i], ...patch, id: String(id) };
+  await writeAll(list);
+  return list[i];
 };
-
-exports.create = async (payload) => {
-  const json = await read();
-  json.products.push(payload);
-  await write(json);
-  return payload;
-};
-
-exports.update = async (id, payload) => {
-  const json = await read();
-  const idx = json.products.findIndex(p => String(p.id) === String(id));
-  if (idx < 0) throw new Error('Not Found');
-  json.products[idx] = { ...json.products[idx], ...payload };
-  await write(json);
-  return json.products[idx];
-};
-
 exports.remove = async (id) => {
-  const json = await read();
-  json.products = json.products.filter(p => String(p.id) !== String(id));
-  await write(json);
+  const list = await readAll();
+  const next = list.filter(x => String(x.id) !== String(id));
+  if (next.length === list.length) return false;
+  await writeAll(next);
+  return true;
 };

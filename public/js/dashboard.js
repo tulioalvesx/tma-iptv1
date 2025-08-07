@@ -447,6 +447,7 @@ function updateChartFor(rangeKey, rawData) {
 	  const labels = points.map(p => p.date.toLocaleDateString());
 	  const values = points.map(p => p.total);
 	  gerarGrafico({ labels, values });
+	}
 	} catch (e) { console.error(e); showToast('Falha ao carregar dashboard',false); }
   }
 

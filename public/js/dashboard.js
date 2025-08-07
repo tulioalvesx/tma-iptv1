@@ -60,6 +60,16 @@ function updateChartFor(rangeKey, rawData) {
 
   const labels = [];
   const values = [];
+
+  // Para “ano” (YTD por mês), crie um mapa mês → soma dos totais
+  let monthlyTotals;
+  if (rangeKey === 'ano') {
+    monthlyTotals = rawData.reduce((map, d) => {
+      const m = new Date(d.dia).getMonth();
+      map[m] = (map[m] || 0) + d.total;
+      return map;
+    }, {});
+  }
   const cursor = new Date(start);
 
   // enquanto o cursor não ultrapassar hoje, gera label e valor
@@ -76,25 +86,24 @@ function updateChartFor(rangeKey, rawData) {
     }
     labels.push(label);
 
-    // busca no rawData o total daquele período
-    let match;
+   // preenche o valor certo (0 se não houver acesso)
+    let total = 0;
     if (rangeKey === 'ano') {
-      const yr = cursor.getFullYear();
-      match = rawData.find(d => new Date(d.dia).getFullYear() === yr);
+      const m = cursor.getMonth();
+      total = monthlyTotals[m] || 0;
     } else if (rangeKey === 'mes') {
-      match = rawData.find(d => {
-        const dt = new Date(d.dia);
-        return dt.getFullYear() === cursor.getFullYear() &&
-               dt.getMonth() === cursor.getMonth();
-      });
+      total = rawData
+        .filter(d => {
+          const dt = new Date(d.dia);
+          return dt.getFullYear() === cursor.getFullYear() &&
+                 dt.getMonth() === cursor.getMonth();
+        })
+        .reduce((sum, d) => sum + d.total, 0);
     } else {
-      // dia ou semana
-      match = rawData.find(d => {
-        const dt = new Date(d.dia);
-        return dt.toDateString() === cursor.toDateString();
-      });
+      const key = cursor.toISOString().slice(0, 10);
+      total = rawData.find(d => d.dia === key)?.total || 0;
     }
-    values.push(match ? match.total : 0);
+    values.push(total);
 
     // avança o cursor
      if (rangeKey === 'ano') {
@@ -109,14 +118,9 @@ function updateChartFor(rangeKey, rawData) {
     }
   }
 
-   // reconstrói o array que gerarGrafico espera: [{ dia, total }, …]
-   const arr = labels.map((lbl, i) => ({
-     dia:   lbl,
-     total: values[i]
-   }));
-   
-   // desenha o gráfico
-   gerarGrafico(arr);
+  // reconstrói o array que gerarGrafico espera e desenha
+  const arr = labels.map((lbl, i) => ({ dia: lbl, total: values[i] }));
+  gerarGrafico(arr);
 }
   let isEditingRule = false,   editingRuleId = null;
   let isEditingHook = false,   editingHookId = null;

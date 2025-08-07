@@ -741,7 +741,6 @@ async function carregarWebhooks() {
 		const upd = {};
 		if (url) upd.url = url;
 		if (img) upd.imagem = img;
-		if (desc) upd.description = desc;
         try {
           const resUpd = await fetch(`/api/downloads/${id}`, {
             method: 'PUT',
@@ -854,7 +853,6 @@ async function carregarGrupos() {
           const img = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`).value.trim();
 		  const body = {};
 		  if (img) body.imagem = img;
-		  if (desc) body.descricao = desc;
           try {
             const res = await fetch(`/api/groups/${id}`, {
               method: 'PUT',

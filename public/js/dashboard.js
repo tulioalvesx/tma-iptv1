@@ -39,6 +39,33 @@ document.addEventListener("DOMContentLoaded", () => {
   mes:    { months: 12,unit: 'month', label: 'Últimos 12 meses' },
   ano:    { years: 12, unit: 'year',  label: 'Últimos 12 anos'  }
 };
+// estado do filtro (padrão)
+  let currentRange = 'dia';
+
+// função global que sobe o gráfico numa janela de tempo
+  function updateChartFor(rangeKey, rawData) {
+	const cfg = timeRanges[rangeKey];
+	const now = new Date();
+	let points = rawData.map(d => ({
+		date: new Date(d.dia),
+		total: d.total
+  }));
+  const cutoff = new Date(now);
+  if (cfg.days)   cutoff.setDate(now.getDate() - cfg.days);
+  if (cfg.months) cutoff.setMonth(now.getMonth() - cfg.months);
+  if (cfg.years)  cutoff.setFullYear(now.getFullYear() - cfg.years);
+
+  points = points
+    .filter(p => p.date >= cutoff)
+    .sort((a,b) => a.date - b.date);
+
+  // gerarGrafico espera um array {dia, total}, então reconstrói:
+  const arr = points.map(p => ({
+    dia:   p.date.toLocaleDateString(),
+    total: p.total
+  }));
+  gerarGrafico(arr);
+}
   let isEditingRule = false,   editingRuleId = null;
   let isEditingHook = false,   editingHookId = null;
   let isEditingProduto = false, editingProdutoId = null;
@@ -428,8 +455,7 @@ function openGrupoModal(gr = null) {
       document.getElementById('total-downloads').textContent = (downloads.files||[]).length;
       document.getElementById('total-grupos').textContent = grupos.length||0;
       document.getElementById('acessos-hoje').textContent = analytics.hoje||0;
-      gerarGrafico(analytics.dias||[]);// padrão: últimos 30 dias
-	  let currentRange = 'dia';
+      updateChartFor(currentRange, analytics.dias||[]);
 function updateChartFor(rangeKey, rawData) {
 	  const cfg = timeRanges[rangeKey];
 	  const now = new Date();

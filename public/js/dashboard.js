@@ -43,28 +43,64 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentRange = 'dia';
 
 // função global que sobe o gráfico numa janela de tempo
-  function updateChartFor(rangeKey, rawData) {
-	const cfg = timeRanges[rangeKey];
-	const now = new Date();
-	let points = rawData.map(d => ({
-		date: new Date(d.dia),
-		total: d.total
-  }));
-  const cutoff = new Date(now);
-  if (cfg.days)   cutoff.setDate(now.getDate() - cfg.days);
-  if (cfg.months) cutoff.setMonth(now.getMonth() - cfg.months);
-  if (cfg.years)  cutoff.setFullYear(now.getFullYear() - cfg.years);
+function updateChartFor(rangeKey, rawData) {
+  const cfg = timeRanges[rangeKey];
+  const now = new Date();
+  // calcula data de início
+  const start = new Date(now);
+  if (cfg.days)   start.setDate(start.getDate() - cfg.days + 1);
+  if (cfg.months) start.setMonth(start.getMonth() - cfg.months + 1);
+  if (cfg.years)  start.setFullYear(start.getFullYear() - cfg.years + 1);
 
-  points = points
-    .filter(p => p.date >= cutoff)
-    .sort((a,b) => a.date - b.date);
+  const labels = [];
+  const values = [];
+  const cursor = new Date(start);
 
-  // gerarGrafico espera um array {dia, total}, então reconstrói:
-  const arr = points.map(p => ({
-    dia:   p.date.toLocaleDateString(),
-    total: p.total
-  }));
-  gerarGrafico(arr);
+  // enquanto o cursor não ultrapassar hoje, gera label e valor
+  while (cursor <= now) {
+    let label;
+    switch (rangeKey) {
+      case 'dia':
+      case 'semana':
+        label = cursor.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        break;
+      case 'mes':
+        label = cursor.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+        break;
+      case 'ano':
+        label = String(cursor.getFullYear());
+        break;
+    }
+    labels.push(label);
+
+    // busca no rawData o total daquele período
+    let match;
+    if (rangeKey === 'ano') {
+      const yr = cursor.getFullYear();
+      match = rawData.find(d => new Date(d.dia).getFullYear() === yr);
+    } else if (rangeKey === 'mes') {
+      match = rawData.find(d => {
+        const dt = new Date(d.dia);
+        return dt.getFullYear() === cursor.getFullYear() &&
+               dt.getMonth() === cursor.getMonth();
+      });
+    } else {
+      // dia ou semana
+      match = rawData.find(d => {
+        const dt = new Date(d.dia);
+        return dt.toDateString() === cursor.toDateString();
+      });
+    }
+    values.push(match ? match.total : 0);
+
+    // avança o cursor
+    if (cfg.days)      cursor.setDate(cursor.getDate() + 1);
+    else if (cfg.months)cursor.setMonth(cursor.getMonth() + 1);
+    else if (cfg.years) cursor.setFullYear(cursor.getFullYear() + 1);
+  }
+
+  // desenha o gráfico
+  gerarGrafico({ labels, values });
 }
   let isEditingRule = false,   editingRuleId = null;
   let isEditingHook = false,   editingHookId = null;

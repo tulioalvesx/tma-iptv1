@@ -668,7 +668,7 @@ async function carregarWebhooks() {
                 <input type="file" data-type="download" data-id="${d.id}" class="inline-file border px-2 py-1 rounded" />
                 <input type="text" data-field="url" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" placeholder="URL" value="${d.url||''}">
                 <input type="text" data-field="imagem" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" placeholder="Imagem" value="${d.imagem||''}">
-				<input type="text" data-field="description" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" placeholder="Descrição" value="${d.description||''}">
+//				<input type="text" data-field="description" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" placeholder="Descrição" value="${d.description||''}">
               </div>
             </div>
             <div class="flex flex-col gap-2">
@@ -790,7 +790,7 @@ async function carregarGrupos() {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
               <input type="file" data-type="grupo" data-id="${g.id}" class="inline-file border px-2 py-1 rounded" />
               <input type="text" data-field="imagem" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Imagem" value="${g.imagem||''}">
-			  <input type="text"  data-field="description" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Descrição" value="${g.descricao||''}">
+//			  <input type="text"  data-field="description" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Descrição" value="${g.descricao||''}">
             </div>
           </div>
           <div class="flex flex-col gap-2">

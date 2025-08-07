@@ -114,8 +114,22 @@ document.addEventListener("DOMContentLoaded", () => {
           backgroundColor: "rgba(37,99,235,0.2)"
         }]
       },
-      options: { scales: { y: { beginAtZero: true } } }
-    });
+      options: {
+      responsive: true,
+      maintainAspectRatio: false,    // importante para preencher o container
+      scales: {
+        x: { display: true, title: { display: true, text: 'Período' } },
+        y: { beginAtZero: true, display: true, title: { display: true, text: 'Acessos' } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      elements: {
+        point: { hoverRadius: 6 }
+      }
+    }
+  });
   }
 
 	// ─── Modal Open Functions ─────────────────────────────────────────────────────

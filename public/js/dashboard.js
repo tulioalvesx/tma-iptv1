@@ -456,24 +456,6 @@ function openGrupoModal(gr = null) {
       document.getElementById('total-grupos').textContent = grupos.length||0;
       document.getElementById('acessos-hoje').textContent = analytics.hoje||0;
       updateChartFor(currentRange, analytics.dias||[]);
-function updateChartFor(rangeKey, rawData) {
-	  const cfg = timeRanges[rangeKey];
-	  const now = new Date();
-	  let points = rawData.map(d => ({
-		date: new Date(d.dia),
-		total: d.total
-  }));
-	  const cutoff = new Date(now);
-	  if (cfg.days)   cutoff.setDate(now.getDate() - cfg.days);
-	  if (cfg.months)cutoff.setMonth(now.getMonth() - cfg.months);
-	  if (cfg.years) cutoff.setFullYear(now.getFullYear() - cfg.years);
-	  points = points
-		.filter(p => p.date >= cutoff)
-		.sort((a,b) => a.date - b.date);
-	  const labels = points.map(p => p.date.toLocaleDateString());
-	  const values = points.map(p => p.total);
-	  gerarGrafico({ labels, values });
-	}
 	} catch (e) { console.error(e); showToast('Falha ao carregar dashboard',false); }
   }
 

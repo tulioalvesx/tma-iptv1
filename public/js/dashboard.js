@@ -47,10 +47,16 @@ function updateChartFor(rangeKey, rawData) {
   const cfg = timeRanges[rangeKey];
   const now = new Date();
   // calcula data de início
-  const start = new Date(now);
-  if (cfg.days)   start.setDate(start.getDate() - cfg.days + 1);
-  if (cfg.months) start.setMonth(start.getMonth() - cfg.months + 1);
-  if (cfg.years)  start.setFullYear(start.getFullYear() - cfg.years + 1);
+  let start;
+  if (rangeKey === 'ano') {
+    // YTD: começa em janeiro do ano atual
+    start = new Date(now.getFullYear(), 0, 1);
+  } else {
+    start = new Date(now);
+    if (cfg.days)   start.setDate(start.getDate() - cfg.days + 1);
+    if (cfg.months) start.setMonth(start.getMonth() - cfg.months + 1);
+    if (cfg.years)  start.setFullYear(start.getFullYear() - cfg.years + 1);
+  }
 
   const labels = [];
   const values = [];
@@ -59,17 +65,14 @@ function updateChartFor(rangeKey, rawData) {
   // enquanto o cursor não ultrapassar hoje, gera label e valor
   while (cursor <= now) {
     let label;
-    switch (rangeKey) {
-      case 'dia':
-      case 'semana':
-        label = cursor.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-        break;
-      case 'mes':
-        label = cursor.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
-        break;
-      case 'ano':
-        label = String(cursor.getFullYear());
-        break;
+    if (rangeKey === 'ano') {
+      // meses do ano atual
+      label = cursor.toLocaleDateString('pt-BR', { month: 'short' });
+    } else if (rangeKey === 'mes') {
+      label = cursor.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+    } else {
+      // dia ou semana
+      label = cursor.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     }
     labels.push(label);
 
@@ -94,9 +97,16 @@ function updateChartFor(rangeKey, rawData) {
     values.push(match ? match.total : 0);
 
     // avança o cursor
-    if (cfg.days)      cursor.setDate(cursor.getDate() + 1);
-    else if (cfg.months)cursor.setMonth(cursor.getMonth() + 1);
-    else if (cfg.years) cursor.setFullYear(cursor.getFullYear() + 1);
+     if (rangeKey === 'ano') {
+    // avança um mês
+      cursor.setMonth(cursor.getMonth() + 1);
+    } else if (cfg.days) {
+      cursor.setDate(cursor.getDate() + 1);
+    } else if (cfg.months) {
+      cursor.setMonth(cursor.getMonth() + 1);
+    } else if (cfg.years) {
+      cursor.setFullYear(cursor.getFullYear() + 1);
+    }
   }
 
    // reconstrói o array que gerarGrafico espera: [{ dia, total }, …]

@@ -143,14 +143,30 @@ function updateChartFor(rangeKey, rawData) {
     setTimeout(() => { toastEl.style.opacity = "0"; }, 2200);
   }
 
-  function normalizeImagem(im) {
-    if (!im) return "";
-    if (im.startsWith("http") || im.startsWith("/")) {
-      if (im.startsWith("/img/")) return im;
-      return im;
-    }
-    return `/img/${im.replace(/^\/?img\/?/i, "")}`;
-  }
+function normalizeImagem(v) {
+  if (!v) return '';
+
+  v = String(v).trim();
+
+  // URL absoluta (http/https) -> devolve como veio
+  if (/^https?:\/\//i.test(v)) return v;
+
+  // Já começa com /img/... -> ok
+  if (v.startsWith('/img/')) return v;
+
+  // Já começa com /uploads/... -> converte para /img/...
+  if (v.startsWith('/uploads/')) return v.replace(/^\/uploads\//, '/img/');
+
+  // Caminhos relativos
+  if (v.startsWith('img/')) return `/${v}`;
+  if (v.startsWith('uploads/')) return `/img/${v.replace(/^uploads\//, '')}`;
+
+  // Qualquer outro caminho absoluto: deixa como está
+  if (v.startsWith('/')) return v;
+
+  // Filename puro -> prefixa /img/
+  return `/img/${v.replace(/^\/?img\/?/i, '').replace(/^uploads\//, '')}`;
+}
 
   function gerarGrafico(dados) {
     const canvas = document.getElementById("grafico-acessos");

@@ -917,5 +917,6 @@ async function carregarGrupos() {
     const res = await fetch('/api/analytics?full=true');
     const { dias } = await res.json();
     updateChartFor(rangeKey, dias);
+	});
   });
 });

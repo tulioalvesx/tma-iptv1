@@ -107,7 +107,7 @@ a {
     width: 100%;
     height: calc(100vh - 300px); /* exemplo: preenche a viewport menos os cards de topo */
   }
-
+  
 .badge {
   position: absolute;
   top: 8px;
@@ -380,6 +380,24 @@ a {
   background-color: #e2e3e5;
   color: #41464b;
 }
+
+.chat-option {
+  display: inline-block;
+  margin: 0.25rem;             /* espaço entre opções */
+  padding: 0.5rem 1rem;        /* acolchoamento interno */
+  background-color: #3b82f6;   /* azul Tailwind “blue-500” */
+  color: white;
+  border: none;
+  border-radius: 0.375rem;     /* 6px, equivalente a rounded */
+  cursor: pointer;
+  font-size: 0.875rem;         /* text-sm */
+  transition: background-color 0.2s;
+}
+
+.chat-option:hover {
+  background-color: #2563eb;   /* azul Tailwind “blue-600” */
+}
+
 .upload-image-input {
   font-size: 12px;
   padding: 4px;

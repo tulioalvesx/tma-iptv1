@@ -1,11 +1,48 @@
 [
-  {
+
+   {
     "id": "example_keyword_rule",
-    "type": "keyword",
-    "pattern": "(.*)preço(.*)",
+    "type": "keyword",            // 'keyword' faz RegExp(pattern,'i') | use 'message' para match exato ou 'regex' para expressão livre
+    "pattern": "preço",           // só o texto ou o trecho de regex sem delimitadores
     "reply": "Você gostaria de consultar o preço de algum produto específico? Digite 'ver produtos'.",
+    "activeHours": null,          // mantenha null ou use [{ "start": 8, "end": 18 }] para restringir horário
+    "externalWebhook": false,     // true dispara chamada a webhookUrl
+    "webhookUrl": null,           // URL do seu webhook externo (se externalWebhook=true)
+    "webhookMethod": null,        // 'GET' ou 'POST'
+    "integrationAction": null     // 'products' para listar produtos, ou null
+  },
+  {
+    "id": "saudacao",
+    "type": "keyword",
+    "pattern": "olá",
+    "reply": "Oi! Em que posso ajudar?",
     "activeHours": null,
-    "externalWebhook": null,
+    "externalWebhook": false,
+    "webhookUrl": null,
+    "webhookMethod": null,
+    "integrationAction": null
+  },
+  {
+    "id": "listar_produtos",
+    "type": "keyword",
+    "pattern": "preço",
+    "reply": "Confira nossos produtos abaixo:",
+    "activeHours": null,
+    "externalWebhook": false,
+    "webhookUrl": null,
+    "webhookMethod": null,
+    "integrationAction": "products"
+  },
+  {
+    "id": "consulta_externa",
+    "type": "regex",
+    "pattern": "estoque\\s+(\\d+)",
+    "reply": "Verificando estoque…",
+    "activeHours": null,
+    "externalWebhook": true,
+    "webhookUrl": "https://imperioxcc.top/chatbot/check/",
+    "webhookMethod": "GET",
+    "webhookKey": "47e8091700",
     "integrationAction": null
   }
 ]

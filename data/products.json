@@ -7,7 +7,8 @@
     "imagem": "eppi-mensal.jpg",
     "grupo": "eppi-cinema",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "eppi-cinema"
   },
   {
     "id": "eppi-cinema-trimestral",
@@ -17,7 +18,8 @@
     "imagem": "eppi-trimestral.jpg",
     "grupo": "eppi-cinema",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "eppi-cinema"
   },
   {
     "id": "eppi-cinema-anual",
@@ -27,7 +29,8 @@
     "imagem": "eppi-anual.jpg",
     "grupo": "eppi-cinema",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "eppi-cinema"
   },
   {
     "id": "unitv-mensal",
@@ -37,7 +40,8 @@
     "imagem": "unitv-mensal.jpg",
     "grupo": "unitv",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "unitv"
   },
   {
     "id": "unitv-anual",
@@ -47,7 +51,8 @@
     "imagem": "unitv-anual.jpg",
     "grupo": "unitv",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "unitv"
   },
   {
     "id": "combo-tv-express-eppi-mensal",
@@ -57,7 +62,8 @@
     "imagem": "combo.jpg",
     "grupo": "combo-tv-express-eppi",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "combo-tv-express-eppi"
   },
   {
     "id": "combo-tv-express-eppi-anual",
@@ -77,7 +83,8 @@
     "imagem": "tv-express-mensal.jpg",
     "grupo": "tv-express",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "combo-tv-express-eppi"
   },
   {
     "id": "tv-express-trimestral",
@@ -87,7 +94,8 @@
     "imagem": "tv-express-trimestral.jpg",
     "grupo": "tv-express",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "tv-express"
   },
   {
     "id": "tv-express-anual",
@@ -97,7 +105,8 @@
     "imagem": "tv-express-anual.jpg",
     "grupo": "tv-express",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "tv-express"
   },
   {
     "id": "hot-app-mensal",
@@ -107,7 +116,8 @@
     "imagem": "hot-app-mensal.jpg",
     "grupo": "hot-app",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "hot-app"
   },
   {
     "id": "hot-app-anual",
@@ -117,7 +127,8 @@
     "imagem": "hot-app-anual.jpg",
     "grupo": "hot-app",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "hot-app"
   },
   {
     "id": "imperio-tv-mensal",
@@ -127,7 +138,8 @@
     "imagem": "imperio-mensal.jpg",
     "grupo": "imperio-tv",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "imperio-tv"
   },
   {
     "id": "imperio-tv-trimestral",
@@ -137,7 +149,8 @@
     "imagem": "imperio-trimestral.jpg",
     "grupo": "imperio-tv",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "imperio-tv"
   },
   {
     "id": "imperio-tv-anual",
@@ -147,7 +160,8 @@
     "imagem": "imperio-anual.jpg",
     "grupo": "imperio-tv",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "imperio-tv"
   },
   {
     "id": "blue-tv-mensal",
@@ -157,7 +171,8 @@
     "imagem": "bluetv-mensal.jpg",
     "grupo": "blue-tv",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "blue-tv"
   },
   {
     "id": "blue-tv-anual",
@@ -167,6 +182,7 @@
     "imagem": "bluetv-anual.jpg",
     "grupo": "blue-tv",
     "desconto": 0,
-    "link": "#"
+    "link": "#",
+    "groupId": "blue-tv"
   }
 ]

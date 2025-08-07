@@ -2,36 +2,57 @@
   {
     "id": "eppi-cinema",
     "nome": "Eppi Cinema",
-    "descricao": "Filmes e séries. Para uso exclusivo no Brasil."
+    "descricao": "Filmes e séries. Para uso exclusivo no Brasil.",
+    "imagem": "EPPICINEMA.jpeg",
+    "image": "EPPICINEMA.jpeg",
+    "name": "Eppi Cinema"
   },
   {
     "id": "unitv",
     "nome": "UniTV",
-    "descricao": "Conteúdo premium nacional e internacional."
+    "descricao": "Conteúdo premium nacional e internacional.",
+    "imagem": "unitvx.jpg",
+    "image": "unitvx.jpg",
+    "name": "UniTV"
   },
   {
     "id": "combo-tv-express-eppi",
-    "nome": "Combo TV Express + Eppi",
-    "descricao": "Pacote especial com TV Express + Eppi Cinema."
+    "nome": "Combo Express TV + Eppi Cinema",
+    "descricao": "Pacote especial com TV Express + Eppi Cinema.",
+    "imagem": "Combo_ExpressTV_Eppi_Cinema.jpg",
+    "image": "Combo_ExpressTV_Eppi_Cinema.jpg",
+    "name": "Combo Express TV + Eppi Cinema"
   },
   {
     "id": "tv-express",
-    "nome": "TV Express",
-    "descricao": "Canais ao vivo, filmes e séries para o Brasil."
+    "nome": "Express TV",
+    "descricao": "Canais ao vivo, filmes e séries para o Brasil.",
+    "imagem": "tvexpressx.jpg",
+    "image": "tvexpressx.jpg",
+    "name": "Express TV"
   },
   {
     "id": "hot-app",
-    "nome": "HOT App",
-    "descricao": "Aplicativo com conteúdo adulto 24 horas."
+    "nome": "HOT +18",
+    "descricao": "Aplicativo com conteúdo adulto 24 horas.",
+    "imagem": "hot.jpg",
+    "image": "hot.jpg",
+    "name": "HOT +18"
   },
   {
     "id": "imperio-tv",
     "nome": "Império TV",
-    "descricao": "Canais e conteúdo premium nacional e internacional."
+    "descricao": "Canais e conteúdo premium nacional e internacional.",
+    "imagem": "imperiotv.jpg",
+    "image": "imperiotv.jpg",
+    "name": "Império TV"
   },
   {
     "id": "blue-tv",
     "nome": "Blue TV",
-    "descricao": "Streaming completo com estabilidade e qualidade."
+    "descricao": "Streaming completo com estabilidade e qualidade.",
+    "imagem": "bluetvpro.jpg",
+    "image": "bluetvpro.jpg",
+    "name": "Blue TV"
   }
 ]

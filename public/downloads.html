@@ -16,22 +16,25 @@
       <a href="#termos" data-i18n="nav-terms">Termos</a>
       <a href="#contato" data-i18n="nav-contact">Contato</a>
     </nav>
-    <!-- Language switcher -->
     <div style="margin-top:8px; font-size:12px;">
       <button id="lang-pt" style="background:none; border:none; color:#fff; cursor:pointer;">PT</button> |
       <button id="lang-en" style="background:none; border:none; color:#fff; cursor:pointer;">EN</button>
     </div>
   </header>
+
   <div class="container">
     <h2 data-i18n="title-downloads">Downloads</h2>
-    <ul id="download-list"></ul>
+
+    <!-- Mantém o mesmo ID usado no downloads.js; classe 'compact' ativa o layout mais enxuto -->
+    <ul id="download-list" class="downloads-grid compact"></ul>
   </div>
 
   <!-- WhatsApp floating button -->
   <a href="https://api.whatsapp.com/send?phone=5535998993464" class="floating-button" id="whatsapp-btn" target="_blank" rel="noopener" title="Fale conosco no WhatsApp">
     <img src="img/whatsapp-icon.png" alt="WhatsApp" style="width:60%;height:60%;">
   </a>
-  <!-- Chatbot floating button and widget -->
+
+  <!-- Chatbot -->
   <div class="floating-button" id="chat-toggle" style="bottom: 90px; background-color:#007bff;">
     <img src="img/chatbot.png" alt="Chatbot" style="width:60%;height:60%;">
   </div>

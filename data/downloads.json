@@ -1,16 +1,60 @@
 {
   "files": [
     {
-      "id": "app-android",
-      "name": "Aplicativo Android",
-      "url": "#",
-      "description": "Download do aplicativo para Android."
+      "id": "83ecb604-2ce8-46df-ab65-adf12a2e1a88",
+      "name": "ASSIST +",
+      "url": "https://drive.google.com/drive/folders/15-Luv2X45ROHLHl2nWqe75QhUwlQKfUx?usp=drive_link",
+      "description": "Assist Plus é um aplicativo de <strong>suporte remoto</strong> para dispositivos <strong>Android, Smart TVs e TV Box</strong>.\nNão oferece conteúdo próprio — sua função é permitir que <strong>técnicos autorizados</strong> acessem o dispositivo de forma segura para diagnóstico, configuração e solução de problemas.\n<hr>\n<strong>Principais Funções</strong>\n<ul>\n  <li>🔒 <strong>Conexão Segura</strong> – Acesso remoto criptografado para proteger seus dados.</li>\n  <li>🖥️ <strong>Compartilhamento de Tela</strong> – Visualização em tempo real para diagnóstico rápido.</li>\n  <li>🎮 <strong>Controle Remoto</strong> – Operação total ou parcial do dispositivo pelo técnico.</li>\n  <li>📱 <strong>Compatibilidade Ampla</strong> – Funciona em Android, Smart TVs e TV Box.</li>\n  <li>📂 <strong>Transferência de Arquivos</strong> – Envio e recepção de configurações e atualizações.</li>\n  <li>💬 <strong>Chat Integrado</strong> – Comunicação direta durante o atendimento.</li>\n  <li>⚙️ <strong>Otimização de Sistema</strong> – Ajustes e melhorias no desempenho do dispositivo.</li>\n  <li>⏱️ <strong>Uso Sob Demanda</strong> – Ativo apenas quando necessário, sem consumo constante.</li>\n</ul>",
+      "imagem": "Assist.jpeg"
     },
     {
-      "id": "app-ios",
-      "name": "Aplicativo iOS",
-      "url": "#",
-      "description": "Download do aplicativo para iOS."
+      "id": "3e7ab4fa-fe32-4778-9b11-8cf8faa5945c",
+      "name": "IMPERIO TV",
+      "url": "https://drive.google.com/drive/folders/19wijxXVf-oYLAcBjxsK43XHLX2FzJtB2?usp=drive_link",
+      "description": "Império TV é um aplicativo de IPTV usado para acessar canais de TV ao vivo, filmes, séries e outros conteúdos via internet. Ele não fornece conteúdo próprio, funcionando apenas como player para listas e servidores autorizados pelo usuário ou provedor.\n\nPrincipais funções:\n\nReprodução de canais de TV, filmes e séries em alta qualidade.\n\nSuporte a listas IPTV no formato Xtream Codes.\n\nInterface simples e de fácil navegação.\n\nOrganização por categorias (TV ao vivo, filmes, séries, favoritos etc.).\n\nCompatível com dispositivos Android (celulares, TV Box e Smart TVs com Android).\n\nSuporte a controle remoto em Android TV e TV Box.",
+      "imagem": "imperiotv.jpg"
+    },
+    {
+      "id": "3bca9046-a1ab-452a-8aad-91538539231b",
+      "name": "UNITV",
+      "url": "https://drive.google.com/drive/folders/1XmrEM_C6o18HJsk648DIxFyrHZ9LU28H?usp=drive_link",
+      "description": "UNiTV é um aplicativo de media player para IPTV que permite assistir canais de TV ao vivo, filmes e séries utilizando listas e credenciais fornecidas pelo usuário ou provedor. Ele não fornece conteúdo próprio, sendo apenas a plataforma de reprodução.\n\nPrincipais funções:\n\nReprodução de canais de TV, filmes e séries on-demand.\n\nSuporte a múltiplos formatos IPTV, incluindo Xtream Codes e M3U.\n\nInterface moderna, intuitiva e personalizável.\n\nOrganização por categorias e sistema de busca rápida.\n\nCompatível com Android TV, TV Box e dispositivos móveis Android.\n\nSuporte a controle remoto e tela cheia.",
+      "imagem": "unitvx.jpg"
+    },
+    {
+      "id": "4398651b-82fd-4e68-8471-d4d5c1544269",
+      "name": "EPPI CINEMA",
+      "url": "https://drive.google.com/drive/folders/1JhtuBNYrGQ1VcKSL2BbNqwfE1oO1W13j?usp=drive_link",
+      "description": "Eppi Cinema (antigo My Family Cinema) é um aplicativo de entretenimento para Android que oferece acesso a uma ampla variedade de canais, filmes, séries e conteúdos multimídia. Com suporte a resoluções de até 4K e 8K, interface amigável, perfis infantis seguros, experiência sem anúncios e possibilidade de compartilhar contas, é uma opção completa para quem busca algo prático e eficiente. Disponível apenas para plataformas Android, possui planos com teste gratuito e acesso premium.",
+      "imagem": "EPPICINEMA.jpeg"
+    },
+    {
+      "id": "f17c9b00-673e-4d53-bf2c-b6fbe5f0d9d4",
+      "name": "EXPRESS TV",
+      "url": "https://drive.google.com/drive/folders/1k-C7qmfGPQaPKIF-tlK9lIqW0n6dge0L?usp=drive_link",
+      "description": "TV Express é um media player IPTV que não fornece conteúdo próprio, mas permite o acesso a canais, filmes e séries por meio de listas compartilhadas. Com interface organizada por categorias e suporte em múltiplas plataformas, ele oferece uma experiência de streaming fluida e bem estruturada para quem já possui acesso a um serviço IPTV.",
+      "imagem": "tvexpressx.jpg"
+    },
+    {
+      "id": "3b9eb154-86be-4d3a-9f20-f7553ded8cbb",
+      "name": "HOT",
+      "url": "https://drive.google.com/drive/folders/1oekD8tNO3kLoQgK1FJm_Tf8Kc1nVmhOy?usp=drive_link",
+      "description": "App de Streaming +18 é uma plataforma completa que reúne os principais canais adultos por assinatura e um extenso catálogo de filmes on-demand. Com acesso fácil e interface intuitiva, o app oferece programação 24h e conteúdo sob demanda em alta qualidade.\n\nPrincipais canais +18 disponíveis:\n\nSexy Hot – Filmes e séries eróticas nacionais e internacionais.\n\nPlayboy TV – Conteúdo adulto premium, lifestyle e produções exclusivas.\n\nVenus – Filmes eróticos e softcore internacionais.\n\nPrivate TV – Conteúdo explícito europeu com produções premiadas.\n\nSextreme – Filmes adultos hardcore 24h.\n\nPenthouse TV – Produções exclusivas e programação ao vivo.\n\nDiferenciais:\n\nBiblioteca com centenas de filmes on-demand (+18 e outros gêneros).\n\nTransmissão ao vivo dos principais canais adultos.\n\nCompatível com Smart TVs, Android TV, TV Box e dispositivos móveis.\n\nOpção de controle parental com PIN para segurança.",
+      "imagem": "hotappx.jpg"
+    },
+    {
+      "id": "e438a7da-1bc9-4fae-850a-57f3e5c6e0b9",
+      "name": "PROTON VPN",
+      "url": "https://drive.google.com/file/d/1VeUyqJcER5QEOuHS_ZBdAPM1v_XipMdC/view?usp=drive_link",
+      "description": "Proton VPN é a escolha ideal para quem busca privacidade avançada, segurança robusta, ampla cobertura de servidores e confiabilidade comprovada — tudo respaldado por uma política transparente e tecnologia auditável. A opção gratuita é excelente para uso leve, enquanto os planos pagos desbloqueiam recursos premium como streaming otimizado, Secure Core e acesso especializado via Tor.",
+      "imagem": "protonvpn.jpg"
+    },
+    {
+      "id": "c693f9c8-bad7-43de-8612-e88004d3e796",
+      "name": "BLUE TV",
+      "url": "https://drive.google.com/drive/folders/1xGgi3_zvKSbrm5KVVOehegmTKTxqbcuf?usp=drive_link",
+      "description": "Descrição:\nO BTV – Blue TV é um aplicativo de IPTV que concentra canais de TV ao vivo, filmes, séries e conteúdos sob demanda, tudo em um só lugar. Compatível com Smart TVs, TV Box Android, celulares e tablets, oferece navegação simples e rápida para assistir onde e quando quiser.\n\nPrincipais Funções:\n\n📡 +300 canais ao vivo de filmes, séries, esportes, notícias, infantil e variedades.\n\n🎬 Catálogo VOD com filmes e séries completas.\n\n📺 Qualidade SD, HD e Full HD.\n\n⏪ Replay para rever programas anteriores.\n\n🗂️ Organização por categorias e favoritos.\n\n🎮 Suporte a controle remoto e interface otimizada para TV.\n\nCompatibilidade:\n\nAndroid TV, TV Box, Smart TVs compatíveis e dispositivos móveis Android.\n\nObservação:\nO BTV – Blue TV não fornece conteúdo próprio, sendo necessário ter credenciais de acesso ou assinatura para utilização.",
+      "imagem": "bluetvpro.jpg"
     }
   ]
 }

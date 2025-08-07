@@ -663,7 +663,7 @@ async function carregarWebhooks() {
             </div>
             <div class="flex-1">
               <h3 class="font-bold text-lg mb-1">${d.name}</h3>
-//            <p class="text-sm text-gray-500 mb-1 clamp-2">${d.description||''}</p>
+              <p class="text-sm text-gray-500 mb-1 clamp-2">${d.description||''}</p>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <input type="file" data-type="download" data-id="${d.id}" class="inline-file border px-2 py-1 rounded" />
                 <input type="text" data-field="url" data-id="${d.id}" class="inline-input border px-2 py-1 rounded" placeholder="URL" value="${d.url||''}">
@@ -786,10 +786,11 @@ async function carregarGrupos() {
           </div>
           <div class="flex-1">
             <h3 class="font-bold text-lg mb-1">${g.nome}</h3>
+			<p class="text-sm text-gray-500 mb-2 clamp-2">${g.descricao||''}</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
               <input type="file" data-type="grupo" data-id="${g.id}" class="inline-file border px-2 py-1 rounded" />
               <input type="text" data-field="imagem" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Imagem" value="${g.imagem||''}">
-			  <input type="text" data-field="description" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Descrição" value="${g.descricao||''}">
+			  <input type="text"  data-field="description" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Descrição" value="${g.descricao||''}">
             </div>
           </div>
           <div class="flex flex-col gap-2">
@@ -862,7 +863,7 @@ async function carregarGrupos() {
             const res = await fetch(`/api/groups/${id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ imagem: img })
+              body: JSON.stringify(body)
             });
             if (res.ok) {
               showToast('Grupo salvo');

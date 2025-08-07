@@ -1,6 +1,6 @@
-// server.js (versão ajustada)
+// server.js (ajustado p/ /img e rotas de compatibilidade)
 const fs = require('fs');
-const path = require('path');              // (removi o require duplicado)
+const path = require('path');
 const express = require('express');
 const multer = require('multer');
 
@@ -31,13 +31,12 @@ const groupsRouter    = require('./routes/groups');
 const downloadsRouter = require('./routes/downloads');
 const analyticsRouter = require('./routes/analytics');
 
-// (se você já criou routes/rules.js, mantenha estas duas linhas)
-const rulesRouter     = require('./routes/rules');
+// Regras (nova rota) + alias para compatibilidade com o painel
+const rulesRouter = require('./routes/rules');
 app.use('/api/rules', rulesRouter);
-// Alias de compatibilidade para o painel antigo:
 app.use('/api/admin/rules', rulesRouter);
 
-// Webhooks não existem mais -> evita quebrar a aba antiga retornando vazio
+// Webhooks não existem mais -> evita quebrar a aba antiga retornando lista vazia
 app.get('/api/admin/webhooks', (_, res) => res.json([]));
 
 app.use('/api/products',  productsRouter);
@@ -45,29 +44,31 @@ app.use('/api/groups',    groupsRouter);
 app.use('/api/downloads', downloadsRouter);
 app.use('/api/analytics', analyticsRouter);
 
-// Chat API (agora depois do analytics para contar acesso)
+// Chat API
 app.get('/api/chat', chatController.chat);
 
-// ── Upload de imagens (compatível com o dashboard)
-const uploadDir = path.join(__dirname, 'public', 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+// ── Upload de imagens: agora salva em /public/img e responde "img/<arquivo>"
+const imgDir = path.join(__dirname, 'public', 'img');
+if (!fs.existsSync(imgDir)) fs.mkdirSync(imgDir, { recursive: true });
 
 const storage = multer.diskStorage({
-  destination: (_, __, cb) => cb(null, uploadDir),
-  filename: (_, file, cb) => {
+  destination: (_, __, cb) => cb(null, imgDir),
+  filename:    (_, file, cb) => {
     const ext  = path.extname(file.originalname || '');
-    const name = `${Date.now()}-${Math.round(Math.random()*1e9)}${ext}`;
+    const name = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
     cb(null, name);
-  },
+  }
 });
 const upload = multer({ storage });
 
 app.post('/api/upload-image', upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, error: 'no file' });
-  res.json({ success: true, filename: `uploads/${req.file.filename}` });
+  res.json({ success: true, filename: `img/${req.file.filename}` });
 });
 
-app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+// servir as imagens (novo) e um alias p/ uploads antigos
+app.use('/img', express.static(imgDir));
+app.use('/uploads', express.static(imgDir)); // compatibilidade com registros antigos
 
 // Favicon opcional (evita 404 no console)
 app.get('/favicon.ico', (req, res) => res.status(204).end());

@@ -102,6 +102,12 @@ a {
   flex-grow: 1;
 }
 
+ .chart-container {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 300px); /* exemplo: preenche a viewport menos os cards de topo */
+  }
+
 .badge {
   position: absolute;
   top: 8px;

@@ -99,8 +99,14 @@ function updateChartFor(rangeKey, rawData) {
     else if (cfg.years) cursor.setFullYear(cursor.getFullYear() + 1);
   }
 
-  // desenha o gráfico
-  gerarGrafico({ labels, values });
+   // reconstrói o array que gerarGrafico espera: [{ dia, total }, …]
+   const arr = labels.map((lbl, i) => ({
+     dia:   lbl,
+     total: values[i]
+   }));
+   
+   // desenha o gráfico
+   gerarGrafico(arr);
 }
   let isEditingRule = false,   editingRuleId = null;
   let isEditingHook = false,   editingHookId = null;

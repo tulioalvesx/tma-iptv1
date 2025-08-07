@@ -739,7 +739,7 @@ async function carregarWebhooks() {
         const id  = btn.dataset.id;
         const url = document.querySelector(`input[data-field=url][data-id="${id}"]`).value.trim();
         const img = document.querySelector(`input[data-field=imagem][data-id="${id}"]`).value.trim();
-		const desc= document.querySelector(`input[data-field=description][data-id="${id}"]`).value.trim();
+//		const desc= document.querySelector(`input[data-field=description][data-id="${id}"]`).value.trim();
 		const upd = {};
 		if (url) upd.url = url;
 		if (img) upd.imagem = img;
@@ -855,7 +855,7 @@ async function carregarGrupos() {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
           const img = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`).value.trim();
-		  const desc= document.querySelector(`input[data-field="description"][data-id="${id}"]`).value.trim();
+//		  const desc= document.querySelector(`input[data-field="description"][data-id="${id}"]`).value.trim();
 		  const body = {};
 		  if (img) body.imagem = img;
 		  if (desc) body.descricao = desc;

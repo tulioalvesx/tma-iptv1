@@ -69,18 +69,26 @@
     </div>
   </div>
 
-  <!-- Modal Grupo -->
-  <div id="modal-grupo" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white rounded-lg p-6 w-96">
-      <h2 class="text-lg font-semibold mb-4">Novo Grupo</h2>
-      <form id="form-grupo" class="space-y-4">
-		<div><label class="block text-sm">ID</label><input name="grupo-id" type="text" required class="w-full border px-2 py-1 rounded" /></div>
-        <div><label class="block text-sm">Nome</label><input name="grupo-nome" type="text" required class="w-full border px-2 py-1 rounded" /></div>
-		<div><label class="block text-sm">Descrição</label><textarea name="grupo-descricao" required class="w-full border px-2 py-1 rounded"></textarea></div>
-        <div class="flex justify-end gap-2"><button id="cancel-grupo" type="button" class="px-4 py-2 border rounded">Cancelar</button><button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Salvar</button></div>
-      </form>
-    </div>
+<!-- Grupo de modos -->
+<div class="mt-3">
+  <label class="block text-sm font-medium mb-1">Como comparar:</label>
+  <div class="grid grid-cols-2 gap-2 text-sm" id="rule-mode-group">
+    <label><input type="radio" name="rule-mode" value="contains" checked> Conter</label>
+    <label><input type="radio" name="rule-mode" value="exact"> Combinação exata</label>
+    <label><input type="radio" name="rule-mode" value="startswith"> Começa com</label>
+    <label><input type="radio" name="rule-mode" value="endswith"> Termina com</label>
+    <label><input type="radio" name="rule-mode" value="word"> Conter palavra</label>
+    <label><input type="radio" name="rule-mode" value="regex"> Regex (avançado)</label>
+    <label><input type="radio" name="rule-mode" value="notcontains"> Não contém</label>
+    <label><input type="radio" name="rule-mode" value="all"> Todos (fallback)</label>
+    <label><input type="radio" name="rule-mode" value="welcome"> Mensagem de boas-vindas</label>
   </div>
+
+  <div class="mt-2 text-xs text-gray-600">
+    <label class="mr-3"><input type="checkbox" id="rule-flag-case"> Diferenciar maiúsculas/minúsculas</label>
+    <label><input type="checkbox" id="rule-flag-accent"> Diferenciar acentos</label>
+  </div>
+</div>
   
 <!-- Modal Import -->
 <div id="modal-import" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">

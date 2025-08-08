@@ -265,6 +265,7 @@ async function adminFetch(url, opts = {}) {
      formRule['rule-pattern'].value = rule.pattern;
      formRule['rule-reply'].value   = rule.reply;
    }
+   setRuleFormFromRule(rule);
    modalRule.classList.remove('hidden');
   }
 
@@ -562,29 +563,82 @@ function openGrupoModal(gr = null) {
   // Rule buttons
   document.getElementById('new-rule-btn')?.addEventListener('click', () => openRuleModal());
   document.getElementById('cancel-rule')?.addEventListener('click', () => modalRule.classList.add('hidden'));
-  formRule.addEventListener('submit', async e => {
-    e.preventDefault();
-    const payload = {
-      id: formRule['rule-id'].value.trim(),
-	  name:	formRule['rule-nome'].value.trim(),
-      type: formRule['rule-type'].value,
-      pattern: formRule['rule-pattern'].value.trim(),
-      reply: formRule['rule-reply'].value.trim()
-    };
-    const url = '/api/admin/rules';
-    try { const res = await fetch(url, { method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeader() },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) throw new Error();
-      modalRule.classList.add('hidden');
-      showToast(isEditingRule ? 'Regra atualizada' : 'Regra criada');
-      carregarRegras();
-    } catch {
-      showToast('Falha ao salvar regra', false);
-   }
-  });
+  // === Helpers de Regra (modo + flags) ===
 
+// mapeia rule.type antigo -> mode novo quando rule.mode não vier
+function deriveModeFromRule(rule = {}) {
+  const type = String(rule.type || '').toLowerCase();
+  const mode = String(rule.mode || '').toLowerCase();
+  if (mode) return mode;
+  if (type === 'regex')   return 'regex';
+  if (type === 'keyword') return 'contains';
+  // type=message: se tiver pattern vira "exact", senão "all"
+  return rule.pattern ? 'exact' : 'all';
+}
+
+// Preenche os radios/checkboxes do modal com base na regra
+function setRuleFormFromRule(rule = {}) {
+  const mode = deriveModeFromRule(rule);
+  const radio = formRule.querySelector(`input[name="rule-mode"][value="${mode}"]`);
+  const defaultRadio = formRule.querySelector('input[name="rule-mode"][value="contains"]');
+  if (radio) radio.checked = true;
+  else if (defaultRadio) defaultRadio.checked = true;
+
+  const flags = (rule.flags && typeof rule.flags === 'object') ? rule.flags : {};
+  const chkCase   = formRule.querySelector('#rule-flag-case');
+  const chkAccent = formRule.querySelector('#rule-flag-accent');
+  if (chkCase)   chkCase.checked   = !!flags.caseSensitive;
+  if (chkAccent) chkAccent.checked = !!flags.accentSensitive;
+}
+
+// Monta o payload da regra a partir do form (compat c/ type antigo)
+function getRuleFormPayload(form) {
+  const pattern = form['rule-pattern'].value.trim();
+  const reply   = form['rule-reply'].value.trim();
+  const enabled = form['rule-enabled'] ? form['rule-enabled'].checked : true;
+
+  const mode = (form.querySelector('input[name="rule-mode"]:checked')?.value) || 'contains';
+  const flags = {
+    caseSensitive:   form.querySelector('#rule-flag-case')?.checked || false,
+    accentSensitive: form.querySelector('#rule-flag-accent')?.checked || false,
+  };
+
+  // compat: preenche 'type' antigo (API ainda aceita)
+  let type = 'message';
+  if (mode === 'regex')      type = 'regex';
+  else if (mode === 'contains') type = 'keyword';
+
+  return {
+    id:      form['rule-id']?.value || undefined,
+    name:    form['rule-nome']?.value?.trim() || '',
+    type,         // legado
+    mode,         // novo (será usado pelo backend)
+    pattern,
+    reply,
+    enabled,
+    flags,
+    // se você tiver no formulário: active_hours, external_webhook, etc, adicione aqui
+  };
+}
+
+formRule.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const payload = getRuleFormPayload(formRule);
+  try {
+    const res = await adminFetch('/api/admin/rules', {
+      method: 'POST', // upsert no backend (POST/PUT ambos funcionam)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(await res.text().catch(()=>''));    
+    modalRule.classList.add('hidden');
+    showToast(isEditingRule ? 'Regra atualizada' : 'Regra criada');
+    carregarRegras();
+  } catch (err) {
+    console.error(err);
+    showToast('Falha ao salvar regra', false);
+  }
+});
   // Webhooks
   document.getElementById('new-hook-btn')?.addEventListener('click', () => openHookModal());
   document.getElementById('cancel-hook')?.addEventListener('click', () => modalHook.classList.add('hidden'));

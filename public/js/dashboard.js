@@ -167,6 +167,25 @@ function updateChartFor(rangeKey, rawData) {
     }
     return { Authorization: `Basic ${token}` };
   }
+  
+async function adminFetch(url, opts = {}) {
+  const res = await fetch(url, {
+    ...opts,
+    headers: { ...(opts.headers || {}), ...authHeader() },
+  });
+
+  if (res.status === 401) {
+    // credencial mudou? limpa e pede de novo
+    localStorage.removeItem('ADMIN_BASIC');
+    const res2 = await fetch(url, {
+      ...opts,
+      headers: { ...(opts.headers || {}), ...authHeader() },
+    });
+    return res2;
+  }
+  return res;
+}
+
   async function uploadImagem(file, prefix='uploads') {
     const fd = new FormData();
     fd.append('file', file);
@@ -292,7 +311,7 @@ function openProdutoModal(prod = null) {
    window.grupos.forEach(g => {
      const opt = document.createElement('option');
      opt.value = g.id;
-     opt.textContent = g.name;
+     opt.textContent = g.nome || g.name;
      sel.appendChild(opt);
    });
    sel.value = prod?.grupo || '';
@@ -378,10 +397,11 @@ function openGrupoModal(gr = null) {
 	  headers: JSON.parse(formHook['hook-headers'].value)
     };
     const url = '/api/admin/webhooks';
-    try { const res = await fetch(url, { method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeader() },
-        body: JSON.stringify(payload)
-      });
+    try { const res = await adminFetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+  });
       if (!res.ok) throw new Error();
       modalHook.classList.add('hidden');
       showToast(isEditingHook ? 'Webhook atualizado' : 'Webhook criado');
@@ -396,28 +416,32 @@ function openGrupoModal(gr = null) {
   const formProduto  = document.getElementById('form-produto');
   document.getElementById('new-produto-btn')?.addEventListener('click', () => openProdutoModal());
   document.getElementById('cancel-produto')?.addEventListener('click', () => modalProduto.classList.add('hidden'));
-  formProduto.addEventListener('submit', async e => {
-    e.preventDefault();
-    const payload = {
-	  id: formProduto['produto-id'].value.trim(),
-      nome: formProduto['produto-nome'].value.trim(),
-      descricao: formProduto['produto-descricao'].value.trim(),
-	  grupo:   formProduto['produto-group'].value || null,
-      preco: parseFloat(formProduto['produto-preco'].value),
-	  grupo:   formProduto['produto-group'].value || null
-    };
-	const url = '/api/products';
-    const res = await fetch(url, { method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeader() },
-      body: JSON.stringify(payload)
+formProduto.addEventListener('submit', async e => {
+  e.preventDefault();
+  const payload = {
+    id:        formProduto['produto-id'].value.trim(),
+    nome:      formProduto['produto-nome'].value.trim(),
+    descricao: formProduto['produto-descricao'].value.trim(),
+    grupo:     formProduto['produto-group'].value || null,
+    preco:     (parseFloat(formProduto['produto-preco'].value) || null),
+  };
+  const url = '/api/products';
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     });
     if (res.ok) {
       showToast(isEditingProduto ? 'Produto atualizado' : 'Produto criado');
       modalProduto.classList.add('hidden');
       carregarProdutos();
       carregarDashboard();
-	} else { showToast(isEditingProduto ? 'Erro ao atualizar produto' : 'Erro ao criar produto', false);
-	  return;
+    } else {
+      showToast(isEditingProduto ? 'Erro ao atualizar produto' : 'Erro ao criar produto', false);
+    }
+	} catch {
+    showToast('Erro de rede ao salvar produto', false);
 	}
   });
 
@@ -434,15 +458,8 @@ function openGrupoModal(gr = null) {
      url:  formDownload['download-url'].value.trim(),
 	 description: formDownload['download-descricao'].value.trim()
    };
-	const url    = isEditingDownload
-                ? `/api/downloads/${encodeURIComponent(editingDownloadId)}`
-                : '/api/downloads';
-	const method = isEditingDownload ? 'PUT' : 'POST';
-	const res = await fetch(url, {
-		method,
-      headers: { 'Content-Type': 'application/json', ...authHeader() },
-      body: JSON.stringify(payload)
-    });
+	const url    = '/api/downloads';
+	const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     if (res.ok) {
       showToast(isEditingDownload ? 'Aplicativo atualizado' : 'Aplicativo criado');
       modalDownload.classList.add('hidden');
@@ -458,31 +475,32 @@ function openGrupoModal(gr = null) {
   const formGrupo  = document.getElementById('form-grupo');
   document.getElementById('new-grupo-btn')?.addEventListener('click', () => openGrupoModal());
   document.getElementById('cancel-grupo')?.addEventListener('click', () => modalGrupo.classList.add('hidden'));
-  formGrupo.addEventListener('submit', async e => {
-    e.preventDefault();
-    const payload = { 
-	id:   formGrupo['grupo-id'].value.trim(),
-	nome: formGrupo['grupo-nome'].value.trim(),
-	descricao: formGrupo['grupo-descricao'].value.trim()	
-	};
-	const url    = isEditingGrupo
-                ? `/api/groups/${editingGrupoId}`
-                : '/api/groups';
-	const method = isEditingGrupo ? 'PUT' : 'POST';
-	const res = await fetch(url, {
-		method,
-      headers: { 'Content-Type': 'application/json', ...authHeader() },
-      body: JSON.stringify(payload)
+	formGrupo.addEventListener('submit', async e => {
+	e.preventDefault();
+	const payload = {
+		id:        formGrupo['grupo-id'].value.trim(),
+		nome:      formGrupo['grupo-nome'].value.trim(),
+		descricao: formGrupo['grupo-descricao'].value.trim(),
+  };
+	const url = '/api/groups';
+	try {
+    const res = await fetch(url, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(payload),
     });
     if (res.ok) {
-      showToast(isEditingGrupo ? 'Grupo atualizado' : 'Grupo criado');
-      modalGrupo.classList.add('hidden');
-      carregarGrupos();
-      carregarDashboard();
-    } else { showToast(isEditingGrupo ? 'Erro ao atualizar grupo' : 'Erro ao criar grupo', false);
-	  return;
-	}
-  });
+		showToast(isEditingGrupo ? 'Grupo atualizado' : 'Grupo criado');
+		modalGrupo.classList.add('hidden');
+		carregarGrupos();
+		carregarDashboard();
+  } else {
+		showToast(isEditingGrupo ? 'Erro ao atualizar grupo' : 'Erro ao criar grupo', false);
+    }
+  } catch {
+		showToast('Erro de rede ao salvar grupo', false);
+  }
+});
 
   // ─── Tab Switching com lazy-load ─────────────────────────────────────────────
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -568,7 +586,7 @@ async function carregarDashboard() {
   // ─── Regras ─────────────────────────────────────────────────────────────────────
  async function carregarRegras() {
   try {
-    const res = await fetch('/api/admin/rules', { headers: authHeader() });
+    const res = await adminFetch('/api/admin/rules');
     const regras = await res.json();
     const cont = document.getElementById('regras-lista');
     cont.innerHTML = '';
@@ -602,7 +620,11 @@ async function carregarDashboard() {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
           if (!confirm(`Excluir regra "${id}"?`)) return;
-          await fetch('/api/admin/rules', { method: 'DELETE', headers: { ...authHeader(), 'Content-Type':'application/json' }, body: JSON.stringify({ id }) });
+          await adminFetch('/api/admin/rules', {
+			method: 'DELETE',
+			headers: { 'Content-Type':'application/json' },
+			body: JSON.stringify({ id }),
+  });
           carregarRegras();
           showToast('Regra excluída');
         });
@@ -615,7 +637,7 @@ async function carregarDashboard() {
 // ─── Webhooks ──────────────────────────────────────────────────────────────────
 async function carregarWebhooks() {
   try {
-    const res = await fetch('/api/admin/webhooks', { headers: authHeader() });
+    const res = await adminFetch('/api/admin/webhooks');
     const hooks = await res.json();
     const cont = document.getElementById('webhooks-lista');
     cont.innerHTML = '';
@@ -650,7 +672,11 @@ async function carregarWebhooks() {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
           if (!confirm(`Excluir webhook "${id}"?`)) return;
-          await fetch('/api/admin/webhooks', { method: 'DELETE', headers: { ...authHeader(), 'Content-Type':'application/json' }, body: JSON.stringify({ id }) });
+          await adminFetch('/api/admin/webhooks', {
+			method: 'DELETE',
+			headers: { 'Content-Type':'application/json' },
+			body: JSON.stringify({ id }),
+  });
           carregarWebhooks();
           showToast('Webhook excluído');
         });
@@ -669,7 +695,7 @@ async function carregarWebhooks() {
       cont.innerHTML = '';
       produtos.forEach(p => {
 		const grp = window.grupos?.find(g => String(g.id) === String(p.grupo));
-		const groupName = grp ? grp.name || grp.nome : 'Sem grupo';
+		const groupName = grp ? (grp.nome || grp.name) : 'Sem grupo';
         const card = document.createElement('div');
         card.className = 'product-card bg-white p-4 rounded shadow mb-3';
         card.innerHTML = `
@@ -733,19 +759,20 @@ async function carregarWebhooks() {
           form.append('id', id);
           try {
             const up = await fetch('/api/upload-image', { method: 'POST', body: form });
-            const info = await up.json();
-            if (info.success) {
-              await fetch(`/api/products/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', ...authHeader() },
-                body: JSON.stringify({ imagem: info.filename })
-              });
-              showToast('Imagem atualizada');
-              carregarProdutos();
-              carregarDashboard();
-            } else showToast(info.error||'Erro upload', false);
-          } catch {
-            showToast('Erro de rede', false);
+			const info = await up.json();
+			if (info && info.url) {
+			await fetch('/api/products', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ id, imagem: info.url }),
+			});
+				showToast('Imagem atualizada');
+				carregarProdutos();
+				carregarDashboard();
+			} else {
+				showToast(info?.error || 'Erro upload', false);
+			} catch {
+				showToast('Erro de rede', false);
           }
         });
       });
@@ -756,15 +783,12 @@ async function carregarWebhooks() {
           const id = btn.dataset.id;
           const img = document.querySelector(`input[data-field=imagem][data-id="${id}"]`).value.trim();
           const link = document.querySelector(`input[data-field=link][data-id="${id}"]`).value.trim();
-          const upd = {};
+          const upd = { id };          // garantir o id no body
           if (img) upd.imagem = img;
           if (link) upd.link = link;
           if (!Object.keys(upd).length) { showToast('Nada para salvar', false); return; }
           try {
-            const res = await fetch('/api/products', { method: 'POST',
-              headers: { 'Content-Type': 'application/json', ...authHeader() },
-              body: JSON.stringify(upd)
-            });
+            const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(upd) });
             if (res.ok) {
               showToast('Produto salvo');
               carregarProdutos();
@@ -854,12 +878,12 @@ async function carregarWebhooks() {
         try {
           const up = await fetch('/api/upload-image', { method: 'POST', body: form });
           const info = await up.json();
-          if (!info.success) throw new Error(info.error || 'Erro upload');
-          const resImg = await fetch(`/api/downloads/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', ...authHeader() },
-            body: JSON.stringify({ imagem: info.filename })
-          });
+          if (!info.url) throw new Error(info.error || 'Erro upload');
+		  const resImg = await fetch('/api/downloads', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ id, imagem: info.url })
+		});
           if (!resImg.ok) throw new Error();
           showToast('Imagem atualizada');
           carregarDownloads();
@@ -876,14 +900,11 @@ async function carregarWebhooks() {
         const id  = btn.dataset.id;
         const url = document.querySelector(`input[data-field=url][data-id="${id}"]`).value.trim();
         const img = document.querySelector(`input[data-field=imagem][data-id="${id}"]`).value.trim();
-		const upd = {};
+		const upd = { id };
 		if (url) upd.url = url;
 		if (img) upd.imagem = img;
         try {
-          const resUpd = await fetch('/api/downloads', { method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...authHeader() },
-            body: JSON.stringify(upd)
-          });
+          const resUpd = await fetch('/api/downloads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(upd) });
           if (!resUpd.ok) throw new Error();
           showToast('Aplicativo salvo');
           carregarDownloads();
@@ -955,31 +976,33 @@ async function carregarGrupos() {
 });
 
       // Upload imagem
-      cont.querySelectorAll('input[type=file][data-type=grupo]').forEach(inp => {
-        inp.addEventListener('change', async e => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const id = e.target.dataset.id;
-          const form = new FormData();
-          form.append('file', file);
-          form.append('type', 'grupo');
-          form.append('id', id);
-          try {
-            const up = await fetch('/api/upload-image', { method: 'POST', body: form });
-            const info = await up.json();
-            if (info.success) {
-              await fetch(`/api/groups/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', ...authHeader() },
-                body: JSON.stringify({ imagem: info.filename })
-              });
-              showToast('Imagem atualizada');
-              carregarGrupos();
-              carregarDashboard();
-            } else showToast('Erro upload', false);
-          } catch {
-            showToast('Erro rede', false);
-          }
+	cont.querySelectorAll('input[type=file][data-type=grupo]').forEach(inp => {
+	inp.addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const id = e.target.dataset.id;
+    const form = new FormData();
+    form.append('file', file);
+    form.append('type', 'grupo');
+    form.append('id', id);
+    try {
+      const up = await fetch('/api/upload-image', { method: 'POST', body: form });
+      const info = await up.json();
+      if (info && info.url) {
+        await fetch('/api/groups', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, imagem: info.url }),
+        });
+        showToast('Imagem atualizada');
+        carregarGrupos();
+        carregarDashboard();
+      } else {
+        showToast('Erro upload', false);
+      }
+    } catch {
+      showToast('Erro rede', false);
+    }
         });
       });
 
@@ -988,13 +1011,10 @@ async function carregarGrupos() {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
           const img = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`).value.trim();
-		  const body = {};
+		  const body = { id };
 		  if (img) body.imagem = img;
           try {
-            const res = await fetch('/api/groups', { method: 'POST',
-              headers: { 'Content-Type': 'application/json', ...authHeader() },
-              body: JSON.stringify(body)
-            });
+            const res = await fetch('/api/groups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             if (res.ok) {
               showToast('Grupo salvo');
               carregarGrupos();

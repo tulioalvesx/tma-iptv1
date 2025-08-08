@@ -143,6 +143,39 @@ function updateChartFor(rangeKey, rawData) {
     setTimeout(() => { toastEl.style.opacity = "0"; }, 2200);
   }
 
+  
+  // === API helpers (Supabase + Vercel) ===
+  function apiFetch(path, opts = {}) {
+    const headers = { ...(opts.headers || {}) };
+    const hasBody = !!opts.body;
+    const isForm  = (hasBody && (typeof FormData !== 'undefined') && (opts.body instanceof FormData));
+    if (hasBody && !isForm) headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+    return fetch(path, { ...opts, headers }).then(async (r) => {
+      const data = await r.json().catch(()=> ({}));
+      if (!r.ok) throw new Error(data?.error || `HTTP ${r.status}`);
+      return data;
+    });
+  }
+  function authHeader() {
+    const key = 'ADMIN_BASIC';
+    let token = localStorage.getItem(key);
+    if (!token) {
+      const u = prompt('Usuário admin:');
+      const p = prompt('Senha admin:');
+      token = btoa(`${u}:${p}`);
+      localStorage.setItem(key, token);
+    }
+    return { Authorization: `Basic ${token}` };
+  }
+  async function uploadImagem(file, prefix='uploads') {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('prefix', prefix);
+    const r = await fetch('/api/upload-image', { method: 'POST', body: fd });
+    if (!r.ok) throw new Error('Falha no upload');
+    return r.json(); // { url, path }
+  }
+
   function normalizeImagem(im) {
     if (!im) return "";
     if (im.startsWith("http") || im.startsWith("/")) {
@@ -262,7 +295,7 @@ function openProdutoModal(prod = null) {
      opt.textContent = g.name;
      sel.appendChild(opt);
    });
-   sel.value = prod?.groupId || '';
+   sel.value = prod?.grupo || '';
   if (prod) {
     formProduto['produto-nome'].value      = prod.nome;
     formProduto['produto-descricao'].value = prod.descricao;
@@ -319,13 +352,9 @@ function openGrupoModal(gr = null) {
       pattern: formRule['rule-pattern'].value.trim(),
       reply: formRule['rule-reply'].value.trim()
     };
-    const url = isEditingRule
-      ? `/api/admin/rules/${encodeURIComponent(editingRuleId)}`
-      : '/api/admin/rules';
-    try {
-      const res = await fetch(url, {
-        method: isEditingRule ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+    const url = '/api/admin/rules';
+    try { const res = await fetch(url, { method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error();
@@ -348,13 +377,9 @@ function openGrupoModal(gr = null) {
 	  url: formHook['hook-url'].value.trim(),
 	  headers: JSON.parse(formHook['hook-headers'].value)
     };
-    const url = isEditingHook
-      ? `/api/admin/webhooks/${encodeURIComponent(editingHookId)}`
-      : '/api/admin/webhooks';
-    try {
-      const res = await fetch(url, {
-        method: isEditingHook ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+    const url = '/api/admin/webhooks';
+    try { const res = await fetch(url, { method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error();
@@ -377,17 +402,13 @@ function openGrupoModal(gr = null) {
 	  id: formProduto['produto-id'].value.trim(),
       nome: formProduto['produto-nome'].value.trim(),
       descricao: formProduto['produto-descricao'].value.trim(),
-	  groupId:   formProduto['produto-group'].value || null,
+	  grupo:   formProduto['produto-group'].value || null,
       preco: parseFloat(formProduto['produto-preco'].value),
-	  groupId:   formProduto['produto-group'].value || null
+	  grupo:   formProduto['produto-group'].value || null
     };
-	const url    = isEditingProduto
-                ? `/api/products/${encodeURIComponent(editingProdutoId)}`
-                : '/api/products';
-	const method = isEditingProduto ? 'PUT' : 'POST';
-	const res = await fetch(url, {
-		method,
-      headers: { 'Content-Type': 'application/json' },
+	const url = '/api/products';
+    const res = await fetch(url, { method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(payload)
     });
     if (res.ok) {
@@ -419,7 +440,7 @@ function openGrupoModal(gr = null) {
 	const method = isEditingDownload ? 'PUT' : 'POST';
 	const res = await fetch(url, {
 		method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(payload)
     });
     if (res.ok) {
@@ -450,7 +471,7 @@ function openGrupoModal(gr = null) {
 	const method = isEditingGrupo ? 'PUT' : 'POST';
 	const res = await fetch(url, {
 		method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(payload)
     });
     if (res.ok) {
@@ -517,22 +538,37 @@ function openGrupoModal(gr = null) {
   });
 
   // ─── Dashboard ─────────────────────────────────────────────────────────────────
-  async function carregarDashboard() {
-    try {
-      const [pRes,gRes,dRes,aRes] = await Promise.all([fetch('/api/products'),fetch('/api/groups'),fetch('/api/downloads'),fetch('/api/analytics')]);
-      const produtos = await pRes.json(), grupos = await gRes.json(), downloads = await dRes.json(), analytics = await aRes.json();
-      document.getElementById('total-produtos').textContent = produtos.length||0;
-      document.getElementById('total-downloads').textContent = (downloads.files||[]).length;
-      document.getElementById('total-grupos').textContent = grupos.length||0;
-      document.getElementById('acessos-hoje').textContent = analytics.hoje||0;
-      updateChartFor(currentRange, analytics.dias||[]);
-	} catch (e) { console.error(e); showToast('Falha ao carregar dashboard',false); }
+  
+async function carregarDashboard() {
+  try {
+    const [produtos, grupos, downloads, analytics] = await Promise.all([
+      apiFetch('/api/products'),
+      apiFetch('/api/groups'),
+      apiFetch('/api/downloads'),
+      apiFetch('/api/analytics')
+    ]);
+
+    document.getElementById('total-produtos').textContent  = Array.isArray(produtos) ? produtos.length : 0;
+    document.getElementById('total-downloads').textContent = Array.isArray(downloads) ? downloads.length : 0;
+    document.getElementById('total-grupos').textContent    = Array.isArray(grupos) ? grupos.length : 0;
+
+    const arr = (Array.isArray(analytics) ? analytics : []).map(r => ({ dia: r.day || r.dia, total: r.total || 0 }));
+    const today = new Date().toISOString().slice(0,10);
+    const hoje  = arr.find(x => (x.dia||'').slice(0,10) === today)?.total || 0;
+    const v = document.getElementById('acessos-hoje'); if (v) v.textContent = hoje;
+
+    updateChartFor(currentRange, arr);
+  } catch (e) {
+    console.error(e);
+    showToast('Falha ao carregar dashboard', false);
   }
+}
+
 
   // ─── Regras ─────────────────────────────────────────────────────────────────────
  async function carregarRegras() {
   try {
-    const res = await fetch('/api/admin/rules');
+    const res = await fetch('/api/admin/rules', { headers: authHeader() });
     const regras = await res.json();
     const cont = document.getElementById('regras-lista');
     cont.innerHTML = '';
@@ -566,7 +602,7 @@ function openGrupoModal(gr = null) {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
           if (!confirm(`Excluir regra "${id}"?`)) return;
-          await fetch(`/api/admin/rules/${id}`, { method: 'DELETE' });
+          await fetch('/api/admin/rules', { method: 'DELETE', headers: { ...authHeader(), 'Content-Type':'application/json' }, body: JSON.stringify({ id }) });
           carregarRegras();
           showToast('Regra excluída');
         });
@@ -579,7 +615,7 @@ function openGrupoModal(gr = null) {
 // ─── Webhooks ──────────────────────────────────────────────────────────────────
 async function carregarWebhooks() {
   try {
-    const res = await fetch('/api/admin/webhooks');
+    const res = await fetch('/api/admin/webhooks', { headers: authHeader() });
     const hooks = await res.json();
     const cont = document.getElementById('webhooks-lista');
     cont.innerHTML = '';
@@ -614,7 +650,7 @@ async function carregarWebhooks() {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
           if (!confirm(`Excluir webhook "${id}"?`)) return;
-          await fetch(`/api/admin/webhooks/${id}`, { method: 'DELETE' });
+          await fetch('/api/admin/webhooks', { method: 'DELETE', headers: { ...authHeader(), 'Content-Type':'application/json' }, body: JSON.stringify({ id }) });
           carregarWebhooks();
           showToast('Webhook excluído');
         });
@@ -632,7 +668,7 @@ async function carregarWebhooks() {
       const cont = document.getElementById('produtos-lista');
       cont.innerHTML = '';
       produtos.forEach(p => {
-		const grp = window.grupos?.find(g => String(g.id) === String(p.groupId));
+		const grp = window.grupos?.find(g => String(g.id) === String(p.grupo));
 		const groupName = grp ? grp.name || grp.nome : 'Sem grupo';
         const card = document.createElement('div');
         card.className = 'product-card bg-white p-4 rounded shadow mb-3';
@@ -678,7 +714,7 @@ async function carregarWebhooks() {
    cont.querySelectorAll('.btn-delete-produto').forEach(btn => {
      btn.addEventListener('click', async () => {
        if (!confirm('Excluir produto?')) return;
-       await fetch(`/api/products/${btn.dataset.id}`, { method: 'DELETE' });
+       await fetch('/api/products', { method: 'DELETE', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ id: btn.dataset.id }) });
        showToast('Produto excluído');
        carregarProdutos();
        carregarDashboard();
@@ -692,7 +728,7 @@ async function carregarWebhooks() {
           if (!file) return;
           const id = e.target.dataset.id;
           const form = new FormData();
-          form.append('image', file);
+          form.append('file', file);
           form.append('type', 'produto');
           form.append('id', id);
           try {
@@ -701,7 +737,7 @@ async function carregarWebhooks() {
             if (info.success) {
               await fetch(`/api/products/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeader() },
                 body: JSON.stringify({ imagem: info.filename })
               });
               showToast('Imagem atualizada');
@@ -725,9 +761,8 @@ async function carregarWebhooks() {
           if (link) upd.link = link;
           if (!Object.keys(upd).length) { showToast('Nada para salvar', false); return; }
           try {
-            const res = await fetch(`/api/products/${id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
+            const res = await fetch('/api/products', { method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...authHeader() },
               body: JSON.stringify(upd)
             });
             if (res.ok) {
@@ -753,7 +788,7 @@ async function carregarWebhooks() {
       const data = await res.json();
       const cont = document.getElementById('downloads-lista');
       cont.innerHTML = '';
-      const files = data.files||[];
+      const files = Array.isArray(data) ? data : [];
 	window.downloads = files;
 
       files.forEach(d => {
@@ -795,7 +830,7 @@ async function carregarWebhooks() {
       btn.addEventListener('click', async () => {
         if (!confirm('Excluir aplicativo?')) return;
         try {
-          const resDel = await fetch(`/api/downloads/${btn.dataset.id}`, { method: 'DELETE' });
+          const resDel = await fetch('/api/downloads', { method: 'DELETE', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ id: btn.dataset.id }) });
           if (!resDel.ok) throw new Error();
           showToast('Aplicativo excluído');
           carregarDownloads();
@@ -813,7 +848,7 @@ async function carregarWebhooks() {
         if (!file) return;
         const id = e.target.dataset.id;
         const form = new FormData();
-        form.append('image', file);
+        form.append('file', file);
         form.append('type', 'download');
         form.append('id', id);
         try {
@@ -822,7 +857,7 @@ async function carregarWebhooks() {
           if (!info.success) throw new Error(info.error || 'Erro upload');
           const resImg = await fetch(`/api/downloads/${id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...authHeader() },
             body: JSON.stringify({ imagem: info.filename })
           });
           if (!resImg.ok) throw new Error();
@@ -845,9 +880,8 @@ async function carregarWebhooks() {
 		if (url) upd.url = url;
 		if (img) upd.imagem = img;
         try {
-          const resUpd = await fetch(`/api/downloads/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+          const resUpd = await fetch('/api/downloads', { method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeader() },
             body: JSON.stringify(upd)
           });
           if (!resUpd.ok) throw new Error();
@@ -913,7 +947,7 @@ async function carregarGrupos() {
 	  cont.querySelectorAll('.btn-delete-grupo').forEach(btn => {
 	  btn.addEventListener('click', async () => {
       if (!confirm('Excluir grupo?')) return;
-      await fetch(`/api/groups/${btn.dataset.id}`, { method: 'DELETE' });
+      await fetch('/api/groups', { method: 'DELETE', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ id: btn.dataset.id }) });
       showToast('Grupo excluído');
       carregarGrupos();
       carregarDashboard();
@@ -927,7 +961,7 @@ async function carregarGrupos() {
           if (!file) return;
           const id = e.target.dataset.id;
           const form = new FormData();
-          form.append('image', file);
+          form.append('file', file);
           form.append('type', 'grupo');
           form.append('id', id);
           try {
@@ -936,7 +970,7 @@ async function carregarGrupos() {
             if (info.success) {
               await fetch(`/api/groups/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeader() },
                 body: JSON.stringify({ imagem: info.filename })
               });
               showToast('Imagem atualizada');
@@ -957,9 +991,8 @@ async function carregarGrupos() {
 		  const body = {};
 		  if (img) body.imagem = img;
           try {
-            const res = await fetch(`/api/groups/${id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
+            const res = await fetch('/api/groups', { method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...authHeader() },
               body: JSON.stringify(body)
             });
             if (res.ok) {
@@ -992,9 +1025,7 @@ async function carregarGrupos() {
     btn.classList.replace('text-gray-700','text-white');
     const rangeKey = btn.id.replace('filter-',''); // dia | semana | mes | ano
     // recarrega todos os dados (ou use um cache de analytics.dias)
-    const res = await fetch('/api/analytics?full=true');
-    const { dias } = await res.json();
-    updateChartFor(rangeKey, dias);
+    const dias = await apiFetch('/api/analytics'); updateChartFor(rangeKey, (dias||[]).map(r => ({ dia: r.day||r.dia, total: r.total||0 })));
 	});
   });
 });

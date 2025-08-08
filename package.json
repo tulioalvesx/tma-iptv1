@@ -1,13 +1,18 @@
 {
   "name": "tma-iptv",
   "version": "1.0.0",
-  "description": "TMA IPTV PREMIUM - frontend + backend para Render",
+  "description": "TMA IPTV PREMIUM",
+  "type": "commonjs",
   "main": "server.js",
+  "private": true,
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+	"@supabase/supabase-js": "^2.45.0",
+    "formidable": "^3.5.0",
+    "uuid": "^9.0.1"
   }
 }

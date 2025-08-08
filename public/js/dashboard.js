@@ -748,34 +748,37 @@ async function carregarWebhooks() {
    });
 
       // Upload actions
-      cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
-        inp.addEventListener('change', async e => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const id = e.target.dataset.id;
-          const form = new FormData();
-          form.append('file', file);
-          form.append('type', 'produto');
-          form.append('id', id);
-          try {
-            const up = await fetch('/api/upload-image', { method: 'POST', body: form });
-			const info = await up.json();
-			if (info && info.url) {
-			await fetch('/api/products', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ id, imagem: info.url }),
-			});
-				showToast('Imagem atualizada');
-				carregarProdutos();
-				carregarDashboard();
-			} else {
-				showToast(info?.error || 'Erro upload', false);
-			} catch {
-				showToast('Erro de rede', false);
-          }
+cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
+  inp.addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const id = e.target.dataset.id;
+
+    const form = new FormData();
+    form.append('file', file);
+    form.append('type', 'produto');
+    form.append('id', id);
+
+    try {
+      const up = await fetch('/api/upload-image', { method: 'POST', body: form });
+      const info = await up.json();
+      if (info && info.url) {
+        await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, imagem: info.url }),
         });
-      });
+        showToast('Imagem atualizada');
+        carregarProdutos();
+        carregarDashboard();
+      } else {
+        showToast(info?.error || 'Erro upload', false);
+      }
+    } catch {
+      showToast('Erro de rede', false);
+    }
+  });
+});
 
       // Inline Save
       cont.querySelectorAll('.btn-save-produto').forEach(btn => {

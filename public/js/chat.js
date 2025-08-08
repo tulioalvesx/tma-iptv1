@@ -1,90 +1,154 @@
 /* chat.js
- * Implements a floating chatbot widget with persistent state and outside-click handling.
+ * Chat flutuante com estado persistente e fallback de API (POST -> GET).
  */
 document.addEventListener('DOMContentLoaded', () => {
-  const toggle = document.getElementById('chat-toggle');
-  const widget = document.getElementById('chat-widget');
-  const messagesEl = document.getElementById('chat-messages');
-  const inputEl = document.getElementById('chat-input');
-  const sendBtn = document.getElementById('chat-send');
+  const els = {
+    toggle:   document.getElementById('chat-toggle'),
+    widget:   document.getElementById('chat-widget'),
+    messages: document.getElementById('chat-messages'),
+    input:    document.getElementById('chat-input'),
+    send:     document.getElementById('chat-send'),
+  };
 
-  if (!toggle || !widget) return;
+  // Elementos obrigatórios
+  if (!els.toggle || !els.widget || !els.messages || !els.input || !els.send) return;
 
-  // Load open/closed state
-  const isOpen = localStorage.getItem('chatOpen') === 'true';
-  widget.style.display = isOpen ? 'flex' : 'none';
+  const STORE_OPEN = 'chatOpen';
+  const STORE_MSGS = 'chatMessages';
+  const MAX_MSGS   = 200;
+  let sending = false;
 
-  // Load previous messages
-  const stored = localStorage.getItem('chatMessages');
-  if (stored) {
+  // ---- Estado aberto/fechado
+  const isOpen = localStorage.getItem(STORE_OPEN) === 'true';
+  setOpen(isOpen);
+
+  function setOpen(open) {
+    els.widget.style.display = open ? 'flex' : 'none';
+    localStorage.setItem(STORE_OPEN, String(open));
+  }
+
+  els.toggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setOpen(els.widget.style.display !== 'flex');
+  });
+
+  // Fecha ao clicar fora
+  document.addEventListener('click', (e) => {
+    if (els.widget.style.display === 'flex' &&
+        !els.widget.contains(e.target) &&
+        e.target !== els.toggle) {
+      setOpen(false);
+    }
+  });
+
+  // Não propagar clique dentro do widget
+  els.widget.addEventListener('click', (e) => e.stopPropagation());
+
+  // ---- Histórico
+  loadMessages();
+
+  function loadMessages() {
+    const stored = localStorage.getItem(STORE_MSGS);
+    if (!stored) return;
     try {
       const msgs = JSON.parse(stored);
       msgs.forEach(m => appendMessage(m.text, m.from, false));
+      // sempre mantém no máximo MAX_MSGS
+      if (Array.isArray(msgs) && msgs.length > MAX_MSGS) {
+        localStorage.setItem(STORE_MSGS, JSON.stringify(msgs.slice(-MAX_MSGS)));
+      }
     } catch (e) {
-      console.error('Erro ao ler chatMessages do localStorage', e);
+      console.error('Erro ao ler histórico do chat', e);
     }
   }
 
-  // Toggle chat window
-  toggle.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const open = widget.style.display === 'flex';
-    widget.style.display = open ? 'none' : 'flex';
-    localStorage.setItem('chatOpen', !open);
-  });
-
-  // Click outside to close
-  document.addEventListener('click', (e) => {
-    if (widget.style.display === 'flex' &&
-        !widget.contains(e.target) &&
-        e.target !== toggle) {
-      widget.style.display = 'none';
-      localStorage.setItem('chatOpen', false);
+  function persist(text, from) {
+    try {
+      const msgs = JSON.parse(localStorage.getItem(STORE_MSGS) || '[]');
+      msgs.push({ text, from });
+      // corta para os últimos MAX_MSGS
+      const trimmed = msgs.slice(-MAX_MSGS);
+      localStorage.setItem(STORE_MSGS, JSON.stringify(trimmed));
+    } catch (e) {
+      console.error('Erro ao salvar histórico do chat', e);
     }
-  });
+  }
 
-  // Prevent clicks inside widget from closing
-  widget.addEventListener('click', (e) => {
-    e.stopPropagation();
-  });
+  // ---- UI
+  function appendMessage(text, from = 'bot', save = true) {
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${from}`;
+    bubble.textContent = text; // textContent por segurança (evita XSS)
+    els.messages.appendChild(bubble);
+    els.messages.scrollTop = els.messages.scrollHeight;
+    if (save) persist(text, from);
+  }
 
-  // Send message handlers
-  sendBtn.addEventListener('click', sendMessage);
-  inputEl.addEventListener('keypress', (e) => {
+  // ---- Envio
+  els.send.addEventListener('click', sendMessage);
+  els.input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       sendMessage();
     }
   });
 
-  // Append message to chat and optionally save
-  function appendMessage(text, from, save = true) {
-    const bubble = document.createElement('div');
-    bubble.className = `chat-bubble ${from}`;
-    bubble.textContent = text;
-    messagesEl.appendChild(bubble);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-    if (save) {
-      const msgs = JSON.parse(localStorage.getItem('chatMessages') || '[]');
-      msgs.push({ text, from });
-      localStorage.setItem('chatMessages', JSON.stringify(msgs));
+  async function sendMessage() {
+    const message = (els.input.value || '').trim();
+    if (!message || sending) return;
+
+    appendMessage(message, 'user');
+    els.input.value = '';
+
+    sending = true;
+    els.send.disabled = true;
+    els.send.setAttribute('aria-busy', 'true');
+
+    try {
+      const { reply } = await callChatAPI(message);
+      appendMessage(reply || 'Não entendi. Pode reformular?', 'bot');
+    } catch (err) {
+      console.error(err);
+      appendMessage('Erro ao obter resposta do servidor.', 'bot');
+    } finally {
+      sending = false;
+      els.send.disabled = false;
+      els.send.removeAttribute('aria-busy');
     }
   }
 
-  // Send message to server and handle response
-  function sendMessage() {
-    const message = inputEl.value.trim();
-    if (!message) return;
-    appendMessage(message, 'user');
-    inputEl.value = '';
-    fetch(`/api/chat?message=${encodeURIComponent(message)}`)
-      .then(res => res.json())
-      .then(data => {
-        appendMessage(data.reply, 'bot');
-      })
-      .catch(err => {
-        console.error(err);
-        appendMessage('Erro ao obter resposta do servidor.', 'bot');
+  // ---- API client: tenta POST e cai para GET; tenta JSON e cai para texto
+  async function callChatAPI(text) {
+    // Preferência: POST /api/chat
+    try {
+      const r = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text })
       });
+      if (!r.ok) throw await buildHttpError(r);
+      const ct = r.headers.get('content-type') || '';
+      const data = ct.includes('application/json') ? await r.json() : { reply: await r.text() };
+      return normalizeReply(data);
+    } catch (e) {
+      // fallback: GET /api/chat?message=
+      const r = await fetch('/api/chat?message=' + encodeURIComponent(text));
+      if (!r.ok) throw await buildHttpError(r);
+      const ct = r.headers.get('content-type') || '';
+      const data = ct.includes('application/json') ? await r.json() : { reply: await r.text() };
+      return normalizeReply(data);
+    }
+  }
+
+  function normalizeReply(data) {
+    if (data && typeof data === 'object' && 'reply' in data) return { reply: String(data.reply ?? '') };
+    if (typeof data === 'string') return { reply: data };
+    return { reply: '...' };
+  }
+
+  async function buildHttpError(res) {
+    let body = '';
+    try { body = await res.text(); } catch {}
+    return new Error(`HTTP ${res.status} ${res.statusText}: ${body?.slice(0,200) || ''}`);
   }
 });

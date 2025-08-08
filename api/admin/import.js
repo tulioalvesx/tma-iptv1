@@ -1,7 +1,7 @@
 // api/admin/import.js
 const { createClient } = require('@supabase/supabase-js');
 
-// (opcional) reaproveite seu _auth.js se já tem
+// Reuse seu _auth.js se preferir; aqui vai um embutido simples:
 function requireBasicAuth(req, res) {
   const userEnv = (process.env.ADMIN_USER || '').trim();
   const passEnv = (process.env.ADMIN_PASS || '');
@@ -14,16 +14,14 @@ function requireBasicAuth(req, res) {
   const i = decoded.indexOf(':');
   const u = (i >= 0 ? decoded.slice(0, i) : decoded).trim();
   const p = i >= 0 ? decoded.slice(i + 1) : '';
-  if (!u || !p || u !== userEnv || p !== passEnv) {
+  if (u !== userEnv || p !== passEnv) {
     res.status(401).end('Invalid credentials.'); return false;
   }
   return true;
 }
 
-function getSb() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  return createClient(url, key, { auth: { persistSession: false }});
+function sb() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false }});
 }
 
 module.exports = async (req, res) => {
@@ -32,11 +30,13 @@ module.exports = async (req, res) => {
 
   try {
     const { groups = [], products = [], downloads = [] } = req.body || {};
+    const supabase = sb();
 
-    const sb = getSb();
-    // normaliza campos possíveis (groupId -> grupo, etc.)
     const normGroups = groups.map(g => ({
-      id: g.id, nome: g.nome ?? g.name ?? '', descricao: g.descricao ?? g.description ?? null, imagem: g.imagem ?? null
+      id: g.id,
+      nome: g.nome ?? g.name ?? '',
+      descricao: g.descricao ?? g.description ?? null,
+      imagem: g.imagem ?? null
     })).filter(g => g.id && g.nome);
 
     const normProducts = products.map(p => ({
@@ -51,34 +51,22 @@ module.exports = async (req, res) => {
     })).filter(p => p.id && p.nome);
 
     const normDownloads = downloads.map(d => ({
-      id: d.id ?? undefined, // deixa o Supabase gerar se não tiver
+      id: d.id ?? undefined, // deixa gerar se não vier
       name: d.name ?? d.nome ?? '',
       url: d.url,
       description: d.description ?? d.descricao ?? null,
       imagem: d.imagem ?? null
     })).filter(d => d.name && d.url);
 
-    // upsert em ordem: groups -> products -> downloads
-    if (normGroups.length) {
-      const { error } = await sb.from('groups').upsert(normGroups, { onConflict: 'id' });
-      if (error) throw error;
-    }
-    if (normProducts.length) {
-      const { error } = await sb.from('products').upsert(normProducts, { onConflict: 'id' });
-      if (error) throw error;
-    }
-    if (normDownloads.length) {
-      const { error } = await sb.from('downloads').upsert(normDownloads, { onConflict: 'id' });
-      if (error) throw error;
-    }
+    if (normGroups.length)   { const { error } = await supabase.from('groups').upsert(normGroups,   { onConflict: 'id' }); if (error) throw error; }
+    if (normProducts.length) { const { error } = await supabase.from('products').upsert(normProducts, { onConflict: 'id' }); if (error) throw error; }
+    if (normDownloads.length){ const { error } = await supabase.from('downloads').upsert(normDownloads,{ onConflict: 'id' }); if (error) throw error; }
 
-    res.json({
-      imported: {
-        groups: normGroups.length,
-        products: normProducts.length,
-        downloads: normDownloads.length
-      }
-    });
+    res.json({ imported: {
+      groups: normGroups.length,
+      products: normProducts.length,
+      downloads: normDownloads.length
+    }});
   } catch (e) {
     console.error('import error', e);
     res.status(500).json({ error: String(e.message || e) });

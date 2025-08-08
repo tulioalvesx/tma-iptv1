@@ -268,7 +268,7 @@ async function adminFetch(url, opts = {}) {
    modalRule.classList.remove('hidden');
   }
 
-// === Import JSON (admin) ===
+// === Import JSON (admin, seletivo) ===
 (function setupImportModal(){
   const btnOpen  = document.getElementById('btn-import-json');
   const modal    = document.getElementById('modal-import');
@@ -276,31 +276,158 @@ async function adminFetch(url, opts = {}) {
   const btnClose = document.getElementById('btn-cancel-import');
   const ta       = document.getElementById('import-json');
   const fileIn   = document.getElementById('import-file');
+  const kindSel  = document.getElementById('import-kind');
 
   if (!btnOpen || !modal) return;
 
   btnOpen.addEventListener('click', () => {
-    ta.value = '';
-    fileIn.value = '';
+    ta.value = ''; fileIn.value = ''; kindSel.value = 'auto';
     modal.classList.remove('hidden');
   });
   btnClose.addEventListener('click', () => modal.classList.add('hidden'));
 
   fileIn.addEventListener('change', async () => {
-    const f = fileIn.files && fileIn.files[0];
+    const f = fileIn.files?.[0];
     if (!f) return;
     const text = await f.text().catch(() => null);
     if (text != null) ta.value = text;
   });
 
-  btnRun.addEventListener('click', async () => {
-    let payload = null;
-    try {
-      payload = JSON.parse(ta.value || '{}');
-    } catch {
-      showToast('JSON inválido', false);
-      return;
+  function asArray(x){ return Array.isArray(x) ? x : (x ? [x] : []); }
+  function toNum(n){ const v = Number(String(n).replace(',', '.')); return Number.isFinite(v) ? v : null; }
+  function cleanStr(s){ return (s ?? '').toString().trim(); }
+
+  function normalizeInput(raw, kind){
+    // aceita array direto OU objeto com uma das chaves conhecidas
+    const obj = (Array.isArray(raw) ? { auto: raw } : (raw || {}));
+
+    // coletores
+    const out = { groups: [], products: [], downloads: [], rules: [], webhooks: [] };
+
+    // mapas “apelidos” -> chave oficial
+    const rootMap = {
+      files: 'downloads',
+      downloads: 'downloads',
+      groups: 'groups',
+      produtos: 'products',
+      products: 'products',
+      regras: 'rules',
+      rules: 'rules',
+      webhooks: 'webhooks',
+      auto: 'auto'
+    };
+
+    // transforma root em arrays por tipo
+    const buckets = {};
+    for (const k of Object.keys(obj)) {
+      const kk = rootMap[k] || null;
+      if (!kk) continue;
+      buckets[kk] = asArray(obj[k]);
     }
+    // se veio um array “cru” e o usuário escolheu um tipo específico:
+    if (Array.isArray(raw) && kind !== 'auto') {
+      buckets[kind] = raw;
+    }
+
+    // se “auto”: tenta adivinhar pelo shape
+    if (Array.isArray(obj.auto) && kind === 'auto') {
+      const sample = obj.auto[0] || {};
+      if ('url' in sample && ('name' in sample || 'nome' in sample)) buckets.downloads = obj.auto;
+      else if (('pattern' in sample) || ('reply' in sample)) buckets.rules = obj.auto;
+      else if ('headers' in sample && 'url' in sample && ('name' in sample || 'nome' in sample)) buckets.webhooks = obj.auto;
+      else if (('preco' in sample) || ('price' in sample) || ('grupo' in sample) || ('group' in sample) || ('groupId' in sample)) buckets.products = obj.auto;
+      else buckets.groups = obj.auto;
+    }
+
+    // normalizadores por tipo
+    (buckets.groups || []).forEach(g => {
+      out.groups.push({
+        id: cleanStr(g.id),
+        nome: cleanStr(g.nome ?? g.name),
+        descricao: g.descricao ?? g.description ?? null,
+        imagem: cleanStr(g.imagem ?? g.image ?? '')
+      });
+    });
+
+    (buckets.products || []).forEach(p => {
+      out.products.push({
+        id: cleanStr(p.id),
+        nome: cleanStr(p.nome ?? p.name),
+        descricao: p.descricao ?? p.description ?? null,
+        preco: toNum(p.preco ?? p.price),
+        imagem: cleanStr(p.imagem ?? p.image ?? ''),
+        grupo: cleanStr(p.grupo ?? p.group ?? p.groupId ?? ''),
+        desconto: toNum(p.desconto ?? p.discount) ?? 0,
+        link: cleanStr(p.link ?? p.url ?? '')
+      });
+    });
+
+    const downloadsSrc = [
+      ...(buckets.downloads || []),
+      ...(Array.isArray(obj.files) ? obj.files : [])
+    ];
+    downloadsSrc.forEach(d => {
+      out.downloads.push({
+        id: cleanStr(d.id) || undefined, // deixa o banco gerar se vazio
+        name: cleanStr(d.name ?? d.nome),
+        url: cleanStr(d.url),
+        description: d.description ?? d.descricao ?? null,
+        imagem: cleanStr(d.imagem ?? d.image ?? '')
+      });
+    });
+
+    (buckets.rules || []).forEach(r => {
+      const type = cleanStr(r.type).toLowerCase();
+      out.rules.push({
+        id: cleanStr(r.id) || undefined,
+        name: cleanStr(r.name ?? r.nome ?? r.pattern ?? ''),
+        type: ['message','keyword','regex'].includes(type) ? type : 'message',
+        pattern: cleanStr(r.pattern ?? r.trigger ?? ''),
+        reply: cleanStr(r.reply ?? r.resposta ?? ''),
+        active_hours: r.active_hours ?? null,
+        external_webhook: cleanStr(r.external_webhook ?? r.webhook ?? ''),
+        integration_action: cleanStr(r.integration_action ?? '')
+      });
+    });
+
+    (buckets.webhooks || []).forEach(h => {
+      let headers = h.headers;
+      if (typeof headers === 'string') {
+        try { headers = JSON.parse(headers); } catch { headers = {}; }
+      }
+      if (headers == null || typeof headers !== 'object') headers = {};
+      out.webhooks.push({
+        id: cleanStr(h.id) || undefined,
+        name: cleanStr(h.name ?? h.nome),
+        url: cleanStr(h.url),
+        headers
+      });
+    });
+
+    // filtra inválidos (mínimos obrigatórios)
+    out.groups = out.groups.filter(g => g.id && g.nome);
+    out.products = out.products.filter(p => p.id && p.nome);
+    out.downloads = out.downloads.filter(d => d.name && d.url);
+    out.rules = out.rules.filter(r => r.name && (r.pattern || r.type === 'message') && r.reply);
+    out.webhooks = out.webhooks.filter(w => w.name && w.url);
+
+    // se o usuário escolheu tipo específico, envia só aquele bucket
+    if (kind !== 'auto') {
+      const empty = { groups: [], products: [], downloads: [], rules: [], webhooks: [] };
+      empty[kind] = out[kind];
+      return empty;
+    }
+    return out;
+  }
+
+  btnRun.addEventListener('click', async () => {
+    let raw;
+    const kind = kindSel.value; // auto|groups|products|downloads|rules|webhooks
+    try { raw = JSON.parse(ta.value || '{}'); }
+    catch { showToast('JSON inválido', false); return; }
+
+    const payload = normalizeInput(raw, kind);
+
     try {
       const res = await (typeof adminFetch === 'function'
         ? adminFetch('/api/admin/import', {
@@ -310,7 +437,7 @@ async function adminFetch(url, opts = {}) {
           })
         : fetch('/api/admin/import', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...authHeader?.() },
+            headers: { 'Content-Type': 'application/json', ...(typeof authHeader==='function' ? authHeader() : {}) },
             body: JSON.stringify(payload)
           })
       );
@@ -318,14 +445,22 @@ async function adminFetch(url, opts = {}) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Falha no import');
 
-      showToast(`Importado: ${data.imported?.groups||0} grupos, ${data.imported?.products||0} produtos, ${data.imported?.downloads||0} downloads`);
-      modal.classList.add('hidden');
+      showToast(
+        `Importado: ${data.imported?.groups||0} grupos, `
+        + `${data.imported?.products||0} produtos, `
+        + `${data.imported?.downloads||0} downloads, `
+        + `${data.imported?.rules||0} regras, `
+        + `${data.imported?.webhooks||0} webhooks`
+      );
 
-      // Atualiza o painel sem perder nada
+      modal.classList.add('hidden');
+      // refresh
       if (typeof carregarGrupos === 'function')     carregarGrupos();
       if (typeof carregarProdutos === 'function')   carregarProdutos();
       if (typeof carregarDownloads === 'function')  carregarDownloads();
       if (typeof carregarDashboard === 'function')  carregarDashboard();
+      if (typeof carregarRegras === 'function')     carregarRegras();
+      if (typeof carregarWebhooks === 'function')   carregarWebhooks();
     } catch (e) {
       console.error(e);
       showToast('Falha ao importar', false);

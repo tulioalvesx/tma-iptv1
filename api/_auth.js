@@ -1,14 +1,13 @@
 // api/_auth.js
-// Basic Auth for admin endpoints. Set ADMIN_USER and ADMIN_PASS on Vercel.
-
 function requireBasicAuth(req, res) {
-  const user = process.env.ADMIN_USER || '';
-  const pass = process.env.ADMIN_PASS || '';
+  const userEnv = (process.env.ADMIN_USER || '').trim(); // trim user
+  const passEnv = (process.env.ADMIN_PASS || '');        // não trime a senha
+
   const header = req.headers['authorization'] || '';
 
-  if (!user || !pass) {
+  if (!userEnv || !passEnv) {
     res.statusCode = 500;
-    res.json({ error: "ADMIN_USER/ADMIN_PASS envs not configured" });
+    res.json({ error: 'ADMIN_USER/ADMIN_PASS envs not configured' });
     return false;
   }
 
@@ -19,14 +18,22 @@ function requireBasicAuth(req, res) {
     return false;
   }
 
-  const decoded = Buffer.from(header.slice(6), 'base64').toString();
-  const [u, p] = decoded.split(':');
-  if (u !== user || p !== pass) {
-    res.statusCode = 401;
-    res.end('Invalid credentials.');
+  try {
+    const decoded = Buffer.from(header.slice(6), 'base64').toString('utf8');
+    const idx = decoded.indexOf(':');
+    const u = (idx >= 0 ? decoded.slice(0, idx) : decoded).trim();
+    const p = idx >= 0 ? decoded.slice(idx + 1) : '';
+
+    if (u !== userEnv || p !== passEnv) {
+      res.statusCode = 401;
+      res.end('Invalid credentials.');
+      return false;
+    }
+    return true;
+  } catch {
+    res.statusCode = 400;
+    res.end('Bad Authorization header.');
     return false;
   }
-  return true;
 }
-
 module.exports = { requireBasicAuth };

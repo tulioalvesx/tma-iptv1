@@ -388,28 +388,42 @@ function openGrupoModal(gr = null) {
   // Webhooks
   document.getElementById('new-hook-btn')?.addEventListener('click', () => openHookModal());
   document.getElementById('cancel-hook')?.addEventListener('click', () => modalHook.classList.add('hidden'));
-  formHook.addEventListener('submit', async e => {
-    e.preventDefault();
-    const payload = {
-      id: formHook['hook-id'].value.trim(),
-	  name:	formHook['hook-nome'].value.trim(),
-	  url: formHook['hook-url'].value.trim(),
-	  headers: JSON.parse(formHook['hook-headers'].value)
-    };
-    const url = '/api/admin/webhooks';
-    try { const res = await adminFetch(url, {
+formHook.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const idRaw = formHook['hook-id'].value.trim();
+  const name  = formHook['hook-nome'].value.trim();
+  const urlStr = formHook['hook-url'].value.trim();
+
+  // headers em JSON (valida pra não quebrar o JS)
+  let headersObj = {};
+  try {
+    headersObj = JSON.parse(formHook['hook-headers'].value || '{}');
+  } catch {
+    showToast('Headers inválidos (JSON)', false);
+    return;
+  }
+
+  // monta payload — se id vier vazio, deixa o backend gerar
+  const payload = { name, url: urlStr, headers: headersObj };
+  if (idRaw) payload.id = idRaw;
+
+  try {
+    const res = await adminFetch('/api/admin/webhooks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-  });
-      if (!res.ok) throw new Error();
-      modalHook.classList.add('hidden');
-      showToast(isEditingHook ? 'Webhook atualizado' : 'Webhook criado');
-      carregarWebhooks();
-    } catch {
-      showToast('Falha ao salvar webhook', false);
-    }
-  });
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    modalHook.classList.add('hidden');
+    showToast(isEditingHook ? 'Webhook atualizado' : 'Webhook criado');
+    carregarWebhooks();
+  } catch (err) {
+    console.error(err);
+    showToast('Falha ao salvar webhook', false);
+  }
+});
 
   // Products
   const modalProduto = document.getElementById('modal-produto');
@@ -582,6 +596,16 @@ async function carregarDashboard() {
   }
 }
 
+async function importar(json) {
+  const res = await adminFetch('/api/admin/import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(json) // { groups: [...], products: [...], downloads: [...] }
+  });
+  const data = await res.json();
+  showToast(`Importado: ${data.imported.groups} grupos, ${data.imported.products} produtos, ${data.imported.downloads} downloads`);
+  carregarGrupos(); carregarProdutos(); // refresh
+}
 
   // ─── Regras ─────────────────────────────────────────────────────────────────────
  async function carregarRegras() {

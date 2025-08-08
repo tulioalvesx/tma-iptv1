@@ -267,7 +267,72 @@ async function adminFetch(url, opts = {}) {
    }
    modalRule.classList.remove('hidden');
   }
-  
+
+// === Import JSON (admin) ===
+(function setupImportModal(){
+  const btnOpen  = document.getElementById('btn-import-json');
+  const modal    = document.getElementById('modal-import');
+  const btnRun   = document.getElementById('btn-run-import');
+  const btnClose = document.getElementById('btn-cancel-import');
+  const ta       = document.getElementById('import-json');
+  const fileIn   = document.getElementById('import-file');
+
+  if (!btnOpen || !modal) return;
+
+  btnOpen.addEventListener('click', () => {
+    ta.value = '';
+    fileIn.value = '';
+    modal.classList.remove('hidden');
+  });
+  btnClose.addEventListener('click', () => modal.classList.add('hidden'));
+
+  fileIn.addEventListener('change', async () => {
+    const f = fileIn.files && fileIn.files[0];
+    if (!f) return;
+    const text = await f.text().catch(() => null);
+    if (text != null) ta.value = text;
+  });
+
+  btnRun.addEventListener('click', async () => {
+    let payload = null;
+    try {
+      payload = JSON.parse(ta.value || '{}');
+    } catch {
+      showToast('JSON inválido', false);
+      return;
+    }
+    try {
+      const res = await (typeof adminFetch === 'function'
+        ? adminFetch('/api/admin/import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          })
+        : fetch('/api/admin/import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeader?.() },
+            body: JSON.stringify(payload)
+          })
+      );
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Falha no import');
+
+      showToast(`Importado: ${data.imported?.groups||0} grupos, ${data.imported?.products||0} produtos, ${data.imported?.downloads||0} downloads`);
+      modal.classList.add('hidden');
+
+      // Atualiza o painel sem perder nada
+      if (typeof carregarGrupos === 'function')     carregarGrupos();
+      if (typeof carregarProdutos === 'function')   carregarProdutos();
+      if (typeof carregarDownloads === 'function')  carregarDownloads();
+      if (typeof carregarDashboard === 'function')  carregarDashboard();
+    } catch (e) {
+      console.error(e);
+      showToast('Falha ao importar', false);
+    }
+  });
+})();
+
   // ─── Webhook ─────────────────────────────────────────────────────
   const modalHook = document.getElementById('modal-hook');
   const formHook  = document.getElementById('form-hook');

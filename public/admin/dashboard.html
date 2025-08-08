@@ -81,6 +81,26 @@
       </form>
     </div>
   </div>
+  
+  <!-- Modal Import -->
+<div id="modal-import" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+  <div class="bg-white rounded-lg p-6 w-[700px] max-w-[95vw]">
+    <h2 class="text-lg font-semibold mb-2">Importar dados (JSON)</h2>
+    <p class="text-sm text-gray-600 mb-3">Use o formato <code>{ groups:[], products:[], downloads:[] }</code>. Você pode colar o JSON ou escolher um arquivo .json.</p>
+
+    <textarea id="import-json" rows="10" class="w-full border px-3 py-2 rounded font-mono text-sm mb-3"></textarea>
+
+    <div class="flex items-center gap-3 mb-4">
+      <input type="file" id="import-file" accept="application/json" class="border rounded px-3 py-2"/>
+      <span class="text-sm text-gray-500">opcional</span>
+    </div>
+
+    <div class="flex justify-end gap-2">
+      <button id="btn-cancel-import" type="button" class="px-4 py-2 border rounded">Cancelar</button>
+      <button id="btn-run-import" type="button" class="px-4 py-2 bg-blue-500 text-white rounded">Importar</button>
+    </div>
+  </div>
+</div>
 
   <!-- Header -->
   <header class="bg-gray-900 text-white p-4 flex justify-between items-center">

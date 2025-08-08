@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function normalizeGroupImage(src) {
   if (!src) return 'images/placeholder.jpg';
   src = src.trim();
-  if (src.startsWith('/')) return src;
+  if (src.startsWith('http') || src.startsWith('/')) return src; // <- add http aqui
   return `/img/${src.replace(/^\/?img\/?/i, '')}`;
 }
 
@@ -40,7 +40,7 @@ async function fetchGroups() {
          image:    normalizeGroupImage(g.image || g.imagem),
          ...g
        };
-       group.products = produtos.filter(p => p.groupId === g.id);
+       group.products = produtos.filter(p => String(p.grupo) === String(g.id));
        const card = createGroupCard(group);
        groupsContainer.appendChild(card);
      });

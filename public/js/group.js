@@ -23,8 +23,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (titleEl) titleEl.textContent = groupName;
 
     const filtered = Array.isArray(produtos)
-      ? produtos.filter(p => p.groupId === groupId)
-      : [];
+	  ? produtos.filter(p => String(p.grupo) === String(groupId))
+	  : [];
     renderProducts(filtered);
   } catch (err) {
     console.error("Erro ao carregar grupo/produtos:", err);
@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 function normalizeImageSrc(src) {
   if (!src) return "images/placeholder.jpg";
-  if (src.startsWith("/")) return src;
+  if (src.startsWith("http") || src.startsWith("/")) return src; // <- add http aqui
   return `/img/${src.replace(/^\/?img\/?/i, "")}`;
 }
 

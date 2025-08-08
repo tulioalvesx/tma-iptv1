@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       list.innerHTML = ""; // a UL já tem classe .downloads-grid no HTML
 
-      const files = Array.isArray(data.files) ? data.files : [];
+      const files = Array.isArray(data) ? data : (Array.isArray(data.files) ? data.files : []);
       files.forEach(item => {
         const li = document.createElement("li"); // estilos vêm do CSS (.downloads-grid > li)
 

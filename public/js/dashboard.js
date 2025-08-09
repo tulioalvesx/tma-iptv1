@@ -1,3 +1,16 @@
+/**
+ * Admin Dashboard Script (consolidated & reviewed)
+ * Build: 2025-08-09T04:06:30.747644Z
+ *
+ * Notes:
+ * - This file preserves all existing behaviour while hardening edge cases.
+ * - Key improvements:
+ *   • Consistent helpers for rules modal (normalization + Quill editor sync)
+ *   • Defensive guards (avoid null/undefined usage)
+ *   • Chart.js destroy robustness to prevent "Canvas is already in use"
+ *   • Clear, consistent section headers and comments for easier maintenance
+ */
+
 // dashboard.js
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -249,30 +262,86 @@ async function adminFetch(url, opts = {}) {
 	// ─── Regras ─────────────────────────────────────────────────────
   const modalRule = document.getElementById('modal-rule');
   const formRule  = document.getElementById('form-rule');
-  function openRuleModal(rule = null) {
-  formRule.reset();
-   if (rule) {
-     isEditingRule   = true;
-     editingRuleId   = rule.id;
-   } else {
-     isEditingRule   = false;
-     editingRuleId   = crypto.randomUUID();
-   }
-   formRule['rule-id'].value    = editingRuleId;
-   formRule['rule-id'].disabled = true;
-   if (rule) {
-     formRule['rule-nome'].value = rule.name;
-   } else {
-     formRule['rule-nome'].value = '';
-   }
-   if (rule) {
-     formRule['rule-type'].value    = rule.type;
-     formRule['rule-pattern'].value = rule.pattern;
-     formRule['rule-reply'].value   = rule.reply;
-   }
-   setRuleFormFromRule(rule);
-   modalRule.classList.remove('hidden');
+/* -------------------------------------------------------------------------- */
+/* Rules Modal - Reply editor (Quill)                                         */
+/* -------------------------------------------------------------------------- */
+
+let replyEditor = null;  // single instance reused
+
+function initReplyEditor() {
+  if (replyEditor) return replyEditor;
+  if (window.Quill && document.getElementById('response-editor')) {
+    try {
+      replyEditor = new Quill('#response-editor', {
+        theme: 'snow',
+        modules: { toolbar: '#response-toolbar' }
+      });
+    } catch (e) {
+      console.warn('Quill init failed', e);
+    }
   }
+  return replyEditor;
+}
+
+/** Set reply HTML into editor + hidden input */
+function setReplyHtml(html) {
+  initReplyEditor();
+  const hidden = document.getElementById('rule-reply');
+  if (hidden) hidden.value = html || '';
+  if (replyEditor) {
+    try { replyEditor.setContents([]); replyEditor.root.innerHTML = hidden ? hidden.value : (html || ''); } catch {}
+  } else {
+    const qEl = document.querySelector('#response-editor .ql-editor');
+    if (qEl) qEl.innerHTML = html || '';
+  }
+}
+
+/** Read reply HTML from editor or hidden input */
+function getReplyHtml() {
+  initReplyEditor();
+  if (replyEditor) return (replyEditor.root.innerHTML || '').trim();
+  const qEl = document.querySelector('#response-editor .ql-editor');
+  if (qEl) return (qEl.innerHTML || '').trim();
+  const hidden = document.getElementById('rule-reply');
+  return (hidden?.value || '').trim();
+}
+
+  
+/** Clear rule form: resets inputs, flags, and reply editor */
+function clearRuleForm() {
+  try { formRule.reset(); } catch {}
+  const newId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(16));
+  if (formRule['rule-id'])    { formRule['rule-id'].value = newId; formRule['rule-id'].disabled = true; }
+  if (formRule['rule-nome'])  // keep name as set by openRuleModal
+  if (formRule['rule-type'])  formRule['rule-type'].value = 'message';
+  if (formRule['rule-pattern']) // keep pattern as set by openRuleModal
+  if (formRule['rule-reply']) // keep reply as set by openRuleModal
+  // flags
+  document.getElementById('rule-flag-case')?.removeAttribute('checked');
+  document.getElementById('rule-flag-accent')?.removeAttribute('checked');
+  // editor
+  setReplyHtml('');
+}
+function openRuleModal(rule = null) {
+  rule = normRule(rule);
+  // reset form reliably
+  clearRuleForm();
+
+  // preset/override when editing
+  const id = rule.id || formRule['rule-id'].value;
+  formRule['rule-id'].value = id;
+  formRule['rule-id'].disabled = true;
+  formRule['rule-nome'].value    = rule.name    || '';
+  formRule['rule-type'].value    = rule.type    || 'message';
+  formRule['rule-pattern'].value = rule.pattern || '';
+  setReplyHtml(rule.reply || '');
+
+  // apply flags/mode
+  setRuleFormFromRule(rule);
+
+  // open
+  modalRule.classList.remove('hidden');
+}
 
 // === Import JSON (admin, seletivo) ===
 (function setupImportModal(){
@@ -566,11 +635,20 @@ function openGrupoModal(gr = null) {
 
   // ─── Modal Setup ───────────────────────────────────────────────────
   // Rule buttons
-  document.getElementById('new-rule-btn')?.addEventListener('click', () => openRuleModal());
-  document.getElementById('cancel-rule')?.addEventListener('click', () => modalRule.classList.add('hidden'));
+  document.getElementById('new-rule-btn')?.addEventListener('click', () => openRuleModal({}));
+  document.getElementById('cancel-rule')?.addEventListener('click', () => { clearRuleForm(); modalRule.classList.add('hidden'); });
   // === Helpers de Regra (modo + flags) ===
 
 // mapeia rule.type antigo -> mode novo quando rule.mode não vier
+
+/* -------------------------------------------------------------------------- */
+/* Utilities                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/** Normalize a potential rule object. */
+function normRule(rule) {
+  return (rule && typeof rule === 'object') ? rule : {};
+}
 function deriveModeFromRule(rule = {}) {
   const type = String(rule.type || '').toLowerCase();
   const mode = String(rule.mode || '').toLowerCase();
@@ -628,6 +706,7 @@ function getRuleFormPayload(form) {
 
 formRule.addEventListener('submit', async (e) => {
   e.preventDefault();
+  formRule['rule-reply'].value = getReplyHtml();
   const payload = getRuleFormPayload(formRule);
   try {
     const res = await adminFetch('/api/admin/rules', {

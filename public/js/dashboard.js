@@ -37,6 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ─── Variables ───────────────────────────────────────────────────────────────
+  let responseQuill = null;
+
   let chartInstance = null;
   const timeRanges = {
   dia:    { days: 30,  unit: 'day',   label: 'Últimos 30 dias'   },
@@ -249,6 +251,12 @@ async function adminFetch(url, opts = {}) {
 	// ─── Regras ─────────────────────────────────────────────────────
   const modalRule = document.getElementById('modal-rule');
   const formRule  = document.getElementById('form-rule');
+  // Inicializa editor Quill para Resposta
+  const respEditor = document.getElementById('response-editor');
+  if (respEditor && window.Quill) {
+    responseQuill = new Quill('#response-editor', { theme: 'snow', modules: { toolbar: '#response-toolbar' } });
+  }
+
   function openRuleModal(rule = null) {
   formRule.reset();
    if (rule) {
@@ -271,6 +279,13 @@ async function adminFetch(url, opts = {}) {
      formRule['rule-reply'].value   = rule.reply;
    }
    setRuleFormFromRule(rule);
+   // Preenche o editor com o reply salvo (HTML) se existir
+   try {
+     if (responseQuill) {
+       responseQuill.setContents([]);
+       responseQuill.root.innerHTML = rule && rule.reply ? rule.reply : '';
+     }
+   } catch (e) { console.warn('Quill set error', e); }
    safeShow(modalRule);
   }
 
@@ -568,7 +583,28 @@ function openGrupoModal(gr = null) {
   // Rule buttons
   document.getElementById('new-rule-btn')?.addEventListener('click', () => openRuleModal());
   document.getElementById('cancel-rule')?.addEventListener('click', () => safeHide(modalRule));
-  // === Helpers de Regra (modo + flags) ===
+  // sincroniza select de tipo quando o usuário muda o modo
+  document.querySelectorAll('input[name="rule-mode"]').forEach(r=> r.addEventListener('change', syncRuleTypeFromMode));
+  
+// Mantém select de Tipo sincronizado com o modo (para reduzir confusão visual)
+function syncRuleTypeFromMode(){
+  const sel = document.getElementById('rule-type');
+  if (!sel) return;
+  const mode = (formRule.querySelector('input[name="rule-mode"]:checked')?.value)||'contains';
+  // contains/startswith/endswith/word/notcontains -> keyword; regex->regex(legacy type), exact/all/welcome->message
+  let t = 'message';
+  if (mode === 'regex' || mode === 'contains' || mode==='startswith' || mode==='endswith' || mode==='word' || mode==='notcontains') {
+    t = (mode === 'regex') ? 'regex' : 'keyword';
+  } else {
+    t = 'message';
+  }
+  if ([...sel.options].some(o=>o.value==='regex')===false){
+    // garante que exista opção regex para compat, sem mostrar ao usuário (disabled select)
+    const opt = document.createElement('option'); opt.value='regex'; opt.textContent='Regex'; sel.appendChild(opt);
+  }
+  sel.value = t;
+}
+// === Helpers de Regra (modo + flags) ===
 
 // mapeia rule.type antigo -> mode novo quando rule.mode não vier
 function deriveModeFromRule(rule) {
@@ -596,6 +632,7 @@ function setRuleFormFromRule(rule) {
   const chkAccent = formRule.querySelector('#rule-flag-accent');
   if (chkCase)   chkCase.checked   = !!flags.caseSensitive;
   if (chkAccent) chkAccent.checked = !!flags.accentSensitive;
+  syncRuleTypeFromMode();
 }
 
 // Monta o payload da regra a partir do form (compat c/ type antigo)
@@ -630,6 +667,12 @@ function getRuleFormPayload(form) {
 
 safeListen(formRule, 'submit', async (e) => {
   e.preventDefault();
+    // Sincroniza o editor rich-text com o campo hidden
+  try {
+    if (responseQuill && formRule['rule-reply']) {
+      formRule['rule-reply'].value = responseQuill.root.innerHTML;
+    }
+  } catch (e) { console.warn('Quill get error', e); }
   const payload = getRuleFormPayload(formRule);
   try {
     const res = await adminFetch('/api/admin/rules', {

@@ -349,6 +349,7 @@ async function adminFetch(url, opts = {}) {
         imagem: cleanStr(g.imagem ?? g.image ?? '')
   });
 
+    });
     (buckets.products || []).forEach(p => {
       out.products.push({
         id: cleanStr(p.id),
@@ -1213,7 +1214,6 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
           }
         });
       });
-    });
 
   } catch {
     showToast('Falha ao carregar aplicativos', false);
@@ -1334,7 +1334,6 @@ async function carregarGrupos() {
             showToast('Erro rede', false);
           }
         });
-      });
       });
 
     } catch {

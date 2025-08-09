@@ -182,7 +182,7 @@ function updateChartFor(rangeKey, rawData) {
   }
   
 async function adminFetch(url, opts = {}) {
-  const res = await fetch(url, {
+  const res = await adminFetch(url, {
     ...opts,
     headers: { ...(opts.headers || {}), ...authHeader() },
   });
@@ -779,7 +779,7 @@ formProduto.addEventListener('submit', async e => {
   };
   const url = '/api/products';
   try {
-    const res = await fetch(url, {
+    const res = await adminFetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -811,7 +811,7 @@ formProduto.addEventListener('submit', async e => {
 	 description: formDownload['download-descricao'].value.trim()
    };
 	const url    = '/api/downloads';
-	const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+	const res = await adminFetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     if (res.ok) {
       showToast(isEditingDownload ? 'Aplicativo atualizado' : 'Aplicativo criado');
       modalDownload.classList.add('hidden');
@@ -836,7 +836,7 @@ formProduto.addEventListener('submit', async e => {
   };
 	const url = '/api/groups';
 	try {
-    const res = await fetch(url, {
+    const res = await adminFetch(url, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(payload),
@@ -1376,8 +1376,12 @@ async function carregarGrupos() {
       cont.querySelectorAll('.btn-save-grupo').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
-          const img = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`).value.trim();
-		  const body = { id };
+const img = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`).value.trim();
+const cur = (window.grupos || []).find(x => String(x.id) === String(id)) || {};
+const body = {};
+if (img !== (cur.imagem || '')) body.imagem = img;
+if (!Object.keys(body).length) { showToast('Nada para salvar', false); return; }
+body.id = id;
 		  if (img) body.imagem = img;
           try {
             const res = await adminFetch('/api/groups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });

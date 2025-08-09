@@ -244,40 +244,27 @@ async function adminFetch(url, opts = {}) {
 	// ─── Regras ─────────────────────────────────────────────────────
   const modalRule = document.getElementById('modal-rule');
   const formRule  = document.getElementById('form-rule');
-  function openRuleModal(rule) {
-  // normaliza para evitar null/undefined
+  function openRuleModal(rule = {}) {
   rule = (rule && typeof rule === 'object') ? rule : {};
-  formRule.reset();
+  // Limpa SEMPRE
+  clearRuleForm();
 
-  // valores padrão
-  const newId = crypto.randomUUID();
-  formRule['rule-id'].value    = newId;
-  formRule['rule-id'].disabled = true;
-  formRule['rule-nome'].value   = '';
-  if (formRule['rule-type']) formRule['rule-type'].value = 'message';
-  formRule['rule-pattern'].value= '';
-  if (formRule['rule-reply']) formRule['rule-reply'].value = '';
-
-  // se veio regra para edição, preenche apenas campos definidos
-  if (rule && Object.keys(rule).length) {
-    if (rule.id)      formRule['rule-id'].value  = String(rule.id);
-    if (rule.name)    formRule['rule-nome'].value = String(rule.name);
-    if (rule.type)    formRule['rule-type'].value = String(rule.type);
-    if (rule.pattern) formRule['rule-pattern'].value = String(rule.pattern);
-    if (rule.reply && formRule['rule-reply']) formRule['rule-reply'].value = String(rule.reply);
+  // Preenche somente se veio algo válido (edição)
+  if (Object.keys(rule).length) {
+    if (rule.id && formRule['rule-id'])       formRule['rule-id'].value = String(rule.id);
+    if (rule.name && formRule['rule-nome'])   formRule['rule-nome'].value = String(rule.name);
+    if (rule.type && formRule['rule-type'])   formRule['rule-type'].value = String(rule.type);
+    if (rule.pattern && formRule['rule-pattern']) formRule['rule-pattern'].value = String(rule.pattern);
+    if (typeof rule.reply === 'string' && formRule['rule-reply']) formRule['rule-reply'].value = rule.reply;
+    try { if (responseQuill) { responseQuill.setContents([]); responseQuill.root.innerHTML = (typeof rule.reply==='string') ? rule.reply : ''; } } catch {}
   }
 
-  // quill
-  try {
-    if (responseQuill) {
-      responseQuill.setContents([]);
-      responseQuill.root.innerHTML = (rule && typeof rule.reply === 'string') ? rule.reply : '';
-    }
-  } catch {}
+  // Ajusta radios/flags conforme a regra (ou defaults)
+  setRuleFormFromRule(rule);
 
-   setRuleFormFromRule(rule);
-   modalRule.classList.remove('hidden');
-  }
+  // Abre
+  modalRule.classList.remove('hidden');
+}
 
 // === Import JSON (admin, seletivo) ===
 (function setupImportModal(){
@@ -571,14 +558,30 @@ function openGrupoModal(gr = null) {
 
   // ─── Modal Setup ───────────────────────────────────────────────────
   // Rule buttons
-  document.getElementById('new-rule-btn')?.addEventListener('click', () => openRuleModal({}));
+  document.getElementById('new-rule-btn')?.addEventListener('click', () => openRuleModal());
   document.getElementById('cancel-rule')?.addEventListener('click', () => modalRule.classList.add('hidden'));
-  // === Helpers de Regra (modo + flags) ===
+  
+// Limpa completamente o formulário de regra (usado ao criar/editar)
+function clearRuleForm() {
+  try { formRule.reset(); } catch {}
+  const newId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(16));
+  if (formRule['rule-id'])    { formRule['rule-id'].value = newId; formRule['rule-id'].disabled = true; }
+  if (formRule['rule-nome'])  formRule['rule-nome'].value = '';
+  if (formRule['rule-type'])  formRule['rule-type'].value = 'message';
+  if (formRule['rule-pattern']) formRule['rule-pattern'].value = '';
+  if (formRule['rule-reply']) formRule['rule-reply'].value = '';
+  // limpa editor rich text
+  try { if (responseQuill) { responseQuill.setContents([]); responseQuill.root.innerHTML = ''; } } catch {}
+  // limpa flags (mantém seu default atual do UI)
+  const chkCase = document.getElementById('rule-flag-case');
+  const chkAccent = document.getElementById('rule-flag-accent');
+  if (chkCase)   chkCase.checked = false;
+  if (chkAccent) chkAccent.checked = false;
+}
+// === Helpers de Regra (modo + flags) ===
 
 // mapeia rule.type antigo -> mode novo quando rule.mode não vier
 function deriveModeFromRule(rule = {}) {
-  // normaliza para evitar null/undefined passado explicitamente
-  rule = (rule && typeof rule === 'object') ? rule : {};
   const type = String(rule.type || '').toLowerCase();
   const mode = String(rule.mode || '').toLowerCase();
   if (mode) return mode;
@@ -590,7 +593,6 @@ function deriveModeFromRule(rule = {}) {
 
 // Preenche os radios/checkboxes do modal com base na regra
 function setRuleFormFromRule(rule = {}) {
-  // normaliza para evitar null/undefined passado explicitamente
   rule = (rule && typeof rule === 'object') ? rule : {};
   const mode = deriveModeFromRule(rule);
   const radio = formRule.querySelector(`input[name="rule-mode"][value="${mode}"]`);

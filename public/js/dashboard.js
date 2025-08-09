@@ -248,25 +248,33 @@ async function adminFetch(url, opts = {}) {
   // normaliza para evitar null/undefined
   rule = (rule && typeof rule === 'object') ? rule : {};
   formRule.reset();
-   if (rule) {
-     isEditingRule   = true;
-     editingRuleId   = rule.id;
-   } else {
-     isEditingRule   = false;
-     editingRuleId   = crypto.randomUUID();
-   }
-   formRule['rule-id'].value    = editingRuleId;
-   formRule['rule-id'].disabled = true;
-   if (rule) {
-     formRule['rule-nome'].value = rule.name;
-   } else {
-     formRule['rule-nome'].value = '';
-   }
-   if (rule) {
-     formRule['rule-type'].value    = rule.type;
-     formRule['rule-pattern'].value = rule.pattern;
-     formRule['rule-reply'].value   = rule.reply;
-   }
+
+  // valores padrão
+  const newId = crypto.randomUUID();
+  formRule['rule-id'].value    = newId;
+  formRule['rule-id'].disabled = true;
+  formRule['rule-nome'].value   = '';
+  if (formRule['rule-type']) formRule['rule-type'].value = 'message';
+  formRule['rule-pattern'].value= '';
+  if (formRule['rule-reply']) formRule['rule-reply'].value = '';
+
+  // se veio regra para edição, preenche apenas campos definidos
+  if (rule && Object.keys(rule).length) {
+    if (rule.id)      formRule['rule-id'].value  = String(rule.id);
+    if (rule.name)    formRule['rule-nome'].value = String(rule.name);
+    if (rule.type)    formRule['rule-type'].value = String(rule.type);
+    if (rule.pattern) formRule['rule-pattern'].value = String(rule.pattern);
+    if (rule.reply && formRule['rule-reply']) formRule['rule-reply'].value = String(rule.reply);
+  }
+
+  // quill
+  try {
+    if (responseQuill) {
+      responseQuill.setContents([]);
+      responseQuill.root.innerHTML = (rule && typeof rule.reply === 'string') ? rule.reply : '';
+    }
+  } catch {}
+
    setRuleFormFromRule(rule);
    modalRule.classList.remove('hidden');
   }

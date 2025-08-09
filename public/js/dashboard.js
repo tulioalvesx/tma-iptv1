@@ -244,7 +244,9 @@ async function adminFetch(url, opts = {}) {
 	// ─── Regras ─────────────────────────────────────────────────────
   const modalRule = document.getElementById('modal-rule');
   const formRule  = document.getElementById('form-rule');
-  function openRuleModal(rule = null) {
+  function openRuleModal(rule) {
+  // normaliza para evitar null/undefined
+  rule = (rule && typeof rule === 'object') ? rule : {};
   formRule.reset();
    if (rule) {
      isEditingRule   = true;
@@ -561,12 +563,14 @@ function openGrupoModal(gr = null) {
 
   // ─── Modal Setup ───────────────────────────────────────────────────
   // Rule buttons
-  document.getElementById('new-rule-btn')?.addEventListener('click', () => openRuleModal());
+  document.getElementById('new-rule-btn')?.addEventListener('click', () => openRuleModal({}));
   document.getElementById('cancel-rule')?.addEventListener('click', () => modalRule.classList.add('hidden'));
   // === Helpers de Regra (modo + flags) ===
 
 // mapeia rule.type antigo -> mode novo quando rule.mode não vier
 function deriveModeFromRule(rule = {}) {
+  // normaliza para evitar null/undefined passado explicitamente
+  rule = (rule && typeof rule === 'object') ? rule : {};
   const type = String(rule.type || '').toLowerCase();
   const mode = String(rule.mode || '').toLowerCase();
   if (mode) return mode;
@@ -578,6 +582,8 @@ function deriveModeFromRule(rule = {}) {
 
 // Preenche os radios/checkboxes do modal com base na regra
 function setRuleFormFromRule(rule = {}) {
+  // normaliza para evitar null/undefined passado explicitamente
+  rule = (rule && typeof rule === 'object') ? rule : {};
   const mode = deriveModeFromRule(rule);
   const radio = formRule.querySelector(`input[name="rule-mode"][value="${mode}"]`);
   const defaultRadio = formRule.querySelector('input[name="rule-mode"][value="contains"]');

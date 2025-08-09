@@ -1,11 +1,12 @@
 // dashboard.js
 
 document.addEventListener("DOMContentLoaded", () => {
-  // helper para evitar quebra caso elemento nao exista
+	
+  // Helpers para evitar que o JS quebre quando um elemento nao existir
   function safeListen(el, ev, fn) { if (el && el.addEventListener) el.addEventListener(ev, fn); }
-  function safeShow(el){ if(el) el.classList.remove("hidden"); }
-  function safeHide(el){ if(el) el.classList.add("hidden"); }
-	// ─── Injeta o styles.css global na página ────────────────────────────────
+  function safeShow(el){ if(el) el.classList.remove('hidden'); }
+  function safeHide(el){ if(el) el.classList.add('hidden'); }
+// ─── Injeta o styles.css global na página ────────────────────────────────
    ;(function(){
      const href = '/css/styles.css';  // ajuste para o caminho real
      if (!document.querySelector(`link[href="${href}"]`)) {
@@ -625,7 +626,7 @@ function getRuleFormPayload(form) {
   };
 }
 
-safeListen(formRule('submit', async (e) => {
+safeListen(formRule, 'submit', async (e) => {
   e.preventDefault();
   const payload = getRuleFormPayload(formRule);
   try {
@@ -635,7 +636,7 @@ safeListen(formRule('submit', async (e) => {
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(await res.text().catch(()=>''));    
-    modalRule.classList.add('hidden');
+    safeHide(modalRule);
     showToast(isEditingRule ? 'Regra atualizada' : 'Regra criada');
     carregarRegras();
   } catch (err) {
@@ -646,7 +647,7 @@ safeListen(formRule('submit', async (e) => {
   // Webhooks
   document.getElementById('new-hook-btn')?.addEventListener('click', () => openHookModal());
   document.getElementById('cancel-hook')?.addEventListener('click', () => safeHide(modalHook));
-safeListen(formHook('submit', async (e) => {
+safeListen(formHook, 'submit', async (e) => {
   e.preventDefault();
 
   const idRaw = formHook['hook-id'].value.trim();
@@ -674,7 +675,7 @@ safeListen(formHook('submit', async (e) => {
     });
     if (!res.ok) throw new Error(await res.text());
 
-    modalHook.classList.add('hidden');
+    safeHide(modalHook);
     showToast(isEditingHook ? 'Webhook atualizado' : 'Webhook criado');
     carregarWebhooks();
   } catch (err) {
@@ -688,7 +689,7 @@ safeListen(formHook('submit', async (e) => {
   const formProduto  = document.getElementById('form-produto');
   document.getElementById('new-produto-btn')?.addEventListener('click', () => openProdutoModal());
   document.getElementById('cancel-produto')?.addEventListener('click', () => safeHide(modalProduto));
-safeListen(formProduto('submit', async e => {
+safeListen(formProduto, 'submit', async e => {
   e.preventDefault();
   const payload = {
     id:        formProduto['produto-id'].value.trim(),
@@ -706,7 +707,7 @@ safeListen(formProduto('submit', async e => {
     });
     if (res.ok) {
       showToast(isEditingProduto ? 'Produto atualizado' : 'Produto criado');
-      modalProduto.classList.add('hidden');
+      safeHide(modalProduto);
       carregarProdutos();
       carregarDashboard();
     } else {
@@ -722,7 +723,7 @@ safeListen(formProduto('submit', async e => {
   const formDownload  = document.getElementById('form-download');
   document.getElementById('new-download-btn')?.addEventListener('click', () => openDownloadModal());
   document.getElementById('cancel-download')?.addEventListener('click', () => safeHide(modalDownload));
-  safeListen(formDownload('submit', async e => {
+  safeListen(formDownload, 'submit', async e => {
     e.preventDefault();
    const payload = {
      id:   formDownload['download-id'].value.trim(),
@@ -734,7 +735,7 @@ safeListen(formProduto('submit', async e => {
 	const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     if (res.ok) {
       showToast(isEditingDownload ? 'Aplicativo atualizado' : 'Aplicativo criado');
-      modalDownload.classList.add('hidden');
+      safeHide(modalDownload);
       carregarDownloads();
       carregarDashboard();
     } else { showToast(isEditingDownload ? 'Erro ao atualizar aplicativo' : 'Erro ao criar aplicativo', false);
@@ -747,7 +748,7 @@ safeListen(formProduto('submit', async e => {
   const formGrupo  = document.getElementById('form-grupo');
   document.getElementById('new-grupo-btn')?.addEventListener('click', () => openGrupoModal());
   document.getElementById('cancel-grupo')?.addEventListener('click', () => safeHide(modalGrupo));
-	safeListen(formGrupo('submit', async e => {
+	safeListen(formGrupo, 'submit', async e => {
 	e.preventDefault();
 	const payload = {
 		id:        formGrupo['grupo-id'].value.trim(),
@@ -763,7 +764,7 @@ safeListen(formProduto('submit', async e => {
     });
     if (res.ok) {
 		showToast(isEditingGrupo ? 'Grupo atualizado' : 'Grupo criado');
-		modalGrupo.classList.add('hidden');
+		safeHide(modalGrupo);
 		carregarGrupos();
 		carregarDashboard();
   } else {

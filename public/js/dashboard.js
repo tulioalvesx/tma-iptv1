@@ -1,6 +1,10 @@
 // dashboard.js
 
 document.addEventListener("DOMContentLoaded", () => {
+  // helper para evitar quebra caso elemento nao exista
+  function safeListen(el, ev, fn) { if (el && el.addEventListener) el.addEventListener(ev, fn); }
+  function safeShow(el){ if(el) el.classList.remove("hidden"); }
+  function safeHide(el){ if(el) el.classList.add("hidden"); }
 	// ─── Injeta o styles.css global na página ────────────────────────────────
    ;(function(){
      const href = '/css/styles.css';  // ajuste para o caminho real
@@ -266,7 +270,7 @@ async function adminFetch(url, opts = {}) {
      formRule['rule-reply'].value   = rule.reply;
    }
    setRuleFormFromRule(rule);
-   modalRule.classList.remove('hidden');
+   safeShow(modalRule);
   }
 
 // === Import JSON (admin, seletivo) ===
@@ -494,7 +498,7 @@ async function adminFetch(url, opts = {}) {
    } else {
      formHook['hook-headers'].value = '{}';
    }
-   modalHook.classList.remove('hidden');
+   safeShow(modalHook);
  }
  
   // ─── Products ─────────────────────────────────────────────────────
@@ -521,7 +525,7 @@ function openProdutoModal(prod = null) {
     formProduto['produto-descricao'].value = prod.descricao;
     formProduto['produto-preco'].value     = prod.preco;
   }
-  modalProduto.classList.remove('hidden');
+  safeShow(modalProduto);
 }
 
   // ─── Downloads ─────────────────────────────────────────────────────
@@ -539,7 +543,7 @@ function openDownloadModal(dl = null) {
     formDownload['download-url'].value  = dl.url;
 	formDownload['download-descricao'].value = dl.description || '';
   }
-  modalDownload.classList.remove('hidden');
+  safeShow(modalDownload);
 }
 
   // ─── Groups ─────────────────────────────────────────────────────
@@ -556,13 +560,13 @@ function openGrupoModal(gr = null) {
     formGrupo['grupo-nome'].value = gr.nome;
 	formGrupo['grupo-descricao'].value = gr.descricao || '';
   }
-  modalGrupo.classList.remove('hidden');
+  safeShow(modalGrupo);
 }
 
   // ─── Modal Setup ───────────────────────────────────────────────────
   // Rule buttons
   document.getElementById('new-rule-btn')?.addEventListener('click', () => openRuleModal());
-  document.getElementById('cancel-rule')?.addEventListener('click', () => modalRule.classList.add('hidden'));
+  document.getElementById('cancel-rule')?.addEventListener('click', () => safeHide(modalRule));
   // === Helpers de Regra (modo + flags) ===
 
 // mapeia rule.type antigo -> mode novo quando rule.mode não vier
@@ -621,7 +625,7 @@ function getRuleFormPayload(form) {
   };
 }
 
-formRule.addEventListener('submit', async (e) => {
+safeListen(formRule('submit', async (e) => {
   e.preventDefault();
   const payload = getRuleFormPayload(formRule);
   try {
@@ -641,8 +645,8 @@ formRule.addEventListener('submit', async (e) => {
 });
   // Webhooks
   document.getElementById('new-hook-btn')?.addEventListener('click', () => openHookModal());
-  document.getElementById('cancel-hook')?.addEventListener('click', () => modalHook.classList.add('hidden'));
-formHook.addEventListener('submit', async (e) => {
+  document.getElementById('cancel-hook')?.addEventListener('click', () => safeHide(modalHook));
+safeListen(formHook('submit', async (e) => {
   e.preventDefault();
 
   const idRaw = formHook['hook-id'].value.trim();
@@ -683,8 +687,8 @@ formHook.addEventListener('submit', async (e) => {
   const modalProduto = document.getElementById('modal-produto');
   const formProduto  = document.getElementById('form-produto');
   document.getElementById('new-produto-btn')?.addEventListener('click', () => openProdutoModal());
-  document.getElementById('cancel-produto')?.addEventListener('click', () => modalProduto.classList.add('hidden'));
-formProduto.addEventListener('submit', async e => {
+  document.getElementById('cancel-produto')?.addEventListener('click', () => safeHide(modalProduto));
+safeListen(formProduto('submit', async e => {
   e.preventDefault();
   const payload = {
     id:        formProduto['produto-id'].value.trim(),
@@ -717,8 +721,8 @@ formProduto.addEventListener('submit', async e => {
   const modalDownload = document.getElementById('modal-download');
   const formDownload  = document.getElementById('form-download');
   document.getElementById('new-download-btn')?.addEventListener('click', () => openDownloadModal());
-  document.getElementById('cancel-download')?.addEventListener('click', () => modalDownload.classList.add('hidden'));
-  formDownload.addEventListener('submit', async e => {
+  document.getElementById('cancel-download')?.addEventListener('click', () => safeHide(modalDownload));
+  safeListen(formDownload('submit', async e => {
     e.preventDefault();
    const payload = {
      id:   formDownload['download-id'].value.trim(),
@@ -742,8 +746,8 @@ formProduto.addEventListener('submit', async e => {
   const modalGrupo = document.getElementById('modal-grupo');
   const formGrupo  = document.getElementById('form-grupo');
   document.getElementById('new-grupo-btn')?.addEventListener('click', () => openGrupoModal());
-  document.getElementById('cancel-grupo')?.addEventListener('click', () => modalGrupo.classList.add('hidden'));
-	formGrupo.addEventListener('submit', async e => {
+  document.getElementById('cancel-grupo')?.addEventListener('click', () => safeHide(modalGrupo));
+	safeListen(formGrupo('submit', async e => {
 	e.preventDefault();
 	const payload = {
 		id:        formGrupo['grupo-id'].value.trim(),

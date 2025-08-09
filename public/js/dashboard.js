@@ -1,12 +1,7 @@
 // dashboard.js
 
 document.addEventListener("DOMContentLoaded", () => {
-	
-  // Helpers para evitar que o JS quebre quando um elemento nao existir
-  function safeListen(el, ev, fn) { if (el && el.addEventListener) el.addEventListener(ev, fn); }
-  function safeShow(el){ if(el) el.classList.remove('hidden'); }
-  function safeHide(el){ if(el) el.classList.add('hidden'); }
-// ─── Injeta o styles.css global na página ────────────────────────────────
+	// ─── Injeta o styles.css global na página ────────────────────────────────
    ;(function(){
      const href = '/css/styles.css';  // ajuste para o caminho real
      if (!document.querySelector(`link[href="${href}"]`)) {
@@ -37,8 +32,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ─── Variables ───────────────────────────────────────────────────────────────
-  let responseQuill = null;
-
   let chartInstance = null;
   const timeRanges = {
   dia:    { days: 30,  unit: 'day',   label: 'Últimos 30 dias'   },
@@ -251,12 +244,6 @@ async function adminFetch(url, opts = {}) {
 	// ─── Regras ─────────────────────────────────────────────────────
   const modalRule = document.getElementById('modal-rule');
   const formRule  = document.getElementById('form-rule');
-  // Inicializa editor Quill para Resposta
-  const respEditor = document.getElementById('response-editor');
-  if (respEditor && window.Quill) {
-    responseQuill = new Quill('#response-editor', { theme: 'snow', modules: { toolbar: '#response-toolbar' } });
-  }
-
   function openRuleModal(rule = null) {
   formRule.reset();
    if (rule) {
@@ -279,14 +266,7 @@ async function adminFetch(url, opts = {}) {
      formRule['rule-reply'].value   = rule.reply;
    }
    setRuleFormFromRule(rule);
-   // Preenche o editor com o reply salvo (HTML) se existir
-   try {
-     if (responseQuill) {
-       responseQuill.setContents([]);
-       responseQuill.root.innerHTML = rule && rule.reply ? rule.reply : '';
-     }
-   } catch (e) { console.warn('Quill set error', e); }
-   safeShow(modalRule);
+   modalRule.classList.remove('hidden');
   }
 
 // === Import JSON (admin, seletivo) ===
@@ -514,7 +494,7 @@ async function adminFetch(url, opts = {}) {
    } else {
      formHook['hook-headers'].value = '{}';
    }
-   safeShow(modalHook);
+   modalHook.classList.remove('hidden');
  }
  
   // ─── Products ─────────────────────────────────────────────────────
@@ -541,7 +521,7 @@ function openProdutoModal(prod = null) {
     formProduto['produto-descricao'].value = prod.descricao;
     formProduto['produto-preco'].value     = prod.preco;
   }
-  safeShow(modalProduto);
+  modalProduto.classList.remove('hidden');
 }
 
   // ─── Downloads ─────────────────────────────────────────────────────
@@ -559,7 +539,7 @@ function openDownloadModal(dl = null) {
     formDownload['download-url'].value  = dl.url;
 	formDownload['download-descricao'].value = dl.description || '';
   }
-  safeShow(modalDownload);
+  modalDownload.classList.remove('hidden');
 }
 
   // ─── Groups ─────────────────────────────────────────────────────
@@ -576,39 +556,17 @@ function openGrupoModal(gr = null) {
     formGrupo['grupo-nome'].value = gr.nome;
 	formGrupo['grupo-descricao'].value = gr.descricao || '';
   }
-  safeShow(modalGrupo);
+  modalGrupo.classList.remove('hidden');
 }
 
   // ─── Modal Setup ───────────────────────────────────────────────────
   // Rule buttons
   document.getElementById('new-rule-btn')?.addEventListener('click', () => openRuleModal());
-  document.getElementById('cancel-rule')?.addEventListener('click', () => safeHide(modalRule));
-  // sincroniza select de tipo quando o usuário muda o modo
-  document.querySelectorAll('input[name="rule-mode"]').forEach(r=> r.addEventListener('change', syncRuleTypeFromMode));
-  
-// Mantém select de Tipo sincronizado com o modo (para reduzir confusão visual)
-function syncRuleTypeFromMode(){
-  const sel = document.getElementById('rule-type');
-  if (!sel) return;
-  const mode = (formRule.querySelector('input[name="rule-mode"]:checked')?.value)||'contains';
-  // contains/startswith/endswith/word/notcontains -> keyword; regex->regex(legacy type), exact/all/welcome->message
-  let t = 'message';
-  if (mode === 'regex' || mode === 'contains' || mode==='startswith' || mode==='endswith' || mode==='word' || mode==='notcontains') {
-    t = (mode === 'regex') ? 'regex' : 'keyword';
-  } else {
-    t = 'message';
-  }
-  if ([...sel.options].some(o=>o.value==='regex')===false){
-    // garante que exista opção regex para compat, sem mostrar ao usuário (disabled select)
-    const opt = document.createElement('option'); opt.value='regex'; opt.textContent='Regex'; sel.appendChild(opt);
-  }
-  sel.value = t;
-}
-// === Helpers de Regra (modo + flags) ===
+  document.getElementById('cancel-rule')?.addEventListener('click', () => modalRule.classList.add('hidden'));
+  // === Helpers de Regra (modo + flags) ===
 
 // mapeia rule.type antigo -> mode novo quando rule.mode não vier
-function deriveModeFromRule(rule) {
-  rule = (rule && typeof rule === 'object') ? rule : {};
+function deriveModeFromRule(rule = {}) {
   const type = String(rule.type || '').toLowerCase();
   const mode = String(rule.mode || '').toLowerCase();
   if (mode) return mode;
@@ -619,8 +577,7 @@ function deriveModeFromRule(rule) {
 }
 
 // Preenche os radios/checkboxes do modal com base na regra
-function setRuleFormFromRule(rule) {
-  rule = (rule && typeof rule === 'object') ? rule : {};
+function setRuleFormFromRule(rule = {}) {
   const mode = deriveModeFromRule(rule);
   const radio = formRule.querySelector(`input[name="rule-mode"][value="${mode}"]`);
   const defaultRadio = formRule.querySelector('input[name="rule-mode"][value="contains"]');
@@ -632,7 +589,6 @@ function setRuleFormFromRule(rule) {
   const chkAccent = formRule.querySelector('#rule-flag-accent');
   if (chkCase)   chkCase.checked   = !!flags.caseSensitive;
   if (chkAccent) chkAccent.checked = !!flags.accentSensitive;
-  syncRuleTypeFromMode();
 }
 
 // Monta o payload da regra a partir do form (compat c/ type antigo)
@@ -665,14 +621,8 @@ function getRuleFormPayload(form) {
   };
 }
 
-safeListen(formRule, 'submit', async (e) => {
+formRule.addEventListener('submit', async (e) => {
   e.preventDefault();
-    // Sincroniza o editor rich-text com o campo hidden
-  try {
-    if (responseQuill && formRule['rule-reply']) {
-      formRule['rule-reply'].value = responseQuill.root.innerHTML;
-    }
-  } catch (e) { console.warn('Quill get error', e); }
   const payload = getRuleFormPayload(formRule);
   try {
     const res = await adminFetch('/api/admin/rules', {
@@ -681,7 +631,7 @@ safeListen(formRule, 'submit', async (e) => {
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(await res.text().catch(()=>''));    
-    safeHide(modalRule);
+    modalRule.classList.add('hidden');
     showToast(isEditingRule ? 'Regra atualizada' : 'Regra criada');
     carregarRegras();
   } catch (err) {
@@ -691,8 +641,8 @@ safeListen(formRule, 'submit', async (e) => {
 });
   // Webhooks
   document.getElementById('new-hook-btn')?.addEventListener('click', () => openHookModal());
-  document.getElementById('cancel-hook')?.addEventListener('click', () => safeHide(modalHook));
-safeListen(formHook, 'submit', async (e) => {
+  document.getElementById('cancel-hook')?.addEventListener('click', () => modalHook.classList.add('hidden'));
+formHook.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const idRaw = formHook['hook-id'].value.trim();
@@ -720,7 +670,7 @@ safeListen(formHook, 'submit', async (e) => {
     });
     if (!res.ok) throw new Error(await res.text());
 
-    safeHide(modalHook);
+    modalHook.classList.add('hidden');
     showToast(isEditingHook ? 'Webhook atualizado' : 'Webhook criado');
     carregarWebhooks();
   } catch (err) {
@@ -733,8 +683,8 @@ safeListen(formHook, 'submit', async (e) => {
   const modalProduto = document.getElementById('modal-produto');
   const formProduto  = document.getElementById('form-produto');
   document.getElementById('new-produto-btn')?.addEventListener('click', () => openProdutoModal());
-  document.getElementById('cancel-produto')?.addEventListener('click', () => safeHide(modalProduto));
-safeListen(formProduto, 'submit', async e => {
+  document.getElementById('cancel-produto')?.addEventListener('click', () => modalProduto.classList.add('hidden'));
+formProduto.addEventListener('submit', async e => {
   e.preventDefault();
   const payload = {
     id:        formProduto['produto-id'].value.trim(),
@@ -752,7 +702,7 @@ safeListen(formProduto, 'submit', async e => {
     });
     if (res.ok) {
       showToast(isEditingProduto ? 'Produto atualizado' : 'Produto criado');
-      safeHide(modalProduto);
+      modalProduto.classList.add('hidden');
       carregarProdutos();
       carregarDashboard();
     } else {
@@ -767,8 +717,8 @@ safeListen(formProduto, 'submit', async e => {
   const modalDownload = document.getElementById('modal-download');
   const formDownload  = document.getElementById('form-download');
   document.getElementById('new-download-btn')?.addEventListener('click', () => openDownloadModal());
-  document.getElementById('cancel-download')?.addEventListener('click', () => safeHide(modalDownload));
-  safeListen(formDownload, 'submit', async e => {
+  document.getElementById('cancel-download')?.addEventListener('click', () => modalDownload.classList.add('hidden'));
+  formDownload.addEventListener('submit', async e => {
     e.preventDefault();
    const payload = {
      id:   formDownload['download-id'].value.trim(),
@@ -780,7 +730,7 @@ safeListen(formProduto, 'submit', async e => {
 	const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     if (res.ok) {
       showToast(isEditingDownload ? 'Aplicativo atualizado' : 'Aplicativo criado');
-      safeHide(modalDownload);
+      modalDownload.classList.add('hidden');
       carregarDownloads();
       carregarDashboard();
     } else { showToast(isEditingDownload ? 'Erro ao atualizar aplicativo' : 'Erro ao criar aplicativo', false);
@@ -792,8 +742,8 @@ safeListen(formProduto, 'submit', async e => {
   const modalGrupo = document.getElementById('modal-grupo');
   const formGrupo  = document.getElementById('form-grupo');
   document.getElementById('new-grupo-btn')?.addEventListener('click', () => openGrupoModal());
-  document.getElementById('cancel-grupo')?.addEventListener('click', () => safeHide(modalGrupo));
-	safeListen(formGrupo, 'submit', async e => {
+  document.getElementById('cancel-grupo')?.addEventListener('click', () => modalGrupo.classList.add('hidden'));
+	formGrupo.addEventListener('submit', async e => {
 	e.preventDefault();
 	const payload = {
 		id:        formGrupo['grupo-id'].value.trim(),
@@ -809,7 +759,7 @@ safeListen(formProduto, 'submit', async e => {
     });
     if (res.ok) {
 		showToast(isEditingGrupo ? 'Grupo atualizado' : 'Grupo criado');
-		safeHide(modalGrupo);
+		modalGrupo.classList.add('hidden');
 		carregarGrupos();
 		carregarDashboard();
   } else {
@@ -1109,26 +1059,37 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
 });
 
       // Inline Save
-      cont.querySelectorAll('.btn-save-produto').forEach(btn => {
+            cont.querySelectorAll('.btn-save-produto').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
-          const img = document.querySelector(`input[data-field=imagem][data-id="${id}"]`).value.trim();
-          const link = document.querySelector(`input[data-field=link][data-id="${id}"]`).value.trim();
-          const upd = { id };          // garantir o id no body
-          if (img) upd.imagem = img;
-          if (link) upd.link = link;
-          if (!Object.keys(upd).length) { showToast('Nada para salvar', false); return; }
+          const base = (window.produtos || []).find(x => String(x.id) === String(id)) || { id };
+          const imgEl = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`);
+          const img = imgEl ? imgEl.value.trim() : '';
+          const linkvalEl = document.querySelector(`input[data-field="link"][data-id="${id}"]`);
+          const linkval = linkvalEl ? linkvalEl.value.trim() : '';
+          const payload = { ...base };
+          if (img) payload['imagem'] = img;
+          if (linkval) payload['link'] = linkval;
+          payload.id = base.id || id;
           try {
-            const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(upd) });
+            const res = await fetch('/api/products', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
             if (res.ok) {
-              showToast('Produto salvo');
+              showToast('Product salvo');
               carregarProdutos();
               carregarDashboard();
-            } else showToast('Erro salvar', false);
-          } catch {
+            } else {
+              const msg = await (async () => { try { return (await res.text())||'Erro salvar'; } catch { return 'Erro salvar'; } })();
+              showToast(msg, false);
+            }
+          } catch (e) {
             showToast('Erro rede', false);
           }
         });
+      });
       });
 
     } catch {
@@ -1226,23 +1187,33 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
     });
 
       // Inline Save
-    cont.querySelectorAll('.btn-save-download').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id  = btn.dataset.id;
-        const url = document.querySelector(`input[data-field=url][data-id="${id}"]`).value.trim();
-        const img = document.querySelector(`input[data-field=imagem][data-id="${id}"]`).value.trim();
-		const upd = { id };
-		if (url) upd.url = url;
-		if (img) upd.imagem = img;
-        try {
-          const resUpd = await fetch('/api/downloads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(upd) });
-          if (!resUpd.ok) throw new Error();
-          showToast('Aplicativo salvo');
-          carregarDownloads();
-          carregarDashboard();
-        } catch {
-          showToast('Erro ao salvar aplicativo', false);
-        }
+          cont.querySelectorAll('.btn-save-download').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          const base = (window.downloads || []).find(x => String(x.id) === String(id)) || { id };
+          const imgEl = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`);
+          const img = imgEl ? imgEl.value.trim() : '';
+          const payload = { ...base };
+          if (img) payload['imagem'] = img;
+          payload.id = base.id || id;
+          try {
+            const res = await fetch('/api/downloads', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+              showToast('Download salvo');
+              carregarDownloads();
+              carregarDashboard();
+            } else {
+              const msg = await (async () => { try { return (await res.text())||'Erro salvar'; } catch { return 'Erro salvar'; } })();
+              showToast(msg, false);
+            }
+          } catch (e) {
+            showToast('Erro rede', false);
+          }
+        });
       });
     });
 
@@ -1338,23 +1309,34 @@ async function carregarGrupos() {
       });
 
       // Inline Save
-      cont.querySelectorAll('.btn-save-grupo').forEach(btn => {
+            cont.querySelectorAll('.btn-save-grupo').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
-          const img = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`).value.trim();
-		  const body = { id };
-		  if (img) body.imagem = img;
+          const base = (window.grupos || []).find(x => String(x.id) === String(id)) || { id };
+          const imgEl = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`);
+          const img = imgEl ? imgEl.value.trim() : '';
+          const payload = { ...base };
+          if (img) payload['imagem'] = img;
+          payload.id = base.id || id;
           try {
-            const res = await fetch('/api/groups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const res = await fetch('/api/groups', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
             if (res.ok) {
-              showToast('Grupo salvo');
+              showToast('Group salvo');
               carregarGrupos();
               carregarDashboard();
-            } else showToast('Erro salvar', false);
-          } catch {
+            } else {
+              const msg = await (async () => { try { return (await res.text())||'Erro salvar'; } catch { return 'Erro salvar'; } })();
+              showToast(msg, false);
+            }
+          } catch (e) {
             showToast('Erro rede', false);
           }
         });
+      });
       });
 
     } catch {

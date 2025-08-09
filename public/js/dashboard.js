@@ -347,8 +347,7 @@ async function adminFetch(url, opts = {}) {
         nome: cleanStr(g.nome ?? g.name),
         descricao: g.descricao ?? g.description ?? null,
         imagem: cleanStr(g.imagem ?? g.image ?? '')
-      });
-    });
+  });
 
     (buckets.products || []).forEach(p => {
       out.products.push({
@@ -1089,7 +1088,6 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
             showToast('Erro rede', false);
           }
         });
-      });
       });
 
     } catch {

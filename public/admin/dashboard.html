@@ -22,7 +22,7 @@
 		<div><label class="block text-sm">Nome</label><input name="rule-nome" type="text" required class="w-full border px-2 py-1 rounded" /></div>
         <div><label class="block text-sm">Tipo <span class="text-xs text-gray-500">(preenchido automaticamente pelo “Como comparar”)</span></label><select id="rule-type" name="rule-type" disabled class="w-full border px-3 py-2 rounded"><option value="keyword">Palavra-chave</option><option value="message">Mensagem exata</option></select></div>
         <div><label class="block text-sm">Padrão</label><input id="rule-pattern" name="rule-pattern" type="text" required class="w-full border px-3 py-2 rounded" /></div>
-        <div class="mb-3"><label class="block text-sm">Resposta</label><div id="response-toolbar" class="mb-2"><span class="ql-formats"><select class="ql-header"><option selected></option><option value="2">Subtítulo</option><option value="1">Título</option></select></span><span class="ql-formats"><button class="ql-bold"></button><button class="ql-italic"></button><button class="ql-underline"></button></span><span class="ql-formats"><button class="ql-list" value="ordered"></button><button class="ql-list" value="bullet"></button></span><span class="ql-formats"><button class="ql-link"></button><button class="ql-code-block"></button></span></div><div id="response-editor" class="form-control border rounded" style="height: 260px; overflow:auto;"></div><input type="hidden" id="rule-reply" name="rule-reply" /></div>
+        <div class="mb-3"><label class="block text-sm">Resposta</label><div id="response-toolbar" class="ql-toolbar ql-snow mb-2"><span class="ql-formats"><select class="ql-header"><option selected></option><option value="2">Subtítulo</option><option value="1">Título</option></select></span><span class="ql-formats"><button class="ql-bold"></button><button class="ql-italic"></button><button class="ql-underline"></button></span><span class="ql-formats"><button class="ql-list" value="ordered"></button><button class="ql-list" value="bullet"></button></span><span class="ql-formats"><button class="ql-link"></button><button class="ql-code-block"></button></span></div><div id="response-editor" class="ql-container ql-snow form-control border rounded" style="height: 260px; overflow:auto;"></div><input type="hidden" id="rule-reply" name="rule-reply" /></div>
         <div class="flex justify-end gap-2"><button id="cancel-rule" type="button" class="px-4 py-2 border rounded">Cancelar</button><button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Salvar</button></div>
       
   <!-- Grupo de modos -->
@@ -256,5 +256,40 @@
     </section>
 
   </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var responseQuillGlobal = null;
+  function ensureQuillReady() {
+    if (!window.Quill) return;
+    var editorEl = document.getElementById('response-editor');
+    if (!editorEl) return;
+    if (!responseQuillGlobal) {
+      try {
+        responseQuillGlobal = new Quill('#response-editor', {
+          theme: 'snow',
+          modules: { toolbar: '#response-toolbar' }
+        });
+      } catch (e) { console.warn('Quill init falhou:', e); }
+    }
+  }
+  // tenta inicializar já no load
+  ensureQuillReady();
+  // garante na hora de abrir o modal
+  var newBtn = document.getElementById('new-rule-btn');
+  if (newBtn) newBtn.addEventListener('click', ensureQuillReady);
+  // e também ao clicar em qualquer botão "Editar" dentro da aba Regras
+  var regrasTab = document.getElementById('tab-regras');
+  if (regrasTab) {
+    regrasTab.addEventListener('click', function (ev) {
+      var btn = ev.target.closest('button');
+      if (!btn) return;
+      var label = (btn.getAttribute('aria-label') || btn.textContent || '').toLowerCase();
+      if (label.includes('editar')) ensureQuillReady();
+    });
+  }
+});
+</script>
+
 </body>
 </html>

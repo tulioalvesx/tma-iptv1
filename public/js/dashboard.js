@@ -571,7 +571,8 @@ function openGrupoModal(gr = null) {
   // === Helpers de Regra (modo + flags) ===
 
 // mapeia rule.type antigo -> mode novo quando rule.mode não vier
-function deriveModeFromRule(rule = {}) {
+function deriveModeFromRule(rule) {
+  rule = (rule && typeof rule === 'object') ? rule : {};
   const type = String(rule.type || '').toLowerCase();
   const mode = String(rule.mode || '').toLowerCase();
   if (mode) return mode;
@@ -582,7 +583,8 @@ function deriveModeFromRule(rule = {}) {
 }
 
 // Preenche os radios/checkboxes do modal com base na regra
-function setRuleFormFromRule(rule = {}) {
+function setRuleFormFromRule(rule) {
+  rule = (rule && typeof rule === 'object') ? rule : {};
   const mode = deriveModeFromRule(rule);
   const radio = formRule.querySelector(`input[name="rule-mode"][value="${mode}"]`);
   const defaultRadio = formRule.querySelector('input[name="rule-mode"][value="contains"]');

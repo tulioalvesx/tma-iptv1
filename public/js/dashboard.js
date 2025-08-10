@@ -1209,7 +1209,7 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
           showToast('Erro ao salvar aplicativo', false);
         }
       });
-    });  });
+    });
 
 }
 

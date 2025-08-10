@@ -1341,5 +1341,5 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
     const dias = await apiFetch('/api/analytics'); updateChartFor(rangeKey, (dias||[]).map(r => ({ dia: r.day||r.dia, total: r.total||0 })));
 	});
   });
-  }
+}
 });

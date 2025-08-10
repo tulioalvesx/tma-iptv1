@@ -168,39 +168,39 @@ function updateChartFor(rangeKey, rawData) {
     return { Authorization: `Basic ${token}` };
   }
   
-// logging leve p/ entender o 500 do backend
+// adminFetch corrigido (sem recursão e com retry 401 dentro da função)
 async function adminFetch(url, opts = {}) {
-  // monta headers (preserva Content-Type que você passar)
+  // monta headers (preserva o que você já passou)
   const headers = { ...(opts.headers || {}), ...authHeader() };
 
-  // se o corpo for objeto e content-type for json, garante stringify
+  // garante stringify p/ JSON quando necessário
   const ct = String(headers['Content-Type'] || headers['content-type'] || '').toLowerCase();
   const final = { ...opts, headers };
   if (final.body && typeof final.body !== 'string' && ct.includes('application/json')) {
     try { final.body = JSON.stringify(final.body); } catch {}
   }
 
-  // log enxuto da requisição
   try {
-    const previewBody = (() => {
-      if (!final.body) return null;
-      if (typeof final.body === 'string') return final.body.slice(0, 400);
-      try { return JSON.stringify(final.body).slice(0, 400); } catch { return '[body non-serializable]'; }
-    })();
-
-    console.debug('[adminFetch] ->', (final.method || 'GET'), url, {
-      headers: final.headers,
-      body: previewBody
-    });
-
+    // request principal
     const res = await fetch(url, final);
 
+    // se precisar revalidar credencial (401), tenta 1x de novo
+    if (res.status === 401) {
+      try { localStorage.removeItem('ADMIN_BASIC'); } catch {}
+      const res2 = await fetch(url, {
+        ...opts,
+        headers: { ...(opts.headers || {}), ...authHeader() },
+      });
+      return res2;
+    }
+
+    // log de erro amigável (mantém o comportamento atual)
     if (!res.ok) {
       const text = await res.text().catch(() => '');
       console.error('[adminFetch] ERRO', res.status, res.statusText, url, '\nResposta:\n', text);
-      // opcional: mostrar toast resumido
       try { showToast?.(`Falha ${res.status} em ${url}`, false); } catch {}
     }
+
     return res;
   } catch (err) {
     console.error('[adminFetch] EXCEPTION', url, err);

@@ -1329,3 +1329,4 @@ async function carregarGrupos() {
     const dias = await apiFetch('/api/analytics'); updateChartFor(rangeKey, (dias||[]).map(r => ({ dia: r.day||r.dia, total: r.total||0 })));
 	});
   });
+});

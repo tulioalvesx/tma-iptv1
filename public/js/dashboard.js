@@ -168,11 +168,46 @@ function updateChartFor(rangeKey, rawData) {
     return { Authorization: `Basic ${token}` };
   }
   
+// logging leve p/ entender o 500 do backend
 async function adminFetch(url, opts = {}) {
-  const res = await fetch(url, {
-    ...opts,
-    headers: { ...(opts.headers || {}), ...authHeader() },
-  });
+  // monta headers (preserva Content-Type que você passar)
+  const headers = { ...(opts.headers || {}), ...authHeader() };
+
+  // se o corpo for objeto e content-type for json, garante stringify
+  const ct = String(headers['Content-Type'] || headers['content-type'] || '').toLowerCase();
+  const final = { ...opts, headers };
+  if (final.body && typeof final.body !== 'string' && ct.includes('application/json')) {
+    try { final.body = JSON.stringify(final.body); } catch {}
+  }
+
+  // log enxuto da requisição
+  try {
+    const previewBody = (() => {
+      if (!final.body) return null;
+      if (typeof final.body === 'string') return final.body.slice(0, 400);
+      try { return JSON.stringify(final.body).slice(0, 400); } catch { return '[body non-serializable]'; }
+    })();
+
+    console.debug('[adminFetch] ->', (final.method || 'GET'), url, {
+      headers: final.headers,
+      body: previewBody
+    });
+
+    const res = await fetch(url, final);
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      console.error('[adminFetch] ERRO', res.status, res.statusText, url, '\nResposta:\n', text);
+      // opcional: mostrar toast resumido
+      try { showToast?.(`Falha ${res.status} em ${url}`, false); } catch {}
+    }
+    return res;
+  } catch (err) {
+    console.error('[adminFetch] EXCEPTION', url, err);
+    try { showToast?.('Erro de rede', false); } catch {}
+    throw err;
+  }
+}
 
   if (res.status === 401) {
     // credencial mudou? limpa e pede de novo

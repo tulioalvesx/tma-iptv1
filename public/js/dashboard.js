@@ -169,6 +169,8 @@ function updateChartFor(rangeKey, rawData) {
   }
   
 // adminFetch corrigido (sem recursão e com retry 401 dentro da função)
+
+// adminFetch corrigido (sem recursão e com retry 401 dentro da função)
 async function adminFetch(url, opts = {}) {
   // monta headers (preserva o que você já passou)
   const headers = { ...(opts.headers || {}), ...authHeader() };
@@ -192,19 +194,7 @@ catch (err) {
   }
 }
 
-  if (res.status === 401) {
-    // credencial mudou? limpa e pede de novo
-    localStorage.removeItem('ADMIN_BASIC');
-    const res2 = await fetch(url, {
-      ...opts,
-      headers: { ...(opts.headers || {}), ...authHeader() },
-    });
-    return res2;
-  }
-  return res;
-}
-
-  async function uploadImagem(file, prefix='uploads') {
+async function uploadImagem(file, prefix='uploads') {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('prefix', prefix);

@@ -208,7 +208,12 @@ async function adminFetch(url, opts = {}) {
     const canvas = document.getElementById("grafico-acessos");
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    if (chartInstance) chartInstance.destroy();
+    // destroy chart instance if one already exists (robust for Chart.js v3/v4)
+    try {
+      const existing = (window.Chart && Chart.getChart) ? Chart.getChart(canvas) : (Chart && Chart.instances ? Object.values(Chart.instances)[0] : null);
+      if (existing) existing.destroy();
+    } catch {}
+    if (chartInstance) try { chartInstance.destroy(); } catch {}
     chartInstance = new Chart(ctx, {
       type: "line",
       data: {
@@ -888,12 +893,13 @@ async function importar(json) {
 
     window.rules = regras;
       cont.querySelectorAll('.btn-edit-regra').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.id;
-          const r = regras.find(x => String(x.id) === id);
-          if (r) openRuleModal(r);
-        });
-      });
+  btn.addEventListener('click', () => {
+    const id = btn.dataset.id;
+    const list = (window.regras || regras || []);
+    const r = list.find(x => String(x.id) === String(id));
+    if (r) openRuleModal(JSON.parse(JSON.stringify(r))); // passa uma cópia fresca
+  });
+});
       cont.querySelectorAll('.btn-delete-regra').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
@@ -967,7 +973,7 @@ async function carregarWebhooks() {
   // ─── Produtos ─────────────────────────────────────────────────────────────────
   async function carregarProdutos() {
     try {
-      const res = await adminFetch('/api/products');
+      const res = await fetch('/api/products');
       const produtos = await res.json();
       const cont = document.getElementById('produtos-lista');
       cont.innerHTML = '';
@@ -1041,8 +1047,7 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
       const up = await fetch('/api/upload-image', { method: 'POST', body: form });
       const info = await up.json();
       if (info && info.url) {
-        await adminFetch('/api/products', {
-          method: 'POST',
+        await adminFetch('/api/products', { method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id, imagem: info.url }),
         });
@@ -1064,10 +1069,12 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
           const id = btn.dataset.id;
           const img = document.querySelector(`input[data-field=imagem][data-id="${id}"]`).value.trim();
           const link = document.querySelector(`input[data-field=link][data-id="${id}"]`).value.trim();
-          const upd = { id };          // garantir o id no body
-          if (img) upd.imagem = img;
-          if (link) upd.link = link;
+          const cur = (window.produtos || []).find(x => String(x.id) === String(id)) || {};
+          const upd = {};
+          if (img  !== (cur.imagem || '')) upd.imagem = img;
+          if (link !== (cur.link   || '')) upd.link   = link;
           if (!Object.keys(upd).length) { showToast('Nada para salvar', false); return; }
+          upd.id = id;
           try {
             const res = await adminFetch('/api/products', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(upd) });
             if (res.ok) {
@@ -1079,7 +1086,7 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
             showToast('Erro rede', false);
           }
         });
-      });
+      });  });
 
     } catch {
       showToast('Falha ao carregar produtos', false);
@@ -1089,7 +1096,7 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
   // ─── Downloads ────────────────────────────────────────────────────────────────
   async function carregarDownloads() {
     try {
-      const res = await adminFetch('/api/downloads');
+      const res = await fetch('/api/downloads');
       const data = await res.json();
       const cont = document.getElementById('downloads-lista');
       cont.innerHTML = '';
@@ -1160,8 +1167,7 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
           const up = await fetch('/api/upload-image', { method: 'POST', body: form });
           const info = await up.json();
           if (!info.url) throw new Error(info.error || 'Erro upload');
-		  const resImg = await adminFetch('/api/downloads', {
-			method: 'POST',
+		  const resImg = await adminFetch('/api/downloads', { method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ id, imagem: info.url })
 		});
@@ -1181,12 +1187,21 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
         const id  = btn.dataset.id;
         const url = document.querySelector(`input[data-field=url][data-id="${id}"]`).value.trim();
         const img = document.querySelector(`input[data-field=imagem][data-id="${id}"]`).value.trim();
-		const upd = { id };
-		if (url) upd.url = url;
-		if (img) upd.imagem = img;
+
+        const cur = (window.downloads || []).find(x => String(x.id) === String(id)) || {};
+        const upd = {};
+        if (url !== (cur.url || ''))     upd.url = url;
+        if (img !== (cur.imagem || ''))  upd.imagem = img;
+        if (!Object.keys(upd).length) { showToast('Nada para salvar', false); return; }
+        upd.id = id;
+
         try {
-          const resUpd = await adminFetch('/api/downloads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(upd) });
-          if (!resUpd.ok) throw new Error();
+          const resUpd = await adminFetch('/api/downloads', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(upd)
+          });
+          if (!resUpd.ok) throw new Error('fail');
           showToast('Aplicativo salvo');
           carregarDownloads();
           carregarDashboard();
@@ -1194,106 +1209,18 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
           showToast('Erro ao salvar aplicativo', false);
         }
       });
-    });
-
-  } catch {
-    showToast('Falha ao carregar aplicativos', false);
-  }
-}
-
-// ─── Grupos ────────────────────────────────────────────────────────────────
-async function carregarGrupos() {
-  try {
-    const res = await adminFetch('/api/groups');
-    const grupos = await res.json();
-    const cont = document.getElementById('grupos-lista');
-    cont.innerHTML = '';
-    window.grupos = grupos;
-	
-    grupos.forEach(g => {
-      const card = document.createElement('div');
-      card.className = 'bg-white p-4 rounded shadow mb-3';
-      card.innerHTML = `
-        <div class="flex items-start gap-4">
-          <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-2">
-            ${g.imagem
-              ? `<img src="${normalizeImagem(g.imagem)}" alt="${g.nome}" class="object-contain w-full h-full rounded">`
-              : 'Sem imagem'}
-          </div>
-          <div class="flex-1">
-            <h3 class="font-bold text-lg mb-1">${g.nome}</h3>
-			<p class="text-sm text-gray-500 mb-2 clamp-2">${g.descricao||''}</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
-              <input type="file" data-type="grupo" data-id="${g.id}" class="inline-file border px-2 py-1 rounded" />
-              <input type="text" data-field="imagem" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Imagem" value="${g.imagem||''}">
-            </div>
-          </div>
-          <div class="flex flex-col gap-2">
-            <button data-id="${g.id}" class="btn-save-grupo px-3 py-1 bg-blue-500 text-white rounded text-sm">Salvar</button>
-            <button data-id="${g.id}" class="btn-edit-grupo px-3 py-1 bg-yellow-400 text-white rounded text-sm">Editar</button>
-            <button data-id="${g.id}" class="btn-delete-grupo px-3 py-1 bg-red-500 text-white rounded text-sm">Excluir</button>
-          </div>
-        </div>`;
-      cont.appendChild(card);
-    });
-
-// -- Edit
-	  cont.querySelectorAll('.btn-edit-grupo').forEach(btn => {
-	  btn.addEventListener('click', () => {
-      const gr = window.grupos.find(x => String(x.id) === btn.dataset.id);
-      if (gr) openGrupoModal(gr);
-  });
-});
-
-// -- Delete
-	  cont.querySelectorAll('.btn-delete-grupo').forEach(btn => {
-	  btn.addEventListener('click', async () => {
-      if (!confirm('Excluir grupo?')) return;
-      await adminFetch('/api/groups', { method: 'DELETE', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ id: btn.dataset.id }) });
-      showToast('Grupo excluído');
-      carregarGrupos();
-      carregarDashboard();
-  });
-});
-
-      // Upload imagem
-	cont.querySelectorAll('input[type=file][data-type=grupo]').forEach(inp => {
-	inp.addEventListener('change', async e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const id = e.target.dataset.id;
-    const form = new FormData();
-    form.append('file', file);
-    form.append('type', 'grupo');
-    form.append('id', id);
-    try {
-      const up = await fetch('/api/upload-image', { method: 'POST', body: form });
-      const info = await up.json();
-      if (info && info.url) {
-        await adminFetch('/api/groups', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, imagem: info.url }),
-        });
-        showToast('Imagem atualizada');
-        carregarGrupos();
-        carregarDashboard();
-      } else {
-        showToast('Erro upload', false);
-      }
-    } catch {
-      showToast('Erro rede', false);
-    }
-        });
-      });
+    });  });
 
       // Inline Save
       cont.querySelectorAll('.btn-save-grupo').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
           const img = document.querySelector(`input[data-field="imagem"][data-id="${id}"]`).value.trim();
-		  const body = { id };
-		  if (img) body.imagem = img;
+          const cur = (window.grupos || []).find(x => String(x.id) === String(id)) || {};
+          const body = {};
+          if (img !== (cur.imagem || '')) body.imagem = img;
+          if (!Object.keys(body).length) { showToast('Nada para salvar', false); return; }
+          body.id = id;
           try {
             const res = await adminFetch('/api/groups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             if (res.ok) {

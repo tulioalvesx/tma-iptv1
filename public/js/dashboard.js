@@ -1086,7 +1086,7 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
             showToast('Erro rede', false);
           }
         });
-      });  });
+      });
 
     } catch {
       showToast('Falha ao carregar produtos', false);

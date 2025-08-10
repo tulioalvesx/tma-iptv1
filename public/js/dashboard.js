@@ -185,24 +185,7 @@ async function adminFetch(url, opts = {}) {
     const res = await fetch(url, final);
 
     // se precisar revalidar credencial (401), tenta 1x de novo
-    if (res.status === 401) {
-      try { localStorage.removeItem('ADMIN_BASIC'); } catch {}
-      const res2 = await fetch(url, {
-        ...opts,
-        headers: { ...(opts.headers || {}), ...authHeader() },
-      });
-      return res2;
-    }
-
-    // log de erro amigável (mantém o comportamento atual)
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      console.error('[adminFetch] ERRO', res.status, res.statusText, url, '\nResposta:\n', text);
-      try { showToast?.(`Falha ${res.status} em ${url}`, false); } catch {}
-    }
-
-    return res;
-  } catch (err) {
+catch (err) {
     console.error('[adminFetch] EXCEPTION', url, err);
     try { showToast?.('Erro de rede', false); } catch {}
     throw err;

@@ -1211,7 +1211,92 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
       });
     });  });
 
-      // Inline Save
+}
+
+  // ─── Grupos ────────────────────────────────────────────────────────────────
+  async function carregarGrupos() {
+    try {
+      const res = await fetch('/api/groups');
+      const grupos = await res.json();
+      const cont = document.getElementById('grupos-lista');
+      cont.innerHTML = '';
+
+      grupos.forEach(g => {
+        const card = document.createElement('div');
+        card.className = 'bg-white p-4 rounded shadow mb-3';
+        card.innerHTML = `
+          <div class="flex items-start gap-4">
+            <div class="w-24 h-24 bg-gray-100 flex items-center justify-center mb-2 overflow-hidden">
+              ${g.imagem?`<img src="${normalizeImagem(g.imagem)}" alt="${g.nome||g.name}" class="object-contain max-w-full max-h-full">`:'Sem imagem'}
+            </div>
+            <div class="flex-1">
+              <h3 class="font-bold text-lg mb-1">${g.nome||g.name}</h3>
+              <p class="text-sm text-gray-500 mb-1 clamp-2">${g.descricao||g.description||''}</p>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <input type="file" data-type="grupo" data-id="${g.id}" class="inline-file border px-2 py-1 rounded" />
+                <input type="text" value="${g.imagem||''}" data-field="imagem" data-id="${g.id}" class="inline-input border px-2 py-1 rounded" placeholder="Imagem">
+              </div>
+            </div>
+            <div class="flex flex-col gap-2">
+              <button data-id="${g.id}" class="btn-save-grupo px-3 py-1 bg-blue-500 text-white rounded text-sm">Salvar</button>
+              <button data-id="${g.id}" class="btn-edit-grupo px-3 py-1 bg-yellow-400 text-white rounded text-sm">Editar</button>
+              <button data-id="${g.id}" class="btn-delete-grupo px-3 py-1 bg-red-500 text-white rounded text-sm">Excluir</button>
+            </div>
+          </div>`;
+        cont.appendChild(card);
+      });
+      window.grupos = grupos;
+
+      // Editar
+      cont.querySelectorAll('.btn-edit-grupo').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const gr = window.grupos.find(x => String(x.id) === btn.dataset.id);
+          if (gr) openGrupoModal(gr);
+        });
+      });
+
+      // Excluir
+      cont.querySelectorAll('.btn-delete-grupo').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Excluir grupo?')) return;
+          try {
+            const resDel = await adminFetch('/api/groups', { method: 'DELETE', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ id: btn.dataset.id }) });
+            if (!resDel.ok) throw new Error();
+            showToast('Grupo excluído');
+            carregarGrupos();
+            carregarDashboard();
+          } catch {
+            showToast('Falha ao excluir grupo', false);
+          }
+        });
+      });
+
+      // Upload imagem
+      cont.querySelectorAll('input[type=file][data-type=grupo]').forEach(inp => {
+        inp.addEventListener('change', async e => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const id = e.target.dataset.id;
+          const form = new FormData();
+          form.append('file', file);
+          form.append('type', 'grupo');
+          form.append('id', id);
+          try {
+            const up = await fetch('/api/upload-image', { method: 'POST', body: form });
+            const info = await up.json();
+            if (!info.url) throw new Error(info.error || 'Erro upload');
+            const resImg = await adminFetch('/api/groups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, imagem: info.url }) });
+            if (!resImg.ok) throw new Error();
+            showToast('Imagem atualizada');
+            carregarGrupos();
+            carregarDashboard();
+          } catch {
+            showToast('Erro de rede ao atualizar imagem', false);
+          }
+        });
+      });
+
+      // Salvar inline
       cont.querySelectorAll('.btn-save-grupo').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.id;
@@ -1237,7 +1322,7 @@ cont.querySelectorAll('input[type=file][data-type=produto]').forEach(inp => {
     } catch {
       showToast('Falha ao carregar grupos', false);
     }
-}
+  }
 
  // Initialization: só Dashboard, demais serão “lazy-loaded”
   carregarDashboard();

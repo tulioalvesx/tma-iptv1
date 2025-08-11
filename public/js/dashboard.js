@@ -629,9 +629,6 @@ function getRuleFormPayload(form) {
 formRule.addEventListener('submit', async (e) => {
   e.preventDefault();
   const payload = getRuleFormPayload(formRule);
-    // se existir um editor visual (#rule-reply-editor), prioriza o conteúdo dele
-  const rich = document.getElementById('rule-reply-editor');
-  if (rich) payload.reply = (rich.innerHTML || '').trim();
   try {
     const res = await adminFetch('/api/admin/rules', {
       method: 'POST', // upsert no backend (POST/PUT ambos funcionam)

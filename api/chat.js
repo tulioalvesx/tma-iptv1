@@ -44,23 +44,64 @@ function getBody(req) {
   return req.body || {};
 }
 
+// --- mapeia 'compare' (pt-br) e outros nomes para o modo interno
+function mapCompareToMode(v) {
+  const s = String(v || '').trim().toLowerCase();
+  if (!s) return '';
+  if (['conter','contains'].includes(s))            return 'contains';
+  if (['combinação exata','combinacao exata','mensagem exata','exato','exact'].includes(s)) return 'exact';
+  if (['começa com','comeca com','startswith'].includes(s))  return 'startswith';
+  if (['termina com','endswith'].includes(s))      return 'endswith';
+  if (['não contém','nao contém','nao contem','notcontains'].includes(s)) return 'notcontains';
+  if (['palavra','word'].includes(s))              return 'word';
+  if (['regex','regexp','expressão regular','expressao regular'].includes(s)) return 'regex';
+  if (['bem-vindo','boas-vindas','welcome','mensagem de boas-vindas','mensagem de boas vindas'].includes(s)) return 'welcome';
+  if (['todos','fallback','all'].includes(s))      return 'all';
+  return '';
+}
+
 function getMode(rule) {
-  const t = String(rule.type || '').toLowerCase(); // legado
-  const m = String(rule.mode || '').toLowerCase();
-  if (m) return m;
+  // aceita: rule.mode, rule.compare (pt-br) e rule.type (legado)
+  const m1 = String(rule.mode || '').toLowerCase();
+  const m2 = mapCompareToMode(rule.compare);
+  const t  = String(rule.type || '').toLowerCase(); // legado
+  if (m1) return m1;
+  if (m2) return m2;
   if (t === 'regex')   return 'regex';
   if (t === 'keyword') return 'contains';
   // type=message: se não tiver pattern => all (fallback), senão exact
-  const hasPattern = !!String(rule.pattern || '').trim();
-  return hasPattern ? 'exact' : 'all';
+  const pat = getPattern(rule);
+  return pat ? 'exact' : 'all';
 }
 
 function getFlags(rule) {
-  const flags = rule.flags && typeof rule.flags === 'object' ? rule.flags : {};
+  // aceita flags dentro de 'flags' ou na raiz
+  const f = (rule.flags && typeof rule.flags === 'object') ? rule.flags : {};
+  const cs = (f.caseSensitive !== undefined) ? f.caseSensitive : rule.caseSensitive;
+  const as = (f.accentSensitive !== undefined) ? f.accentSensitive : rule.accentSensitive;
   return {
-    caseSensitive:  !!flags.caseSensitive,
-    accentSensitive: !!flags.accentSensitive
+    caseSensitive:  !!cs,
+    accentSensitive: !!as
   };
+}
+
+// pega o pattern com aliases (compat)
+function getPattern(rule) {
+  return String(
+    rule.pattern ??
+    rule.keyword ??     // alias comum
+    rule.padrao  ??     // pt-br
+    ''
+  ).trim();
+}
+
+// pega o texto de resposta com aliases (compat)
+function getReply(rule) {
+  return String(
+    rule.reply ??
+    rule.response ??    // algumas bases usam 'response'
+    ''
+  );
 }
 
 // casamento por modo
@@ -80,7 +121,7 @@ function matchesByMode(mode, msgRaw, patRaw, flags) {
     }
     case 'notcontains':  return !!pat && !msg.includes(pat);
     case 'all':          return true;     // catch-all (fallback)
-    case 'welcome':      return false;    // tratado fora
+    case 'welcome':      return false;    // tratado fora (init)
     case 'regex':
       try { return new RegExp(patRaw, flags.caseSensitive ? '' : 'i').test(String(msgRaw || '')); }
       catch { return false; }
@@ -106,10 +147,15 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Missing message' });
     }
 
-    // busca regras ativas
-    const q = supabase.from('rules').select('*').eq('enabled', true);
+    // -------- busca regras --------
+    // se a coluna 'enabled' não existir/for null, considera ativa
+    let q = supabase.from('rules').select('*');
+    // se você usa 'enabled', filtramos ativas OU null
+    q = q.or('enabled.is.true,enabled.is.null');
+
     // se você não criou created_at, comente a linha abaixo
-    q.order('created_at', { ascending: true });
+    try { q.order('created_at', { ascending: true }); } catch {}
+
     const { data: rules, error } = await q;
     if (error) throw error;
 
@@ -127,12 +173,12 @@ module.exports = async (req, res) => {
     if (!matched) {
       outer: for (const m of order) {
         for (const r of byMode(m)) {
-          if (matchesByMode(m, message, r.pattern, getFlags(r))) { matched = r; break outer; }
+          if (matchesByMode(m, message, getPattern(r), getFlags(r))) { matched = r; break outer; }
         }
       }
     }
 
-    let reply = matched?.reply || 'Não entendi agora 🤔. Se preferir, fale com um atendente.';
+    let reply = getReply(matched) || 'Não entendi agora 🤔. Se preferir, fale com um atendente.';
 
     // webhook externo opcional
     if (matched?.external_webhook) {

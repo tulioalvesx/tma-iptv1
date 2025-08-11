@@ -244,30 +244,32 @@ async function adminFetch(url, opts = {}) {
 	// ─── Regras ─────────────────────────────────────────────────────
   const modalRule = document.getElementById('modal-rule');
   const formRule  = document.getElementById('form-rule');
-  function openRuleModal(rule = null) {
+function openRuleModal(rule = null) {
   formRule.reset();
-   if (rule) {
-     isEditingRule   = true;
-     editingRuleId   = rule.id;
-   } else {
-     isEditingRule   = false;
-     editingRuleId   = crypto.randomUUID();
-   }
-   formRule['rule-id'].value    = editingRuleId;
-   formRule['rule-id'].disabled = true;
-   if (rule) {
-     formRule['rule-nome'].value = rule.name;
-   } else {
-     formRule['rule-nome'].value = '';
-   }
-   if (rule) {
-     formRule['rule-type'].value    = rule.type;
-     formRule['rule-pattern'].value = rule.pattern;
-     formRule['rule-reply'].value   = rule.reply;
-   }
-   setRuleFormFromRule(rule);
-   modalRule.classList.remove('hidden');
-  }
+
+  // id/estado de edição
+  const isEdit = !!rule;
+  isEditingRule = isEdit;
+  editingRuleId = isEdit ? rule.id : crypto.randomUUID();
+
+  formRule['rule-id'].value    = editingRuleId;
+  formRule['rule-id'].disabled = true;
+
+  // sempre atribui, editando ou criando
+  formRule['rule-nome'].value    = isEdit ? (rule.name || '')           : '';
+  formRule['rule-type'].value    = isEdit ? (rule.type || 'keyword')    : 'keyword';
+  formRule['rule-pattern'].value = isEdit ? (rule.pattern || '')        : '';
+  formRule['rule-reply'].value   = isEdit ? (rule.reply || '')          : '';
+
+  // se você usa um editor rich (div/iframe), mantenha sincronizado também:
+  const rich = document.getElementById('rule-reply-editor');
+  if (rich) rich.innerHTML = formRule['rule-reply'].value;
+
+  // evita passar null para a função de derivar modo
+  setRuleFormFromRule(rule || { type: formRule['rule-type'].value });
+
+  modalRule.classList.remove('hidden');
+}
 
 // === Import JSON (admin, seletivo) ===
 (function setupImportModal(){
@@ -566,7 +568,8 @@ function openGrupoModal(gr = null) {
   // === Helpers de Regra (modo + flags) ===
 
 // mapeia rule.type antigo -> mode novo quando rule.mode não vier
-function deriveModeFromRule(rule = {}) {
+function deriveModeFromRule(rule) {
+  rule = rule || {}; // <<< protege contra null
   const type = String(rule.type || '').toLowerCase();
   const mode = String(rule.mode || '').toLowerCase();
   if (mode) return mode;
@@ -577,7 +580,9 @@ function deriveModeFromRule(rule = {}) {
 }
 
 // Preenche os radios/checkboxes do modal com base na regra
-function setRuleFormFromRule(rule = {}) {
+function setRuleFormFromRule(rule) {
+  rule = rule || {}; // <<< protege contra null
+
   const mode = deriveModeFromRule(rule);
   const radio = formRule.querySelector(`input[name="rule-mode"][value="${mode}"]`);
   const defaultRadio = formRule.querySelector('input[name="rule-mode"][value="contains"]');
